@@ -2,13 +2,11 @@
 A Uniswap V2 trader client with GUI, limit orders and stoploss.
 
 <H2>Prerequisites</H2>
-<br></br>
 
 - An ethereum address and its personal key
 - An infura project with link
 
 <H2>Getting started</H2>
-<br></br>
 
 1. Download the files from this git-repository.
 
@@ -33,7 +31,7 @@ my_pk = ''</pre>
 
 
 <H2>Functions</H2>
-<br></br>
+
 
 <b>Main coin/token</b>: The token or coin you want to trade tokens for and with
 
@@ -70,7 +68,6 @@ my_pk = ''</pre>
   As an example, if the current price of token1 is $0.9 and it's set high is $1, the value of this token is "seen as 90%". Token2 also has a high of $1, but the current price is   0.2$, value of this token is seen as 20%. The tokentokenmnumerator is set at 3.3. If we divide the 90% by the 20%, we get 4.5, which is higher than 3.3, which means that         token1 gets traded for token2 instantly. If the tokentokennumerator was set to 5, the swap would not happen.
 
 <H2>Current bugs</h2>
-<br></br>
 
 - Cant add current ETH tokens with less than 18 decimals (The price it shows will be wrong)
 - Starting the bot after it is been stopped may close the application in Linux (No problem in Windows)
@@ -79,7 +76,6 @@ my_pk = ''</pre>
 
 
 <H2>To do</H2>
-<br></br>
 
 - Fix bugs
 - New, more user-friendly design
