@@ -84,4 +84,16 @@ my_pk = ''</pre>
 - Fix bugs
 - New, more user-friendly design
 (Depends on whether the application is used)
+
+<br> </br>
+<H2>Author</H2>
+During the latest pandemic I realised that I had time to learn how to code, I decided to do this by making trader-bots in python. Other than it being a good exercise, it was/is also very fun and lucrative! This is one of my first applications I made, so the documentation is still quite poor with spaghetti-code here and there, but it does what it should do!
+
+If you feel like meesaging me, this is possible at xykominos@gmail.com.
+
+
+<br> </br>
+<H2>Disclosure</H2>
+I own some of the tokens portayed in the gif. These tokens are used only for example purposes and are not meant to be an endorsement. I am not affiliated with these tokens or any subsidiaries. Use the application at your own risk, I am not in any way responsible for losses etc.
+
   
