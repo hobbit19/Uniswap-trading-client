@@ -77,7 +77,7 @@ my_pk = ''</pre>
 - Starting the bot after it is been stopped may close the application in Linux (No problem in Windows)
 - Sloppy dinamic design of GUI
 - Gas-strategies: all are seen as "Fast"
-- Sometimes lag when updating names or when start bot (0-30 seconds)
+- Sometimes lag when updating names or when starting the bot (0-30 seconds)
 - More: Let me know!
 
 <br> </br>
