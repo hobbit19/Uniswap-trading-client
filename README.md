@@ -1,12 +1,13 @@
 # Uniswap-trader-GUI
 A Uniswap V2 trader client with GUI, limit orders and stoploss.
 
-<H3>Prerequisites</H3>
+<H2>Prerequisites</H2>
 
 - An ethereum address and its personal key
 - An infura project with link
 
-<H3>Getting started</H3>
+<H2>Getting started</H2>
+
 
 1. Download the files from this git-repository.
 
@@ -30,7 +31,8 @@ my_pk = ''</pre>
 6. Add infura project url
 
 
-<H3>Functions</H3>
+<H2>Functions</H2>
+
 <b>Main coin/token</b>: The token or coin you want to trade tokens for and with
 
 <b>Token ETH address</b>: Fill the token eth address you want to trade (such as 0x00000000000000000)
