@@ -1,5 +1,5 @@
 # Uniswap-trader-GUI
-An Uniswap V2 trader client with GUI, limit orders and stoploss.
+An Uniswap V2 trader client with limit orders, stoploss, custom gas strategies, a GUI and much more.
 
 ![alt text](https://github.com/Davidkolh/Uniswap-trader-GUI/blob/main/test.gif?raw=true "GIF application")
 
@@ -76,6 +76,7 @@ my_pk = ''</pre>
 - Can't add ETH tokens with less than 18 decimals (The price it shows will be wrong)
 - Starting the bot after it is been stopped may close the application in Linux (No problem in Windows)
 - Sloppy dinamic design of GUI
+- Gas-strategies: all are seen as "Fast"
 - Sometimes lag when updating names or when start bot (0-30 seconds)
 - More: Let me know!
 
