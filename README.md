@@ -95,6 +95,6 @@ If you feel like meesaging me, this is possible at xykominos@gmail.com.
 
 <br> </br>
 <H2>Disclosure</H2>
-I own some of the tokens portayed in the gif. These tokens are used only for example purposes and are not meant to be an endorsement. I am not affiliated with these tokens or any subsidiaries. Use the application at your own risk, I am not in any way responsible for losses etc.
+I own some of the tokens portayed in the gif. These tokens are used only for example purposes and are not meant to be an endorsement. I am not affiliated with these tokens or any subsidiaries. Use the application at your own risk, I am not in any way responsible for losses.
 
   
