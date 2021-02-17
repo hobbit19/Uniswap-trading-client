@@ -2,7 +2,6 @@
 A Uniswap V2 trader client with GUI, limit orders and stoploss.
 
 <H2>Prerequisites</H2>
-
 - An ethereum address and its personal key
 - An infura project with link
 
