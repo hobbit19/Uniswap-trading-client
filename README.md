@@ -11,9 +11,9 @@ An Uniswap V2 trader client with GUI, limit orders and stoploss.
 <br> </br>
 <H2>Getting started</H2>
 
-1. Download the files from this git-repository.
+1. Download the files from this git-repository and add them to a map.
 
-2. Install the modules needed for the trader using pip.
+2. Install the libraries needed for the trader using pip.
 
 <pre>pip install -r requirements.txt</pre>
 
@@ -61,27 +61,28 @@ my_pk = ''</pre>
 <b>Update names</b>: Press to update tokens names according to the Token address
 
 
-<b>Tokentokennumerator (Experimental!)</b>: This value lets you trade ERC tokens with each other. The code to create the value is as follows:
+<b>Tokentokennumerator (Experimental!)</b>: This value lets you trade ERC tokens with each other. The code to create the value is as followed:
 
 <pre>if pricetoken1usd > ((token1high + token1low) / 2) and pricetoken2usd < ((token2high + token2low) / 2):
   token1totoken2 = ((pricetoken1usd - token1low) / (token1high - token1low)) / ((pricetoken2usd - token2low) / (token2high - token2low))</pre>
   
-  If you dont want to wait till the token1 is sold for the maincoinoption, because you are uncertain whether token2 will still be at this price level or think that token1 will     drop, you can use this function. To use this function, "Trade with ERC" should be activated for at least 2 tokens, and the highs and lows set seriously.
+  If you dont want to wait till the token1 is sold for the maincoinoption, because you are uncertain whether token2 will still be at this price level or think that token1 will     drop, you can use this function. To use this function, "Trade with ERC" should be activated for at least 2 tokens, and the highs and lows should be set seriously.
     
-  As an example, if the current price of token1 is $0.9 and it's set high is $1, the value of this token is "seen as 90%". Token2 also has a high of $1, but the current price is   0.2$, value of this token is seen as 20%. The tokentokenmnumerator is set at 3.3. If we divide the 90% by the 20%, we get 4.5, which is higher than 3.3, which means that         token1 gets traded for token2 instantly. If the tokentokennumerator was set to 5, the swap would not happen.
+  As an example, if the current price of token1 is $0.9 and it's set "high" is $1, the value of this token is seen as "90%". Token2 also has a high of $1, but the current price   is 0.2$, value of this token is seen as 20%. The tokentokenmnumerator is set at 3.3. If we divide the 90% by the 20%, we get 4.5, which is higher than 3.3, which means that     token1 gets traded for token2 instantly. If the tokentokennumerator was set to 5, the swap would not happen.
 
 <br> </br>
 <H2>Current bugs</h2>
 
-- Cant add current ETH tokens with less than 18 decimals (The price it shows will be wrong)
+- Can't add ETH tokens with less than 18 decimals (The price it shows will be wrong)
 - Starting the bot after it is been stopped may close the application in Linux (No problem in Windows)
 - Sloppy dinamic design of GUI
+- Sometimes lag when updating names or when start bot (0-30 seconds)
 - More: Let me know!
 
 <br> </br>
 <H2>To do</H2>
 
-- Fix bugs
+- Fix current bugs
 - New, more user-friendly design
 (Depends on whether the application is used)
 
