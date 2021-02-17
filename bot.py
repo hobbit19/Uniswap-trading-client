@@ -351,7 +351,7 @@ class Worker(QObject):
                     except Exception as e:
                         o=0
                         exception_type, exception_object, exception_traceback = sys.exc_info()
-                        print(str(e)+str(exception_traceback.tb_lineno))
+                        #print(str(e)+str(exception_traceback.tb_lineno))
                         w33.eth.setGasPriceStrategy(fast_gas_price_strategy)
                     uniconnect = Uniswap(my_address, pk, web3=Web3(
                         w33.HTTPProvider(infura_url)),
@@ -385,7 +385,7 @@ class Worker(QObject):
                     except Exception as e:
                         o = 0
                         exception_type, exception_object, exception_traceback = sys.exc_info()
-                        print(str(e)+str(exception_traceback.tb_lineno))
+                        #print(str(e)+str(exception_traceback.tb_lineno))
                     tradeamount = int(ethamount2 * 10 ** selldecimals)
                     ethamount = ethamount2
                     contractaddress = token
@@ -941,7 +941,7 @@ class Worker(QObject):
                 except Exception as e:
                     o=0
                     exception_type, exception_object, exception_traceback = sys.exc_info()
-                    print(str(e)+str(exception_traceback.tb_lineno))
+                    #print(str(e)+str(exception_traceback.tb_lineno))
                     gelukt = "mislukt"
                 try:  # token to token
                     if token1address != 0:
@@ -1093,7 +1093,7 @@ class Worker(QObject):
                         except Exception as e:
                             o=0
                             exception_type, exception_object, exception_traceback = sys.exc_info()
-                            print(str(e)+str(exception_traceback.tb_lineno))
+                            #print(str(e)+str(exception_traceback.tb_lineno))
                             gelukt = "mislukt"
                     if token2address != 0:
                         try:  # token2 to others
@@ -1244,7 +1244,7 @@ class Worker(QObject):
                         except Exception as e:
                             o=0
                             exception_type, exception_object, exception_traceback = sys.exc_info()
-                            print(str(e)+str(exception_traceback.tb_lineno))
+                            #print(str(e)+str(exception_traceback.tb_lineno))
                             gelukt = "mislukt"
                     if token3address != 0:
                         try:  # token3 to others
@@ -1395,7 +1395,7 @@ class Worker(QObject):
                         except Exception as e:
                             o=0
                             exception_type, exception_object, exception_traceback = sys.exc_info()
-                            print(str(e)+str(exception_traceback.tb_lineno))
+                            #print(str(e)+str(exception_traceback.tb_lineno))
                             gelukt = "mislukt"
                     if token4address != 0:
                         try:  # token4 to others
@@ -1546,7 +1546,7 @@ class Worker(QObject):
                         except Exception as e:
                             o=0
                             exception_type, exception_object, exception_traceback = sys.exc_info()
-                            print(str(e)+str(exception_traceback.tb_lineno))
+                            #print(str(e)+str(exception_traceback.tb_lineno))
                             gelukt = "mislukt"
                     if token5address != 0:
                         try:  # token5 to others
@@ -1697,7 +1697,7 @@ class Worker(QObject):
                         except Exception as e:
                             o=0
                             exception_type, exception_object, exception_traceback = sys.exc_info()
-                            print(str(e)+str(exception_traceback.tb_lineno))
+                            #print(str(e)+str(exception_traceback.tb_lineno))
                             gelukt = "mislukt"
                     if token6address != 0:
                         try:  # token6 to others
@@ -1848,7 +1848,7 @@ class Worker(QObject):
                         except Exception as e:
                             o=0
                             exception_type, exception_object, exception_traceback = sys.exc_info()
-                            print(str(e)+str(exception_traceback.tb_lineno))
+                            #print(str(e)+str(exception_traceback.tb_lineno))
                             gelukt = "mislukt"
                     if token7address != 0:
                         try:  # token7 to others
@@ -1999,7 +1999,7 @@ class Worker(QObject):
                         except Exception as e:
                             o=0
                             exception_type, exception_object, exception_traceback = sys.exc_info()
-                            print(str(e)+str(exception_traceback.tb_lineno))
+                            #print(str(e)+str(exception_traceback.tb_lineno))
                             gelukt = "mislukt"
                     if token8address != 0:
                         try:  # token8 to others
@@ -2150,7 +2150,7 @@ class Worker(QObject):
                         except Exception as e:
                             o=0
                             exception_type, exception_object, exception_traceback = sys.exc_info()
-                            print(str(e)+str(exception_traceback.tb_lineno))
+                            #print(str(e)+str(exception_traceback.tb_lineno))
                             gelukt = "mislukt"
                     if token9address != 0:
                         try:  # token9 to others
@@ -2301,7 +2301,7 @@ class Worker(QObject):
                         except Exception as e:
                             o=0
                             exception_type, exception_object, exception_traceback = sys.exc_info()
-                            print(str(e)+str(exception_traceback.tb_lineno))
+                            #print(str(e)+str(exception_traceback.tb_lineno))
                             gelukt = "mislukt"
                     if token10address != 0:
                         try:  # token10 to others
@@ -2452,7 +2452,7 @@ class Worker(QObject):
                         except Exception as e:
                             o=0
                             exception_type, exception_object, exception_traceback = sys.exc_info()
-                            print(str(e)+str(exception_traceback.tb_lineno))
+                            #print(str(e)+str(exception_traceback.tb_lineno))
                             gelukt = "mislukt"
                 except Exception as e:
                     o=0
@@ -4209,7 +4209,7 @@ class Worker(QObject):
                     except Exception as e:
                         o=0
                         exception_type, exception_object, exception_traceback = sys.exc_info()
-                        print(str(e)+str(exception_traceback.tb_lineno))
+                        #print(str(e)+str(exception_traceback.tb_lineno))
                         w33.eth.setGasPriceStrategy(fast_gas_price_strategy)
                     w33.middleware_onion.add(middleware.time_based_cache_middleware)
                     w33.middleware_onion.add(middleware.latest_block_based_cache_middleware)
@@ -4485,7 +4485,7 @@ class Worker(QObject):
                             except Exception as e:
                                 o=0
                                 exception_type, exception_object, exception_traceback = sys.exc_info()
-                                print(str(e)+str(exception_traceback.tb_lineno))
+                                #print(str(e)+str(exception_traceback.tb_lineno))
                             if "weergave1" not in locals():
                                 print(str(strftime("%H:%M:%S", localtime())) +weergave)
                             if "weergave1" in locals():
@@ -4494,11 +4494,11 @@ class Worker(QObject):
 
                         except Exception as e:
                             exception_type, exception_object, exception_traceback = sys.exc_info()
-                            print(str(e)+str(exception_traceback.tb_lineno))
+                            #print(str(e)+str(exception_traceback.tb_lineno))
                             if e is not IndexError:
                                 o=0
                                 exception_type, exception_object, exception_traceback = sys.exc_info()
-                                print(str(e)+str(exception_traceback.tb_lineno))
+                                #print(str(e)+str(exception_traceback.tb_lineno))
                             time.sleep(1)
                             notyet = 4
                         notyet==3
@@ -4569,11 +4569,11 @@ class Worker(QObject):
 
                 except Exception as e:
                     exception_type, exception_object, exception_traceback = sys.exc_info()
-                    print(str(e)+str(exception_traceback.tb_lineno))
+                    #print(str(e)+str(exception_traceback.tb_lineno))
                     if e is not IndexError:
                         o=0
                         exception_type, exception_object, exception_traceback = sys.exc_info()
-                        print(str(e)+str(exception_traceback.tb_lineno))
+                        #print(str(e)+str(exception_traceback.tb_lineno))
                         #o=0
                     import socket
                     def is_connected():
@@ -5134,7 +5134,7 @@ class Ui_MainWindow(QGraphicsObject):
 
         self.label_13.setObjectName("label_13")
         self.currentstatus = QtWidgets.QTextBrowser(self.centralwidget)
-        self.currentstatus.setGeometry(QtCore.QRect(-10, 440, 1051, 141))
+        self.currentstatus.setGeometry(QtCore.QRect(0, 440, 1051, 141))
         self.currentstatus.setObjectName("currentstatus")
 
         self.label_14 = QtWidgets.QLabel(self.centralwidget)
@@ -7042,6 +7042,4 @@ if __name__ == "__main__":
 
 
 
-# tokenname also gets saved
-# tokenname dissapears if ethaddress is changed
-#future: waiting time when done. (maybe before adding done before break?)
+
