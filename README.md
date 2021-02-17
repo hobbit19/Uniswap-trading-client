@@ -6,6 +6,7 @@ A Uniswap V2 trader client with GUI, limit orders and stoploss.
 - An ethereum address and its personal key
 - An infura project with link
 
+<br> </br>
 <H2>Getting started</H2>
 
 1. Download the files from this git-repository.
@@ -29,7 +30,7 @@ my_pk = ''</pre>
 
 6. Add infura project url
 
-
+<br> </br>
 <H2>Functions</H2>
 
 
@@ -67,6 +68,7 @@ my_pk = ''</pre>
     
   As an example, if the current price of token1 is $0.9 and it's set high is $1, the value of this token is "seen as 90%". Token2 also has a high of $1, but the current price is   0.2$, value of this token is seen as 20%. The tokentokenmnumerator is set at 3.3. If we divide the 90% by the 20%, we get 4.5, which is higher than 3.3, which means that         token1 gets traded for token2 instantly. If the tokentokennumerator was set to 5, the swap would not happen.
 
+<br> </br>
 <H2>Current bugs</h2>
 
 - Cant add current ETH tokens with less than 18 decimals (The price it shows will be wrong)
@@ -74,7 +76,7 @@ my_pk = ''</pre>
 - Sloppy dinamic design of GUI
 - More: Let me know!
 
-
+<br> </br>
 <H2>To do</H2>
 
 - Fix bugs
