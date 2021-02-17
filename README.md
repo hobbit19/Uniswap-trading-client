@@ -1,6 +1,8 @@
 # Uniswap-trader-GUI
 A Uniswap V2 trader client with GUI, limit orders and stoploss.
 
+![alt text](https://github.com/Davidkolh/Uniswap-trader-GUI/blob/main/test.gif?raw=true "GIF application")
+
 <H2>Prerequisites</H2>
 
 - An ethereum address and its personal key
