@@ -1,5 +1,5 @@
 # Uniswap-trader-GUI
-A Uniswap V2 trader client with GUI, limit orders and stoploss.
+An Uniswap V2 trader client with GUI, limit orders and stoploss.
 
 ![alt text](https://github.com/Davidkolh/Uniswap-trader-GUI/blob/main/test.gif?raw=true "GIF application")
 
