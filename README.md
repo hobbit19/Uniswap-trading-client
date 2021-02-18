@@ -1,4 +1,4 @@
-# Uniswap-trader-GUI
+# Uniswap trading client
 
 ![alt text](https://github.com/Davidkolh/Uniswap-trader-GUI/blob/main/test.gif?raw=true "GIF application")
 
