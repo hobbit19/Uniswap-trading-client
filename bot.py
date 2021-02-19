@@ -1,7 +1,7 @@
 import datetime
 import time
 from uniswap import Uniswap
-from web3 import Web3, middleware
+from web3 import Web3, middleware,_utils
 from web3.gas_strategies.time_based import fast_gas_price_strategy
 from pycoingecko import CoinGeckoAPI
 import pyetherbalance
@@ -22,6 +22,7 @@ from time import localtime, strftime
 
 QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)  # enable highdpi scaling
 QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)  # use highdpi icons
+
 
 
 def __ne__(self, other):
@@ -309,6 +310,9 @@ class Worker(QObject):
         except:
             o = 0
 
+
+
+
         def letstrade(keer2, tradewithERCtoken1, tradewithERCtoken2, tradewithERCtoken3, tradewithERCtoken4,
                       tradewithERCtoken5, tradewithERCtoken6, tradewithERCtoken9, tradewithERCtoken7,
                       tradewithERCtoken8, tradewithERCtoken10, activatetoken1, activatetoken2, activatetoken3,
@@ -363,10 +367,10 @@ class Worker(QObject):
                       stoplosschecktoken4, stoplosschecktoken5, stoplosschecktoken6, stoplosschecktoken7,
                       stoplosschecktoken8, stoplosschecktoken9, stoplosschecktoken10,
                       token1decimals, token2decimals, token3decimals, token4decimals, token5decimals, token6decimals,
-                      token7decimals, token8decimals, token9decimals, token10decimals):
+                      token7decimals, token8decimals, token9decimals, token10decimals,speed):
 
             def makeTrade(buytokenaddress, selltokenaddress, my_address, pk, max_slippage, infura_url,
-                          buysmallcasesymbol, sellsmallcasesymbol, ethtokeep):
+                          buysmallcasesymbol, sellsmallcasesymbol, ethtokeep,speed):
                 def api2(ethaddress):
                     res = requests.get(
                         'https://api.ethplorer.io/getTokenInfo/' + ethaddress + '?apiKey=EK-5nuDS-iZCPJhW-SYGLU')
@@ -375,21 +379,19 @@ class Worker(QObject):
 
                 selldecimals = int(api2(selltokenaddress))
                 try:
-                    def api():
+                    def api(speed):
                         res = requests.get(
                             'https://data-api.defipulse.com/api/v1/egs/api/ethgasAPI.json?api-key=f2ff6e6755c2123799676dbe8ed3af94574000b4c9b56d1f159510ec91b0')
                         data = (res.json()[speed]) / 10
                         return data
 
-                    gwei = api()
-                    print('Gwei for fastest trading at the moment: ' + str(gwei))
+                    gwei = api(speed)
+                    print('Gwei for '+ str(speed)+ ' trading at the moment: ' + str(gwei))
 
-                    def value_based_gas_price_strategy(web3, gwei):
-                        gwei = gwei
-                        web3 = web3
-                        return web3.toWei(float(gwei), 'gwei')
+                    def value_based_gas_price_strategy(gwei):
+                        return Web3.toWei((gwei), 'gwei')
 
-                    w33.eth.setGasPriceStrategy(value_based_gas_price_strategy(web3=w33, gwei=gwei))
+                    w33.eth.setGasPriceStrategy(value_based_gas_price_strategy(gwei=gwei))
                 except Exception as e:
                     o = 0
                     exception_type, exception_object, exception_traceback = sys.exc_info()
@@ -461,7 +463,7 @@ class Worker(QObject):
                                      my_address=my_address,
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep)
+                                     sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,speed=speed)
                     time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
                     keer = 9999
@@ -482,7 +484,7 @@ class Worker(QObject):
                                      my_address=my_address,
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep)
+                                     sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,speed=speed)
                     time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
                     keer = 9999
@@ -503,7 +505,7 @@ class Worker(QObject):
                                      my_address=my_address,
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep)
+                                     sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,speed=speed)
                     time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
                     keer = 9999
@@ -524,7 +526,7 @@ class Worker(QObject):
                                      my_address=my_address,
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep)
+                                     sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,speed=speed)
                     time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
                     keer = 9999
@@ -545,7 +547,7 @@ class Worker(QObject):
                                      my_address=my_address,
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep)
+                                     sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,speed=speed)
                     time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
                     keer = 9999
@@ -566,7 +568,7 @@ class Worker(QObject):
                                      my_address=my_address,
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep)
+                                     sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,speed=speed)
                     time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
                     keer = 9999
@@ -587,7 +589,7 @@ class Worker(QObject):
                                      my_address=my_address,
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep)
+                                     sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,speed=speed)
                     time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
                     keer = 9999
@@ -608,7 +610,7 @@ class Worker(QObject):
                                      my_address=my_address,
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep)
+                                     sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,speed=speed)
                     time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
                     keer = 9999
@@ -629,7 +631,7 @@ class Worker(QObject):
                                      my_address=my_address,
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep)
+                                     sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,speed=speed)
                     time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
                     keer = 9999
@@ -650,7 +652,7 @@ class Worker(QObject):
                                      my_address=my_address,
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep)
+                                     sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,speed=speed)
                     time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
                     keer = 9999
@@ -676,7 +678,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -698,7 +700,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -720,7 +722,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -742,7 +744,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -764,7 +766,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -786,7 +788,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -808,7 +810,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -830,7 +832,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -852,7 +854,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -874,7 +876,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -899,7 +901,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token1smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -919,7 +921,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token2smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -938,7 +940,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token3smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -957,7 +959,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token4smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -976,7 +978,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token5smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -995,7 +997,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token6smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -1014,7 +1016,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token7smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -1033,7 +1035,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token8smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -1052,7 +1054,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token9smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -1071,7 +1073,7 @@ class Worker(QObject):
                                          my_address=my_address,
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token10smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep)
+                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep,speed=speed)
                         time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
                         keer = 9999
@@ -1098,7 +1100,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token2smallcasename,
-                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1116,7 +1118,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token3smallcasename,
-                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1134,7 +1136,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token4smallcasename,
-                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1152,7 +1154,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token5smallcasename,
-                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1170,7 +1172,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token6smallcasename,
-                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1188,7 +1190,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token7smallcasename,
-                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1206,7 +1208,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token8smallcasename,
-                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1224,7 +1226,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token9smallcasename,
-                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1242,7 +1244,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token10smallcasename,
-                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1268,7 +1270,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token1smallcasename,
-                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1286,7 +1288,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token3smallcasename,
-                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1304,7 +1306,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token4smallcasename,
-                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1322,7 +1324,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token5smallcasename,
-                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1340,7 +1342,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token6smallcasename,
-                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1358,7 +1360,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token7smallcasename,
-                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1376,7 +1378,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token8smallcasename,
-                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1394,7 +1396,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token9smallcasename,
-                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1412,7 +1414,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token10smallcasename,
-                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1438,7 +1440,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token1smallcasename,
-                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1456,7 +1458,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token2smallcasename,
-                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1474,7 +1476,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token4smallcasename,
-                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1492,7 +1494,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token5smallcasename,
-                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1510,7 +1512,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token6smallcasename,
-                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1528,7 +1530,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token7smallcasename,
-                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1546,7 +1548,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token8smallcasename,
-                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1564,7 +1566,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token9smallcasename,
-                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1582,7 +1584,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token10smallcasename,
-                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1608,7 +1610,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token2smallcasename,
-                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1626,7 +1628,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token1smallcasename,
-                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1644,7 +1646,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token3smallcasename,
-                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1662,7 +1664,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token5smallcasename,
-                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1680,7 +1682,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token6smallcasename,
-                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1698,7 +1700,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token7smallcasename,
-                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1716,7 +1718,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token8smallcasename,
-                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1734,7 +1736,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token9smallcasename,
-                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1752,7 +1754,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token10smallcasename,
-                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1778,7 +1780,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token2smallcasename,
-                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1796,7 +1798,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token3smallcasename,
-                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1814,7 +1816,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token1smallcasename,
-                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1832,7 +1834,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token4smallcasename,
-                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1850,7 +1852,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token6smallcasename,
-                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1868,7 +1870,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token7smallcasename,
-                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1886,7 +1888,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token8smallcasename,
-                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1904,7 +1906,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token9smallcasename,
-                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1922,7 +1924,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token10smallcasename,
-                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1948,7 +1950,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token2smallcasename,
-                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1966,7 +1968,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token3smallcasename,
-                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -1984,7 +1986,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token4smallcasename,
-                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2002,7 +2004,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token1smallcasename,
-                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2020,7 +2022,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token5smallcasename,
-                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2038,7 +2040,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token7smallcasename,
-                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2056,7 +2058,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token8smallcasename,
-                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2074,7 +2076,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token9smallcasename,
-                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2092,7 +2094,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token10smallcasename,
-                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2118,7 +2120,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token2smallcasename,
-                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2136,7 +2138,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token3smallcasename,
-                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2154,7 +2156,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token4smallcasename,
-                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2172,7 +2174,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token5smallcasename,
-                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2190,7 +2192,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token1smallcasename,
-                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2208,7 +2210,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token6smallcasename,
-                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2226,7 +2228,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token8smallcasename,
-                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2244,7 +2246,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token9smallcasename,
-                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2262,7 +2264,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token10smallcasename,
-                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2288,7 +2290,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token2smallcasename,
-                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2306,7 +2308,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token3smallcasename,
-                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2324,7 +2326,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token4smallcasename,
-                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2342,7 +2344,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token5smallcasename,
-                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2360,7 +2362,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token6smallcasename,
-                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2378,7 +2380,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token1smallcasename,
-                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2396,7 +2398,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token7smallcasename,
-                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2414,7 +2416,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token9smallcasename,
-                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2432,7 +2434,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token10smallcasename,
-                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2458,7 +2460,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token2smallcasename,
-                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2476,7 +2478,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token3smallcasename,
-                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2494,7 +2496,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token4smallcasename,
-                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2512,7 +2514,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token5smallcasename,
-                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2530,7 +2532,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token6smallcasename,
-                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2548,7 +2550,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token7smallcasename,
-                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2566,7 +2568,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token8smallcasename,
-                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2584,7 +2586,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token1smallcasename,
-                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2602,7 +2604,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token10smallcasename,
-                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2628,7 +2630,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token2smallcasename,
-                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2646,7 +2648,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token3smallcasename,
-                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2664,7 +2666,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token4smallcasename,
-                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2682,7 +2684,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token5smallcasename,
-                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2700,7 +2702,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token6smallcasename,
-                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2718,7 +2720,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token7smallcasename,
-                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2736,7 +2738,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token8smallcasename,
-                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2754,7 +2756,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token1smallcasename,
-                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -2772,7 +2774,7 @@ class Worker(QObject):
                                                  my_address=my_address,
                                                  pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                                  buysmallcasesymbol=token9smallcasename,
-                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep)
+                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,speed=speed)
                                 time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
                                 keer = 9999
@@ -4610,21 +4612,19 @@ class Worker(QObject):
             try:
                 w33 = Web3()
                 try:
-                    def api():
+                    def api(speed):
                         res = requests.get(
                             'https://data-api.defipulse.com/api/v1/egs/api/ethgasAPI.json?api-key=f2ff6e6755c2123799676dbe8ed3af94574000b4c9b56d1f159510ec91b0')
                         data = (res.json()[speed]) / 10
                         return data
 
-                    gwei = api()
-                    print("Current gwei costs for chosen gas-tactic (gets updated when trading): " + str(int(gwei)))
+                    gwei = api(speed)
+                    print('Gwei for '+ str(speed)+ ' trading at the moment: ' + str(gwei))
 
-                    def value_based_gas_price_strategy(web3, gwei):
-                        gwei = gwei
-                        web3 = web3
-                        return web3.toWei(float(gwei), 'gwei')
+                    def value_based_gas_price_strategy(gwei):
+                        return Web3.toWei((gwei), 'gwei')
 
-                    w33.eth.setGasPriceStrategy(value_based_gas_price_strategy(web3=w33, gwei=gwei))
+                    w33.eth.setGasPriceStrategy(value_based_gas_price_strategy(gwei=gwei))
                 except Exception as e:
                     o = 0
                     exception_type, exception_object, exception_traceback = sys.exc_info()
@@ -5018,7 +5018,7 @@ class Worker(QObject):
                                         stoplosschecktoken7, stoplosschecktoken8, stoplosschecktoken9,
                                         stoplosschecktoken10, token1decimals, token2decimals, token3decimals,
                                         token4decimals, token5decimals, token6decimals, token7decimals, token8decimals,
-                                        token9decimals, token10decimals)
+                                        token9decimals, token10decimals,speed)
                         gelukt = oke['gelukt']
                         gelukt2 = oke['gelukt']
                         keer = oke['keer']
