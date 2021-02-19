@@ -5,10 +5,12 @@
 <H2>Prerequisites</H2>
 
 - An ethereum address
-- An infura project with link
+- An infura project with link (www.infura.io)
+- Visual C++ build tools (www.visualstudio.microsoft.com/visual-cpp-build-tools/)
 
 <br> </br>
 <H2>Getting started</H2>
+0. Read prerequisites
 
 1. Download the files from this git-repository and add them to a map.
 
