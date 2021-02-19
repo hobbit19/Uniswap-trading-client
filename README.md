@@ -7,6 +7,7 @@
 - An ethereum address
 - An infura project with link (www.infura.io)
 - Visual C++ build tools (www.visualstudio.microsoft.com/visual-cpp-build-tools/)
+- Python 3.5+
 
 <br> </br>
 <H2>Getting started</H2>
