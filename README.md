@@ -72,7 +72,7 @@ my_pk = ''</pre>
 <br> </br>
 <H2>Current bugs</h2>
 
-- Can't add ETH tokens with less than 18 decimals (The price it shows will be wrong)
+- <del>Can't add ETH tokens with less than 18 decimals (The price it shows will be wrong)</del>
 - Starting the bot after it is been stopped may close the application in Linux (No problem in Windows)
 - Sloppy dinamic design of GUI
 - Gas-strategies: all are seen as "Fast"
@@ -83,6 +83,7 @@ my_pk = ''</pre>
 <H2>To do</H2>
 
 - Fix current bugs
+- <del>Add debugmode</del>
 - New, more user-friendly design
 (Depends on whether the application is used)
 
