@@ -89,7 +89,7 @@ my_pk = ''</pre>
 - Fix current bugs
 - <del>Add debugmode</del>
 - New, more user-friendly design
-- After all bugs are gone: make an executable
+- Create an executable .exe
 - Create prerequisites for linux
 (Depends on whether the application is used)
 
