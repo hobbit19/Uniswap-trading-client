@@ -75,7 +75,7 @@ my_pk = ''</pre>
 - <del>Can't add ETH tokens with less than 18 decimals (The price it shows will be wrong)</del>
 - Starting the bot after it is been stopped may close the application in Linux (No problem in Windows)
 - Sloppy dinamic design of GUI
-- Gas-strategies: all are seen as "Fast"
+- <del>Gas-strategies: all are seen as "Fast"</del>
 - Sometimes lag when updating names or when starting the bot (0-30 seconds)
 - More: Let me know!
 
