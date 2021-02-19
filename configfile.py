@@ -149,6 +149,7 @@ stoplosstoken7='0'
 stoplosstoken8='0'
 stoplosstoken9='0'
 stoplosstoken10='0'
+debugmode='0'
 
 my_address = '0'
 my_pk = '0'
