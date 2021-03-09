@@ -5,10 +5,14 @@
 <H2>Prerequisites</H2>
 
 - An ethereum address
-- An infura project with link
+- An infura project with link (www.infura.io)
+- Visual C++ build tools (www.visualstudio.microsoft.com/visual-cpp-build-tools/)
+- Python 3.5+
 
 <br> </br>
 <H2>Getting started</H2>
+
+0. Read prerequisites
 
 1. Download the files from this git-repository and add them to a map.
 
@@ -75,7 +79,7 @@ my_pk = ''</pre>
 - <del>Can't add ETH tokens with less than 18 decimals (The price it shows will be wrong)</del>
 - Starting the bot after it is been stopped may close the application in Linux (No problem in Windows)
 - Sloppy dinamic design of GUI
-- Gas-strategies: all are seen as "Fast"
+- <del>Gas-strategies: all are seen as "Fast"</del>
 - Sometimes lag when updating names or when starting the bot (0-30 seconds)
 - More: Let me know!
 
@@ -85,14 +89,15 @@ my_pk = ''</pre>
 - Fix current bugs
 - <del>Add debugmode</del>
 - New, more user-friendly design
-- After all bugs are gone: make an executable
+- Create an executable .exe
+- Create prerequisites for linux
 (Depends on whether the application is used)
 
 <br> </br>
 <H2>Author</H2>
 During the latest pandemic I realised that I had time to learn how to code, I decided to do this by making trader-bots in python. Other than it being a good exercise, it was/is also very fun and lucrative! This is one of my first applications I made, so the documentation is still quite poor with spaghetti-code here and there, but it does what it should do!
 
-If you feel like meesaging me, this is possible at xykominos@gmail.com.
+If you feel like meesaging me, this is possible on telegram: unitradergit.
 
 
 <br> </br>
