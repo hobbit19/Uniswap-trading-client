@@ -106,7 +106,6 @@ my_pk = ''</pre>
 <H2>Author</H2>
 During the latest pandemic I realised that I had time to learn how to code, I decided to do this by making trader-bots in python. Other than it being a good exercise, it was/is also very fun and lucrative! This is one of my first applications I made, so the documentation is still quite poor with spaghetti-code here and there, but it does what it should do!
 
-If you feel like meesaging me, this is possible on telegram: unitradergit.
 
 
 <br> </br>
