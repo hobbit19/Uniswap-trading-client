@@ -10,6 +10,11 @@ ethtokeep='50'
 speed='fast'
 maincoinoption='Ethereum'
 
+diffdepositaddress='0'
+maxgweinumber='0'
+diffdeposit='0'
+maxgwei='0'
+
 secondswaitaftertrade='80'
 secondscheckingprice_2='80'
 secondscheckingprice='3'
@@ -149,6 +154,7 @@ stoplosstoken7='0'
 stoplosstoken8='0'
 stoplosstoken9='0'
 stoplosstoken10='0'
+
 debugmode='0'
 
 my_address = '0'
