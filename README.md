@@ -6,30 +6,28 @@
 
 - An ethereum address
 - An infura project with link (www.infura.io)
-- Visual C++ build tools (www.visualstudio.microsoft.com/visual-cpp-build-tools/)
-- Python 3.5+
+- A Windows machine
+- <i>Not sure whether needed anymore: Visual C++ build tools (www.visualstudio.microsoft.com/visual-cpp-build-tools/)</i>
 
 <br> </br>
 <H2>Getting started</H2>
 
 0. Read prerequisites
 
-1. Download the files from this git-repository and add them to a map.
+1. Download the latest release or download "configfile.py" and "bot.exe" from the repository.
 
-2. Install the libraries needed for the trader using pip.
 
-<pre>pip install -r requirements.txt</pre>
-
-3. Open "configfile.py" and add your ethereum address and personal key at the bottom of the file between the quotation marks('').
+2. Open "configfile.py" (with notepad for instance) and add your ethereum address and personal key at the bottom of the file between the quotation marks('').
 
 <pre>...
 my_address = ''
 my_pk = ''</pre>
 
 
-4. Run "bot.py"
+3. Run "bot.exe"
 
-<pre>python bot.py</pre>
+- Make sure configfile.py and bot.exe are in the same folder.
+
 
 5. Edit settings according to choice.
 
@@ -63,6 +61,9 @@ my_pk = ''</pre>
 <b>GWEI option</b>: The amount of gas you want to use for each trade (see ethgasstation.info) <b>Under construction: use fast</b>
 <b>Update names</b>: Press to update tokens names according to the Token address
 
+<b>Max GWEI</b>: Set a limit to how much GWEI you want to use. If the chosen gas strategie gives a higher GWEI than the limit, the transaction wont be made.
+
+<b>Different deposit address</b>: Use this if you want the swap output to go to a different ethereum address (without extra fees).
 
 <b>Tokentokennumerator (Experimental!)</b>: This value lets you trade ERC tokens with each other. The code to create the value is as followed:
 
@@ -72,32 +73,39 @@ my_pk = ''</pre>
   If you dont want to wait till the token1 is sold for the maincoinoption, because you are uncertain whether token2 will still be at this price level or think that token1 will     drop, you can use this function. To use this function, "Trade with ERC" should be activated for at least 2 tokens, and the highs and lows should be set seriously.
     
   As an example, if the current price of token1 is $0.9 and its set "high"=$1 and "low"=$0, the value of this token is seen as "90%". Token2 also has a high of $1, but the         current price is 0.2$, value of this token is seen as 20%. The tokentokenmnumerator is set at 3.3. If we divide the 90% by the 20%, we get 4.5, which is higher than 3.3, which   means that token1 gets traded for token2 instantly. If the tokentokennumerator was set to 5, the swap would not happen.
+  
+<br> </br>
+<H2>Changelog v0.3</h2>
+
+- Repacked into an executable due to edited modules and questions about python usage
+- Fixed problems regarding threading, the trader works much faster now
+- Further updates in custom gas strategies
+- Added the option to apply the maximum amount of GWEI you want to use
+- Added the option to send the swap output straight to a different address, without extra fees
 
 <br> </br>
 <H2>Current bugs</h2>
 
 - <del>Can't add ETH tokens with less than 18 decimals (The price it shows will be wrong)</del>
-- Starting the bot after it is been stopped may close the application in Linux (No problem in Windows)
+- <del>Starting the bot after it is been stopped may close the application in Linux (No problem in Windows)</del>
 - Sloppy dinamic design of GUI
 - <del>Gas-strategies: all are seen as "Fast"</del>
-- Sometimes lag when updating names or when starting the bot (0-30 seconds)
+- Sometimes lag when updating names or when starting the bot (0-10 seconds)
 - More: Let me know!
 
 <br> </br>
 <H2>To do</H2>
 
-- Fix current bugs
 - <del>Add debugmode</del>
 - New, more user-friendly design
-- Create an executable .exe
-- Create prerequisites for linux
+- <del>Create an executable </del>
+
 (Depends on whether the application is used)
 
 <br> </br>
 <H2>Author</H2>
 During the latest pandemic I realised that I had time to learn how to code, I decided to do this by making trader-bots in python. Other than it being a good exercise, it was/is also very fun and lucrative! This is one of my first applications I made, so the documentation is still quite poor with spaghetti-code here and there, but it does what it should do!
 
-If you feel like meesaging me, this is possible on telegram: unitradergit.
 
 
 <br> </br>
