@@ -1,6 +1,6 @@
 # Uniswap trading client
 
-![alt text](https://github.com/Davidkolh/Uniswap-trader-GUI/blob/main/test.gif?raw=true "GIF application")
+![alt text](https://github.com/aviddot/Uniswap-trading-client/raw/main/test.gif "GIF application")
 
 <H2>Prerequisites</H2>
 
