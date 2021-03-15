@@ -9,6 +9,7 @@ ethtokeep='50'
 
 speed='fast'
 maincoinoption='Ethereum'
+mcotoseeassell='100'
 
 diffdepositaddress='0'
 maxgweinumber='0'
@@ -157,7 +158,7 @@ stoplosstoken10='0'
 
 debugmode='0'
 
-my_address = ''
-my_pk = ''
+my_address = '0'
+my_pk = '0'
 
 sys.path.append(".")

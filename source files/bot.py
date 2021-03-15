@@ -15,6 +15,7 @@ from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QApplication, QPushButton, QTextEdit, QVBoxLayout, QWidget,QGraphicsObject
 from PyQt5.QtCore import QCoreApplication
+from PyQt5 import QtTest
 import fileinput
 import re
 import importlib
@@ -66,9 +67,7 @@ sys.excepthook = trap_exc_during_debug
 
 @pyqtSlot()
 class Worker(QObject):
-    """
-    Must derive from QObject in order to emit signals, connect slots to other signals, and operate in a QThread.
-    """
+
     sig_step = pyqtSignal(int, str)  # worker id, step description: emitted every step through work() loop
     sig_done = pyqtSignal(int)  # worker id: emitted at end of work()
     sig_msg = pyqtSignal(str)  # message to be shown to user
@@ -97,8 +96,11 @@ class Worker(QObject):
         importlib.reload(configfile)
         w33 = Web3()
         cg = CoinGeckoAPI()
-        maxgwei=float(configfile.maxgwei)
-        maxgweinumber = int(configfile.maxgweinumber)
+        maxgwei=int(configfile.maxgwei)
+        if configfile.maxgweinumber == '':
+            maxgweinumber=0
+        else:
+            maxgweinumber = int(configfile.maxgweinumber)
         diffdeposit=float(configfile.diffdeposit)
         diffdepositaddress = str(configfile.diffdepositaddress)
         speed = str(configfile.speed)
@@ -200,6 +202,7 @@ class Worker(QObject):
         token10ethaddress = str(configfile.token10ethaddress)
         token10low = float(configfile.token10low)
         token10high = float(configfile.token10high)
+        mcotoseeassell=float(configfile.mcotoseeassell)
 
         stoplosstoken10 = float(configfile.token10stoploss)
         stoplosstoken9 = float(configfile.token9stoploss)
@@ -223,7 +226,6 @@ class Worker(QObject):
         stoplosschecktoken9 = float(configfile.stoplosstoken9)
         stoplosschecktoken10 = float(configfile.stoplosstoken10)
         debugmode = int(configfile.debugmode)
-
         token1address = token1ethaddress
         token2address = token2ethaddress
         token3address = token3ethaddress
@@ -244,11 +246,11 @@ class Worker(QObject):
         fasttoken8 = 0
         fasttoken9 = 0
         fasttoken10 = 0
-
+        
         if float(token1high) < float(token1low) or float(token2high) < float(token2low) or float(token3high) < float(token3low) or float(token4high) < float(token4low) or float(token5high) < float(token5low) or float(token6high) < float(token6low) or float(token7high) < float(token7low) or float(token8high) < float(token8low) or float(token9high) < float(token9low) or float(token10high) < float(token10low) or float(stoplosstoken1) > float(token1high) or float(stoplosstoken2) > float(token2high) or float(stoplosstoken3) > float(token3high) or float(stoplosstoken4) > float(token4high) or float(stoplosstoken5) > float(token5high) or float(stoplosstoken6) > float(token6high) or float(stoplosstoken7) > float(token7high) or float(stoplosstoken8) > float(token8high) or float(stoplosstoken9) > float(token9high) or float(stoplosstoken10) > float(token10high):
             print(
                 'Stopping the script, a tokenlow is higher than its tokenhigh or a stoploss it higher than the tokenhigh')
-            time.sleep(42949)
+            QtTest.QTest.qWait(42949000)
         my_address = str(configfile.my_address)
         my_pk = str(configfile.my_pk)
         pk = my_pk
@@ -262,6 +264,7 @@ class Worker(QObject):
             ethaddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
         if configfile.maincoinoption == 'wBTC':
             ethaddress = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+        maincoinname= configfile.maincoinoption
         maincoinoption = ethaddress
         append = QtCore.pyqtSignal(str)
 
@@ -274,8 +277,7 @@ class Worker(QObject):
         if self.__abort==True:
             # note that "step" value will not necessarily be same for every thread
             self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
-
-
+        totaldollars=1
         try:
             token1smallcasename = 0
             token2smallcasename = 0
@@ -418,18 +420,17 @@ class Worker(QObject):
                         'https://api.ethplorer.io/getTokenInfo/' + ethaddress + '?apiKey=EK-5nuDS-iZCPJhW-SYGLU')
                     data = int((res.json())["decimals"])
                     return data
-
                 selldecimals = int(api2(selltokenaddress))
                 try:
                     def api(speed):
                         res = requests.get(
                             'https://data-api.defipulse.com/api/v1/egs/api/ethgasAPI.json?api-key=f2ff6e6755c2123799676dbe8ed3af94574000b4c9b56d1f159510ec91b0')
-                        data = (res.json()[speed]) / 10
+                        data = int(res.json()[speed] / 10)
                         return data
 
-                    gwei = api(speed)
-                    print('Gwei for ' + str(speed) + ' trading at the moment: ' + str(gwei))
-                    gwei=types.Wei(Web3.toWei(gwei, "gwei"))
+                    gwei2 = api(speed)
+                    print('Gwei for ' + str(speed) + ' trading at the moment: ' + str(gwei2))
+                    gwei=types.Wei(Web3.toWei(gwei2, "gwei"))
 
                 except Exception as e:
                     o = 0
@@ -437,7 +438,7 @@ class Worker(QObject):
                     if configfile.debugmode == '1':
                         print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
                     w33.eth.setGasPriceStrategy(fast_gas_price_strategy)
-                if (maxgwei==0) or (maxgwei==1 and gwei <= maxgweinumber):
+                if (maxgwei==0) or (maxgwei==1 and gwei2 <= maxgweinumber):
 
                     try:
                         uniconnect = Uniswap(my_address, pk, web3=Web3(
@@ -447,7 +448,9 @@ class Worker(QObject):
                         token = w33.toChecksumAddress(buytokenaddress)
                         selldecimals = int(api2(selltokenaddress))
                     except Exception as e:
-                        print(e)
+                        exception_type, exception_object, exception_traceback = sys.exc_info()
+                        if configfile.debugmode == '1':
+                            print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
                     try:
                         if sellsmallcasesymbol == "eth":
                             ethbalance = pyetherbalance.PyEtherBalance(infura_url)
@@ -457,14 +460,13 @@ class Worker(QObject):
                                     ethtokeep / (float(priceeth['ethereum']['usd'])))
                         else:
                             ethbalance = pyetherbalance.PyEtherBalance(infura_url)
-                            balance_eth = ethbalance.get_eth_balance(my_address)
+                            balance_eth = ethbalance.get_eth_balance(my_address)['balance']
                             token2 = sellsmallcasesymbol.upper
                             details2 = {'symbol': sellsmallcasesymbol.upper, 'address': selltokenaddress,
                                         'decimals': selldecimals,
                                         'name': sellsmallcasesymbol.upper}
                             erc20tokens2 = ethbalance.add_token(token2, details2)
-                            ethamount2 = math.floor(
-                                ethbalance.get_token_balance(token2, ethereum_address)['balance'])
+                            ethamount2 = ethbalance.get_token_balance(token2, ethereum_address)['balance']
                         tradeamount = ethamount2 * 10 ** selldecimals
                         ethamount = tradeamount
                         eth = Web3.toChecksumAddress(selltokenaddress)
@@ -479,7 +481,7 @@ class Worker(QObject):
                     ethamount = ethamount2
                     contractaddress = token
                     if int(diffdeposit) == 0:
-                        uniconnect.make_trade(eth, token, int(tradeamount),gwei,my_address,pk)
+                        uniconnect.make_trade(eth, token, int(tradeamount),gwei,my_address,pk,my_address)
                     if int(diffdeposit) == 1:
                         uniconnect.make_trade(eth, token, int(tradeamount), gwei, my_address, pk,diffdepositaddress)
 
@@ -489,7 +491,7 @@ class Worker(QObject):
                         gelukt = 'buy ' + buysmallcasesymbol
                     return {'gelukt': gelukt}
                 else:
-                    print('Current gwei  of gasstrategy are higher than max-gwei')
+                    print('Current gwei of gasstrategy is higher than max-gwei')
                     gelukt='mislukt'
                     return {'gelukt': gelukt}
 
@@ -515,8 +517,9 @@ class Worker(QObject):
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
                                      sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
+                    if gelukt != 'mislukt':
+                        QtTest.QTest.qWait(timesleepaftertrade*1000)
                     keer = 9999
                     fasttoken1 = 0
                 if (
@@ -536,8 +539,9 @@ class Worker(QObject):
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
                                      sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
+                    if gelukt != 'mislukt':
+                        QtTest.QTest.qWait(timesleepaftertrade*1000)
                     keer = 9999
                     fasttoken2 = 0
                 if (
@@ -557,8 +561,9 @@ class Worker(QObject):
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
                                      sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
+                    if gelukt != 'mislukt':
+                        QtTest.QTest.qWait(timesleepaftertrade*1000)
                     keer = 9999
                     fasttoken3 = 0
                 if (
@@ -578,8 +583,9 @@ class Worker(QObject):
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
                                      sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
+                    if gelukt != 'mislukt':
+                        QtTest.QTest.qWait(timesleepaftertrade*1000)
                     keer = 9999
                     fasttoken4 = 0
                 if (
@@ -599,8 +605,9 @@ class Worker(QObject):
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
                                      sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
+                    if gelukt != 'mislukt':
+                        QtTest.QTest.qWait(timesleepaftertrade*1000)
                     keer = 9999
                     fasttoken5 = 0
                 if (
@@ -620,8 +627,9 @@ class Worker(QObject):
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
                                      sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
+                    if gelukt != 'mislukt':
+                        QtTest.QTest.qWait(timesleepaftertrade*1000)
                     keer = 9999
                     fasttoken6 = 0
                 if (
@@ -641,8 +649,9 @@ class Worker(QObject):
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
                                      sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
+                    if gelukt != 'mislukt':
+                        QtTest.QTest.qWait(timesleepaftertrade*1000)
                     keer = 9999
                     fasttoken7 = 0
                 if (
@@ -662,8 +671,9 @@ class Worker(QObject):
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
                                      sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
+                    if gelukt != 'mislukt':
+                        QtTest.QTest.qWait(timesleepaftertrade*1000)
                     keer = 9999
                     fasttoken8 = 0
                 if (
@@ -683,8 +693,9 @@ class Worker(QObject):
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
                                      sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
+                    if gelukt != 'mislukt':
+                        QtTest.QTest.qWait(timesleepaftertrade*1000)
                     keer = 9999
                     fasttoken9 = 0
                 if (
@@ -704,12 +715,16 @@ class Worker(QObject):
                                      pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                      buysmallcasesymbol=buysmallcasesymbol,
                                      sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    time.sleep(timesleepaftertrade)
                     gelukt = kaka['gelukt']
+                    if gelukt != 'mislukt':
+                        QtTest.QTest.qWait(timesleepaftertrade*1000)
                     keer = 9999
                     fasttoken10 = 0
             except:
-                o = 0
+                exception_type, exception_object, exception_traceback = sys.exc_info()
+                traceback.print_exc()
+                if configfile.debugmode == '1':
+                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
                 gelukt = 'mislukt'
             try:  # sell alt and buy ETH trades
                 if (token1address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1:
@@ -730,8 +745,9 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
                                          sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
                         fasttoken1 = 0
                 if (token2address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1:
@@ -752,8 +768,9 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
                                          sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
                         fasttoken2 = 0
                 if (token3address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1:
@@ -774,8 +791,9 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
                                          sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
                         fasttoken3 = 0
                 if (token4address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1:
@@ -796,8 +814,9 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
                                          sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
                         fasttoken4 = 0
                 if (token5address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1:
@@ -818,8 +837,9 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
                                          sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
                         fasttoken5 = 0
                 if (token6address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1:
@@ -840,8 +860,9 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
                                          sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
                         fasttoken6 = 0
                 if (token7address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1:
@@ -862,8 +883,9 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
                                          sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
                         fasttoken7 = 0
                 if (token8address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1:
@@ -884,8 +906,9 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
                                          sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
                         fasttoken8 = 0
                 if (token9address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1:
@@ -906,8 +929,9 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
                                          sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
                         fasttoken9 = 0
                 if (token10address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1:
@@ -928,19 +952,22 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=buysmallcasesymbol,
                                          sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
                         fasttoken10 = 0
             except Exception as e:
-                o = 0
+                exception_type, exception_object, exception_traceback = sys.exc_info()
+                if configfile.debugmode == '1':
+                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
                 gelukt = "mislukt"
             try:  # sell ETH and buy ALT
                 if (token1address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1:
                     if (pricetoken1usd < token1low and gelukt == "sell") or (
                             pricetoken1usd < token1low and gelukt2 == "sell"):
                         print(
-                            "Buying " + str(token1smallcasename) + ' (Current price: ' + str(int(pricetoken1usd)) + ')')
+                            "Buying " + str(token1smallcasename) + ' (Current price: ' + str(float(pricetoken1usd)) + ')')
                         if maincoinoption != '0x0000000000000000000000000000000000000000':
                             sellsmallcasesymbol = str(
                                 cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
@@ -953,14 +980,15 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token1smallcasename,
                                          sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
                 if (token2address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1:
                     if (pricetoken2usd < token2low and gelukt == "sell") or (
                             pricetoken2usd < token2low and gelukt2 == "sell"):
                         print("Buying " + str((token2smallcasename)) + ' (Current price: ' + str(
-                            int(pricetoken2usd)) + ')')
+                            float(pricetoken2usd)) + ')')
                         if maincoinoption != '0x0000000000000000000000000000000000000000':
                             sellsmallcasesymbol = str(
                                 cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
@@ -973,8 +1001,9 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token2smallcasename,
                                          sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
                 if (token3address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1:
                     if (pricetoken3usd < token3low and gelukt == "sell") or (
@@ -992,8 +1021,9 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token3smallcasename,
                                          sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
                 if (token4address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1:
                     if (pricetoken4usd < token4low and gelukt == "sell") or (
@@ -1011,8 +1041,9 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token4smallcasename,
                                          sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
                 if (token5address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1:
                     if (pricetoken5usd < token5low and gelukt == "sell") or (
@@ -1030,8 +1061,9 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token5smallcasename,
                                          sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
                 if (token6address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1:
                     if (pricetoken6usd < token6low and gelukt == "sell") or (
@@ -1049,8 +1081,9 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token6smallcasename,
                                          sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
                 if (token7address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1:
                     if (pricetoken7usd < token7low and gelukt == "sell") or (
@@ -1068,8 +1101,9 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token7smallcasename,
                                          sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
                 if (token8address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1:
                     if (pricetoken8usd < token8low and gelukt == "sell") or (
@@ -1087,8 +1121,9 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token8smallcasename,
                                          sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
                 if (token9address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1:
                     if (pricetoken9usd < token9low and gelukt == "sell") or (
@@ -1106,8 +1141,9 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token9smallcasename,
                                          sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
                 if (token10address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1:
                     if (pricetoken10usd < token10low and gelukt == "sell") or (
@@ -1125,14 +1161,12 @@ class Worker(QObject):
                                          pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
                                          buysmallcasesymbol=token10smallcasename,
                                          sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        time.sleep(timesleepaftertrade)
                         gelukt = kaka['gelukt']
+                        if gelukt != 'mislukt':
+                            QtTest.QTest.qWait(timesleepaftertrade*1000)
                         keer = 9999
             except Exception as e:
-                o = 0
-                print(e)
                 exception_type, exception_object, exception_traceback = sys.exc_info()
-                traceback.print_exc()
                 if configfile.debugmode == '1':
                     print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
                 gelukt = "mislukt"
@@ -1155,8 +1189,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token2smallcasename,
                                                  sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token1address != 0) and (
                                 token3address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1 \
@@ -1174,8 +1209,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token3smallcasename,
                                                  sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token1address != 0) and (
                                 token4address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1 \
@@ -1193,8 +1229,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token4smallcasename,
                                                  sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                        QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token1address != 0) and (
                                 token5address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1 \
@@ -1212,8 +1249,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token5smallcasename,
                                                  sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token1address != 0) and (
                                 token6address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1 \
@@ -1231,8 +1269,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token6smallcasename,
                                                  sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token1address != 0) and (
                                 token7address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1 \
@@ -1250,8 +1289,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token7smallcasename,
                                                  sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token1address != 0) and (
                                 token8address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1 \
@@ -1269,8 +1309,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token8smallcasename,
                                                  sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token1address != 0) and (
                                 token9address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1 \
@@ -1288,8 +1329,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token9smallcasename,
                                                  sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token1address != 0) and (
                                 token10address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1 \
@@ -1307,8 +1349,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token10smallcasename,
                                                  sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                     except Exception as e:
                         o = 0
@@ -1334,8 +1377,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token1smallcasename,
                                                  sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token2address != 0) and (
                                 token3address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1 \
@@ -1353,8 +1397,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token3smallcasename,
                                                  sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token2address != 0) and (
                                 token4address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1 \
@@ -1372,8 +1417,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token4smallcasename,
                                                  sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token2address != 0) and (
                                 token5address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1 \
@@ -1391,8 +1437,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token5smallcasename,
                                                  sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token2address != 0) and (
                                 token6address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1 \
@@ -1410,8 +1457,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token6smallcasename,
                                                  sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token2address != 0) and (
                                 token7address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1 \
@@ -1429,8 +1477,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token7smallcasename,
                                                  sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token2address != 0) and (
                                 token8address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1 \
@@ -1448,8 +1497,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token8smallcasename,
                                                  sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token2address != 0) and (
                                 token9address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1 \
@@ -1467,8 +1517,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token9smallcasename,
                                                  sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token2address != 0) and (
                                 token10address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1 \
@@ -1486,8 +1537,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token10smallcasename,
                                                  sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                     except Exception as e:
                         o = 0
@@ -1513,8 +1565,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token1smallcasename,
                                                  sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token3address != 0) and (
                                 token2address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1 \
@@ -1532,8 +1585,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token2smallcasename,
                                                  sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token3address != 0) and (
                                 token4address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1 \
@@ -1551,8 +1605,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token4smallcasename,
                                                  sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token3address != 0) and (
                                 token5address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1 \
@@ -1570,8 +1625,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token5smallcasename,
                                                  sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token3address != 0) and (
                                 token6address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1 \
@@ -1589,8 +1645,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token6smallcasename,
                                                  sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token3address != 0) and (
                                 token7address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1 \
@@ -1608,8 +1665,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token7smallcasename,
                                                  sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token3address != 0) and (
                                 token8address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1 \
@@ -1627,8 +1685,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token8smallcasename,
                                                  sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token3address != 0) and (
                                 token9address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1 \
@@ -1646,8 +1705,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token9smallcasename,
                                                  sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token3address != 0) and (
                                 token10address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1 \
@@ -1665,8 +1725,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token10smallcasename,
                                                  sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                     except Exception as e:
                         o = 0
@@ -1692,8 +1753,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token2smallcasename,
                                                  sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token4address != 0) and (
                                 token1address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1 \
@@ -1711,8 +1773,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token1smallcasename,
                                                  sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token4address != 0) and (
                                 token3address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1 \
@@ -1730,8 +1793,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token3smallcasename,
                                                  sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token4address != 0) and (
                                 token5address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1 \
@@ -1749,8 +1813,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token5smallcasename,
                                                  sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token4address != 0) and (
                                 token6address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1 \
@@ -1768,8 +1833,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token6smallcasename,
                                                  sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token4address != 0) and (
                                 token7address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1 \
@@ -1787,8 +1853,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token7smallcasename,
                                                  sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token4address != 0) and (
                                 token8address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1 \
@@ -1806,8 +1873,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token8smallcasename,
                                                  sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token4address != 0) and (
                                 token9address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1 \
@@ -1825,8 +1893,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token9smallcasename,
                                                  sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token4address != 0) and (
                                 token10address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1 \
@@ -1844,8 +1913,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token10smallcasename,
                                                  sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                     except Exception as e:
                         o = 0
@@ -1871,8 +1941,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token2smallcasename,
                                                  sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token5address != 0) and (
                                 token3address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1 \
@@ -1890,8 +1961,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token3smallcasename,
                                                  sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token5address != 0) and (
                                 token1address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1 \
@@ -1909,8 +1981,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token1smallcasename,
                                                  sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token5address != 0) and (
                                 token4address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1 \
@@ -1928,8 +2001,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token4smallcasename,
                                                  sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token5address != 0) and (
                                 token6address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1 \
@@ -1947,8 +2021,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token6smallcasename,
                                                  sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token5address != 0) and (
                                 token7address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1 \
@@ -1966,8 +2041,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token7smallcasename,
                                                  sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token5address != 0) and (
                                 token8address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1 \
@@ -1985,8 +2061,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token8smallcasename,
                                                  sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token5address != 0) and (
                                 token9address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1 \
@@ -2004,8 +2081,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token9smallcasename,
                                                  sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token5address != 0) and (
                                 token10address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1 \
@@ -2023,8 +2101,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token10smallcasename,
                                                  sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                     except Exception as e:
                         o = 0
@@ -2050,8 +2129,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token2smallcasename,
                                                  sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token6address != 0) and (
                                 token3address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1 \
@@ -2069,8 +2149,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token3smallcasename,
                                                  sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token6address != 0) and (
                                 token4address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1 \
@@ -2088,8 +2169,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token4smallcasename,
                                                  sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token6address != 0) and (
                                 token1address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1 \
@@ -2107,8 +2189,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token1smallcasename,
                                                  sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token6address != 0) and (
                                 token5address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1 \
@@ -2126,8 +2209,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token5smallcasename,
                                                  sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token6address != 0) and (
                                 token7address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1 \
@@ -2145,8 +2229,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token7smallcasename,
                                                  sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token6address != 0) and (
                                 token8address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1 \
@@ -2164,8 +2249,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token8smallcasename,
                                                  sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token6address != 0) and (
                                 token9address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1 \
@@ -2183,8 +2269,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token9smallcasename,
                                                  sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token6address != 0) and (
                                 token10address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1 \
@@ -2202,8 +2289,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token10smallcasename,
                                                  sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                     except Exception as e:
                         o = 0
@@ -2229,8 +2317,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token2smallcasename,
                                                  sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token7address != 0) and (
                                 token3address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1 \
@@ -2248,8 +2337,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token3smallcasename,
                                                  sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token7address != 0) and (
                                 token4address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1 \
@@ -2267,8 +2357,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token4smallcasename,
                                                  sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token7address != 0) and (
                                 token5address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1 \
@@ -2286,8 +2377,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token5smallcasename,
                                                  sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token7address != 0) and (
                                 token1address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1 \
@@ -2305,8 +2397,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token1smallcasename,
                                                  sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token7address != 0) and (
                                 token6address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1 \
@@ -2324,8 +2417,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token6smallcasename,
                                                  sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token7address != 0) and (
                                 token8address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1 \
@@ -2343,8 +2437,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token8smallcasename,
                                                  sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token7address != 0) and (
                                 token9address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1 \
@@ -2362,8 +2457,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token9smallcasename,
                                                  sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token7address != 0) and (
                                 token10address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1 \
@@ -2381,8 +2477,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token10smallcasename,
                                                  sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                     except Exception as e:
                         o = 0
@@ -2408,8 +2505,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token2smallcasename,
                                                  sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token8address != 0) and (
                                 token3address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1 \
@@ -2427,8 +2525,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token3smallcasename,
                                                  sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token8address != 0) and (
                                 token4address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1 \
@@ -2446,8 +2545,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token4smallcasename,
                                                  sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token8address != 0) and (
                                 token5address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1 \
@@ -2465,8 +2565,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token5smallcasename,
                                                  sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token8address != 0) and (
                                 token6address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1 \
@@ -2484,8 +2585,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token6smallcasename,
                                                  sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token8address != 0) and (
                                 token1address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1 \
@@ -2503,8 +2605,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token1smallcasename,
                                                  sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token8address != 0) and (
                                 token7address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1 \
@@ -2522,8 +2625,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token7smallcasename,
                                                  sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token8address != 0) and (
                                 token9address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1 \
@@ -2541,8 +2645,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token9smallcasename,
                                                  sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token8address != 0) and (
                                 token10address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1 \
@@ -2560,8 +2665,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token10smallcasename,
                                                  sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                     except Exception as e:
                         o = 0
@@ -2587,8 +2693,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token2smallcasename,
                                                  sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token9address != 0) and (
                                 token3address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1 \
@@ -2606,8 +2713,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token3smallcasename,
                                                  sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token9address != 0) and (
                                 token4address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1 \
@@ -2625,8 +2733,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token4smallcasename,
                                                  sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token9address != 0) and (
                                 token5address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1 \
@@ -2644,8 +2753,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token5smallcasename,
                                                  sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token9address != 0) and (
                                 token6address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1 \
@@ -2663,8 +2773,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token6smallcasename,
                                                  sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token9address != 0) and (
                                 token7address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1 \
@@ -2682,8 +2793,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token7smallcasename,
                                                  sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token9address != 0) and (
                                 token8address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1 \
@@ -2701,8 +2813,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token8smallcasename,
                                                  sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token9address != 0) and (
                                 token1address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1 \
@@ -2720,8 +2833,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token1smallcasename,
                                                  sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token9address != 0) and (
                                 token10address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1 \
@@ -2739,8 +2853,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token10smallcasename,
                                                  sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                     except Exception as e:
                         o = 0
@@ -2766,8 +2881,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token2smallcasename,
                                                  sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token10address != 0) and (
                                 token3address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1 \
@@ -2785,8 +2901,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token3smallcasename,
                                                  sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token10address != 0) and (
                                 token4address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1 \
@@ -2804,8 +2921,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token4smallcasename,
                                                  sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token10address != 0) and (
                                 token5address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1 \
@@ -2823,8 +2941,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token5smallcasename,
                                                  sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token10address != 0) and (
                                 token6address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1 \
@@ -2842,8 +2961,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token6smallcasename,
                                                  sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token10address != 0) and (
                                 token7address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1 \
@@ -2861,8 +2981,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token7smallcasename,
                                                  sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token10address != 0) and (
                                 token8address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1 \
@@ -2880,8 +3001,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token8smallcasename,
                                                  sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token10address != 0) and (
                                 token1address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1 \
@@ -2899,8 +3021,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token1smallcasename,
                                                  sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                         if (token10address != 0) and (
                                 token9address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1 \
@@ -2918,8 +3041,9 @@ class Worker(QObject):
                                                  buysmallcasesymbol=token9smallcasename,
                                                  sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,
                                                  speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                time.sleep(timesleepaftertrade)
                                 gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
                                 keer = 9999
                     except Exception as e:
                         o = 0
@@ -2928,7 +3052,9 @@ class Worker(QObject):
                             print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
                         gelukt = "mislukt"
             except Exception as e:
-                o = 0
+                exception_type, exception_object, exception_traceback = sys.exc_info()
+                if configfile.debugmode == '1':
+                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
                 gelukt = "mislukt"
             if 'keer' not in locals():
                 keer = keer2
@@ -2941,12 +3067,12 @@ class Worker(QObject):
                          token5address,
                          token6address, token7address, token8address, token9address, token10address, maincoinoption,
                          token1decimals, token2decimals, token3decimals, token4decimals, token5decimals, token6decimals,
-                         token7decimals, token8decimals, token9decimals, token10decimals):
+                         token7decimals, token8decimals, token9decimals, token10decimals,dollarbalancemaintoken, mcotoseeassell,dollarbalancetoken1,dollarbalancetoken2,dollarbalancetoken3,dollarbalancetoken4,dollarbalancetoken5,dollarbalancetoken6,dollarbalancetoken7,dollarbalancetoken8,dollarbalancetoken9,dollarbalancetoken10,balance_token1,balance_token2,balance_token3,balance_token4,balance_token5,balance_token6,balance_token7,balance_token8,balance_token9,balance_token10):
             ethereum_address = my_address
             cg = CoinGeckoAPI()
 
             def api(ethaddress):
-                time.sleep(200 / 1000)
+                QtTest.QTest.qWait(200)
                 res = requests.get(
                     'https://api.ethplorer.io/getTokenInfo/' + ethaddress + '?apiKey=EK-5nuDS-iZCPJhW-SYGLU')
                 data = int((res.json())["decimals"])
@@ -2986,617 +3112,221 @@ class Worker(QObject):
                         'symbol']
             except:
                 o = 0
-            try:
-                balance_token1 = -1
-                balance_token2 = -1
-                balance_token3 = -1
-                balance_token4 = -1
-                balance_token5 = -1
-                balance_token6 = -1
-                balance_token7 = -1
-                balance_token8 = -1
-                balance_token9 = -1
-                balance_token10 = -1
-                maintokenbalance = -1
-            except:
-                o = 0
+
 
             try:
-                if maincoinoption == "0x0000000000000000000000000000000000000000":
-                    ethbalance = pyetherbalance.PyEtherBalance(infura_url)
-                    balance_eth = ethbalance.get_eth_balance(my_address)
-                    ethamount2 = (float(balance_eth['balance']))
-                else:
-                    token2 = str(cg.get_coin_info_from_contract_address_by_id(contract_address=maincoinoption,
-                                                                              id='ethereum')[
-                                     'symbol']).upper
-                    token2lower = str(
-                        cg.get_coin_info_from_contract_address_by_id(contract_address=maincoinoption,
-                                                                     id='ethereum')[
-                            'symbol'])
-                    if maincoinoption == "0xdac17f958d2ee523a2206206994597c13d831ec7":
-                        selldecimals = int(api(maincoinoption))
-                    if maincoinoption == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48":
-                        selldecimals = int(api(maincoinoption))
-                    if maincoinoption == "0x6b175474e89094c44da98b954eedeac495271d0f":
-                        selldecimals = int(api(maincoinoption))
-                    if maincoinoption == "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599":
-                        selldecimals = int(api(maincoinoption))
-                    if maincoinoption == '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2':
-                        selldecimals = int(api(maincoinoption))
-                    details2 = {'symbol': token2lower, 'address': maincoinoption,
-                                'decimals': selldecimals,
-                                'name': token2}
-                    erc20tokens2 = ethbalance.add_token(token2, details2)
-                    ethamount2 = math.floor(
-                        ethbalance.get_token_balance(token2, ethereum_address)['balance'])
-                maintokenbalance = ethamount2
-                if (maincoinoption == "0x0000000000000000000000000000000000000000" and ethamount2 > 0.01) or (
-                        maincoinoption != "0x0000000000000000000000000000000000000000" and ethamount2 > 1):
+                if (dollarbalancemaintoken > mcotoseeassell):
                     gelukt = "sell"
-                if 1==1:
-                    token = token1smallcasename.upper
-                    details = {'symbol': token, 'address': token1address, 'decimals': token1decimals,
-                               'name': token}
-                    erc20tokens = ethbalance.add_token(token, details)
-                    balance_token1 = math.floor(ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                    if balance_token1 > 3:
+                if 10==10:
+                    if dollarbalancetoken1 > mcotoseeassell:
                         gelukt = "buy " + token1smallcasename
-                    if balance_token1 < 3 and str(token2address) != '0':
-                        token = token2smallcasename.upper
-                        details = {'symbol': token, 'address': token2address, 'decimals': token2decimals,
-                                   'name': token}
-                        erc20tokens = ethbalance.add_token(token, details)
-                        balance_token2 = math.floor(
-                            ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                        if balance_token2 > 3:
+                    if dollarbalancetoken1 < mcotoseeassell and str(token2address) != '0':
+                        if dollarbalancetoken2 > mcotoseeassell:
                             gelukt = "buy " + token2smallcasename
-                        if balance_token2 < 3 and str(token3address) != '0':
-                            token = (token3smallcasename).upper
-                            details = {'symbol': token, 'address': token3address, 'decimals': token3decimals,
-                                       'name': token}
-
-                            erc20tokens = ethbalance.add_token(token, details)
-                            balance_token3 = math.floor(
-                                ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                            if balance_token3 > 3:
+                        if dollarbalancetoken2 < mcotoseeassell and str(token3address) != '0':
+                            if dollarbalancetoken3 > mcotoseeassell:
                                 gelukt = "buy " + token3smallcasename
-                            if balance_token3 < 3 and str(token4address) != '0':
-                                token = token4smallcasename.upper
-                                details = {'symbol': token, 'address': token4address, 'decimals': token4decimals,
-                                           'name': token}
-                                erc20tokens = ethbalance.add_token(token, details)
-                                balance_token4 = math.floor(
-                                    ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                                if balance_token4 > 3:
+                            if dollarbalancetoken3 < mcotoseeassell and str(token4address) != '0':
+                                if dollarbalancetoken4 > mcotoseeassell:
                                     gelukt = "buy " + token4smallcasename
-                                if balance_token4 < 3 and str(token5address) != '0':
-                                    token = token5smallcasename.upper
-                                    details = {'symbol': token, 'address': token5address, 'decimals': token5decimals,
-                                               'name': token}
-                                    erc20tokens = ethbalance.add_token(token, details)
-                                    balance_token5 = math.floor(
-                                        ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                                    if balance_token5 > 3:
+                                if dollarbalancetoken4 < mcotoseeassell and str(token5address) != '0':
+                                    if dollarbalancetoken5 > mcotoseeassell:
                                         gelukt = "buy " + token5smallcasename
-                                    if balance_token5 < 3 and str(token6address) != '0':
-                                        token = token6smallcasename.upper
-                                        details = {'symbol': token, 'address': token6address,
-                                                   'decimals': token6decimals,
-                                                   'name': token}
-                                        erc20tokens = ethbalance.add_token(token, details)
-                                        balance_token6 = math.floor(
-                                            ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                                        if balance_token6 > 3:
+                                    if dollarbalancetoken5 < mcotoseeassell and str(token6address) != '0':
+                                        if dollarbalancetoken6 > mcotoseeassell:
                                             gelukt = "buy " + token6smallcasename
-                                        if balance_token6 < 3 and str(token7address) != '0':
-                                            token = token7smallcasename.upper
-                                            details = {'symbol': token, 'address': token7address,
-                                                       'decimals': token7decimals,
-                                                       'name': token}
-                                            erc20tokens = ethbalance.add_token(token, details)
-                                            balance_token7 = math.floor(
-                                                ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                                            if balance_token7 > 3:
+                                        if dollarbalancetoken6 < mcotoseeassell and str(token7address) != '0':
+                                            if dollarbalancetoken7 > mcotoseeassell:
                                                 gelukt = "buy " + token7smallcasename
-                                            if balance_token7 < 3 and str(token8address) != '0':
-                                                token = token8smallcasename.upper
-                                                details = {'symbol': token, 'address': token8address,
-                                                           'decimals': token8decimals,
-                                                           'name': token}
-                                                erc20tokens = ethbalance.add_token(token, details)
-                                                balance_token8 = math.floor(
-                                                    ethbalance.get_token_balance(token, ethereum_address)[
-                                                        'balance'])
-                                                if balance_token8 > 3:
+                                            if dollarbalancetoken7 < mcotoseeassell and str(token8address) != '0':
+                                                if dollarbalancetoken8 > mcotoseeassell:
                                                     gelukt = "buy " + token8smallcasename
-                                                if balance_token8 < 3 and str(token9address) != '0':
-                                                    token = token9smallcasename.upper
-                                                    details = {'symbol': token, 'address': token9address,
-                                                               'decimals': token9decimals,
-                                                               'name': token}
-                                                    erc20tokens = ethbalance.add_token(token, details)
-                                                    balance_token9 = math.floor(
-                                                        ethbalance.get_token_balance(token, ethereum_address)[
-                                                            'balance'])
-                                                    if balance_token9 > 3:
+                                                if dollarbalancetoken8 < mcotoseeassell and str(token9address) != '0':
+                                                    if dollarbalancetoken9 > mcotoseeassell:
                                                         gelukt = "buy " + token9smallcasename
-                                                    if balance_token9 < 3 and str(token10address) != '0':
-                                                        token = token10smallcasename.upper
-                                                        details = {'symbol': token, 'address': token10address,
-                                                                   'decimals': token10decimals,
-                                                                   'name': token}
-                                                        erc20tokens = ethbalance.add_token(token, details)
-                                                        balance_token10 = math.floor(
-                                                            ethbalance.get_token_balance(token, ethereum_address)[
-                                                                'balance'])
-                                                        if balance_token10 > 3:
+                                                    if dollarbalancetoken9 < mcotoseeassell and str(token10address) != '0':
+                                                        if dollarbalancetoken10 > mcotoseeassell:
                                                             gelukt = "buy " + token10smallcasename
                 keer = 0
                 if 'gelukt' not in locals():
                     gelukt = 'nothing'
             except Exception as e:
-                o = 0
-                time.sleep(5)
-                if maincoinoption == "0x0000000000000000000000000000000000000000":
-                    ethbalance = pyetherbalance.PyEtherBalance(infura_url)
-                    balance_eth = ethbalance.get_eth_balance(my_address)
-                    ethamount2 = (float(balance_eth['balance']))
-                else:
-                    token2 = str(cg.get_coin_info_from_contract_address_by_id(contract_address=maincoinoption,
-                                                                              id='ethereum')[
-                                     'symbol']).upper
-                    token2lower = str(
-                        cg.get_coin_info_from_contract_address_by_id(contract_address=maincoinoption,
-                                                                     id='ethereum')[
-                            'symbol'])
-                    if maincoinoption == "0xdac17f958d2ee523a2206206994597c13d831ec7":
-                        selldecimals = int(api(maincoinoption))
-                    if maincoinoption == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48":
-                        selldecimals = int(api(maincoinoption))
-                    if maincoinoption == "0x6b175474e89094c44da98b954eedeac495271d0f":
-                        selldecimals = int(api(maincoinoption))
-                    if maincoinoption == "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599":
-                        selldecimals = int(api(maincoinoption))
-                    if maincoinoption == '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2':
-                        selldecimals = int(api(maincoinoption))
-                    details2 = {'symbol': token2lower, 'address': maincoinoption,
-                                'decimals': selldecimals,
-                                'name': token2}
-                    erc20tokens2 = ethbalance.add_token(token2, details2)
-                    ethamount2 = math.floor(
-                        ethbalance.get_token_balance(token2, ethereum_address)['balance'])
-                maintokenbalance = ethamount2
-                if (maincoinoption == "0x0000000000000000000000000000000000000000" and ethamount2 > 0.01) or (
-                        maincoinoption != "0x0000000000000000000000000000000000000000" and ethamount2 > 1):
+                exception_type, exception_object, exception_traceback = sys.exc_info()
+                if configfile.debugmode == '1':
+                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
+                QtTest.QTest.qWait(5000)
+                if (dollarbalancemaintoken > mcotoseeassell):
                     gelukt = "sell"
-                if 1==1:
-                    token = token1smallcasename.upper
-                    details = {'symbol': token, 'address': token1address, 'decimals': token1decimals,
-                               'name': token}
-                    erc20tokens = ethbalance.add_token(token, details)
-                    balance_token1 = math.floor(ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                    if balance_token1 > 3:
+                if 1 == 1:
+                    if dollarbalancetoken1 > mcotoseeassell:
                         gelukt = "buy " + token1smallcasename
-                    if balance_token1 < 3 and str(token2address) != '0':
-                        token = token2smallcasename.upper
-                        details = {'symbol': token, 'address': token2address, 'decimals': token2decimals,
-                                   'name': token}
-                        erc20tokens = ethbalance.add_token(token, details)
-                        balance_token2 = math.floor(
-                            ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                        if balance_token2 > 3:
+                    if dollarbalancetoken1 < mcotoseeassell and str(token2address) != '0':
+                        if dollarbalancetoken2 > mcotoseeassell:
                             gelukt = "buy " + token2smallcasename
-                        if balance_token2 < 3 and str(token3address) != '0':
-                            token = (token3smallcasename).upper
-                            details = {'symbol': token, 'address': token3address, 'decimals': token3decimals,
-                                       'name': token}
-
-                            erc20tokens = ethbalance.add_token(token, details)
-                            balance_token3 = math.floor(
-                                ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                            if balance_token3 > 3:
+                        if dollarbalancetoken2 < mcotoseeassell and str(token3address) != '0':
+                            if dollarbalancetoken3 > mcotoseeassell:
                                 gelukt = "buy " + token3smallcasename
-                            if balance_token3 < 3 and str(token4address) != '0':
-                                token = token4smallcasename.upper
-                                details = {'symbol': token, 'address': token4address, 'decimals': token4decimals,
-                                           'name': token}
-                                erc20tokens = ethbalance.add_token(token, details)
-                                balance_token4 = math.floor(
-                                    ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                                if balance_token4 > 3:
+                            if dollarbalancetoken3 < mcotoseeassell and str(token4address) != '0':
+                                if dollarbalancetoken4 > mcotoseeassell:
                                     gelukt = "buy " + token4smallcasename
-                                if balance_token4 < 3 and str(token5address) != '0':
-                                    token = token5smallcasename.upper
-                                    details = {'symbol': token, 'address': token5address, 'decimals': token5decimals,
-                                               'name': token}
-                                    erc20tokens = ethbalance.add_token(token, details)
-                                    balance_token5 = math.floor(
-                                        ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                                    if balance_token5 > 3:
+                                if dollarbalancetoken4 < mcotoseeassell and str(token5address) != '0':
+                                    if dollarbalancetoken5 > mcotoseeassell:
                                         gelukt = "buy " + token5smallcasename
-                                    if balance_token5 < 3 and str(token6address) != '0':
-                                        token = token6smallcasename.upper
-                                        details = {'symbol': token, 'address': token6address,
-                                                   'decimals': token6decimals,
-                                                   'name': token}
-                                        erc20tokens = ethbalance.add_token(token, details)
-                                        balance_token6 = math.floor(
-                                            ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                                        if balance_token6 > 3:
+                                    if dollarbalancetoken5 < mcotoseeassell and str(token6address) != '0':
+                                        if dollarbalancetoken6 > mcotoseeassell:
                                             gelukt = "buy " + token6smallcasename
-                                        if balance_token6 < 3 and str(token7address) != '0':
-                                            token = token7smallcasename.upper
-                                            details = {'symbol': token, 'address': token7address,
-                                                       'decimals': token7decimals,
-                                                       'name': token}
-                                            erc20tokens = ethbalance.add_token(token, details)
-                                            balance_token7 = math.floor(
-                                                ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                                            if balance_token7 > 3:
+                                        if dollarbalancetoken6 < mcotoseeassell and str(token7address) != '0':
+                                            if dollarbalancetoken7 > mcotoseeassell:
                                                 gelukt = "buy " + token7smallcasename
-                                            if balance_token7 < 3 and str(token8address) != '0':
-                                                token = token8smallcasename.upper
-                                                details = {'symbol': token, 'address': token8address,
-                                                           'decimals': token8decimals,
-                                                           'name': token}
-                                                erc20tokens = ethbalance.add_token(token, details)
-                                                balance_token8 = math.floor(
-                                                    ethbalance.get_token_balance(token, ethereum_address)[
-                                                        'balance'])
-                                                if balance_token8 > 3:
+                                            if dollarbalancetoken7 < mcotoseeassell and str(token8address) != '0':
+                                                if dollarbalancetoken8 > mcotoseeassell:
                                                     gelukt = "buy " + token8smallcasename
-                                                if balance_token8 < 3 and str(token9address) != '0':
-                                                    token = token9smallcasename.upper
-                                                    details = {'symbol': token, 'address': token9address,
-                                                               'decimals': token9decimals,
-                                                               'name': token}
-                                                    erc20tokens = ethbalance.add_token(token, details)
-                                                    balance_token9 = math.floor(
-                                                        ethbalance.get_token_balance(token, ethereum_address)[
-                                                            'balance'])
-                                                    if balance_token9 > 3:
+                                                if dollarbalancetoken8 < mcotoseeassell and str(token9address) != '0':
+                                                    if dollarbalancetoken9 > mcotoseeassell:
                                                         gelukt = "buy " + token9smallcasename
-                                                    if balance_token9 < 3 and str(token10address) != '0':
-                                                        token = token10smallcasename.upper
-                                                        details = {'symbol': token, 'address': token10address,
-                                                                   'decimals': token10decimals,
-                                                                   'name': token}
-                                                        erc20tokens = ethbalance.add_token(token, details)
-                                                        balance_token10 = math.floor(
-                                                            ethbalance.get_token_balance(token, ethereum_address)[
-                                                                'balance'])
-                                                        if balance_token10 > 3:
+                                                    if dollarbalancetoken9 < mcotoseeassell and str(
+                                                            token10address) != '0':
+                                                        if dollarbalancetoken10 > mcotoseeassell:
                                                             gelukt = "buy " + token10smallcasename
                 keer = 0
                 if 'gelukt' not in locals():
                     gelukt = 'nothing'
 
             try:
-                if maincoinoption == "0x0000000000000000000000000000000000000000":
-                    ethbalance = pyetherbalance.PyEtherBalance(infura_url)
-                    balance_eth = ethbalance.get_eth_balance(my_address)
-                    ethamount2 = (float(balance_eth['balance']))
-                else:
-                    token2 = str(cg.get_coin_info_from_contract_address_by_id(contract_address=maincoinoption,
-                                                                              id='ethereum')[
-                                     'symbol']).upper
-                    token2lower = str(cg.get_coin_info_from_contract_address_by_id(contract_address=maincoinoption,
-                                                                                   id='ethereum')[
-                                          'symbol'])
-                    if maincoinoption == "0xdac17f958d2ee523a2206206994597c13d831ec7":
-                        selldecimals = int(api(maincoinoption))
-                    if maincoinoption == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48":
-                        selldecimals = int(api(maincoinoption))
-                    if maincoinoption == "0x6b175474e89094c44da98b954eedeac495271d0f":
-                        selldecimals = int(api(maincoinoption))
-                    if maincoinoption == "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599":
-                        selldecimals = int(api(maincoinoption))
-                    if maincoinoption == '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2':
-                        selldecimals = int(api(maincoinoption))
-                    details2 = {'symbol': token2lower, 'address': maincoinoption,
-                                'decimals': selldecimals,
-                                'name': token2}
-                    erc20tokens2 = ethbalance.add_token(token2, details2)
-                    ethamount2 = math.floor(
-                        ethbalance.get_token_balance(token2, ethereum_address)['balance'])
-                if (
-                        maincoinoption == "0x0000000000000000000000000000000000000000" and ethamount2 > 0.01 and gelukt != "sell") or (
-                        maincoinoption != "0x0000000000000000000000000000000000000000" and ethamount2 > 1 and gelukt != "sell"):
+                if (dollarbalancemaintoken > mcotoseeassell and gelukt != "sell"):
                     gelukt2 = "sell"
-                if (
-                        maincoinoption == "0x0000000000000000000000000000000000000000" and ethamount2 > 0.01 and gelukt == "sell") or (
-                        maincoinoption != "0x0000000000000000000000000000000000000000" and ethamount2 > 1 and gelukt == "sell"):
+                if (dollarbalancemaintoken > mcotoseeassell and gelukt == "sell"):
                     gelukt2 = "nothing"
-                    ethamount2 = 0.05
-                if (ethamount2 < 0.01 and maincoinoption == "0x0000000000000000000000000000000000000000") or (
-                        ethamount2 < 1 and maincoinoption != "0x0000000000000000000000000000000000000000"):
-                    token = token1smallcasename.upper
-                    details = {'symbol': token, 'address': token1address, 'decimals': token1decimals,
-                               'name': token}
-                    erc20tokens = ethbalance.add_token(token, details)
-                    balance_token1 = math.floor(ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                    if balance_token1 > 3 and gelukt != ("buy " + str(token1smallcasename)):
+                if dollarbalancemaintoken > mcotoseeassell and (gelukt2=="nothing" or "gelukt2" not in locals()):
+                    if dollarbalancetoken1 > mcotoseeassell and gelukt != ("buy " + str(token1smallcasename)):
                         gelukt2 = "buy " + token1smallcasename
-                    if balance_token1 < 3 and str(token2address) != '0' or (
-                            balance_token1 > 3 and gelukt == ("buy " + str(token1smallcasename)) and str(
+                    if dollarbalancetoken1 < mcotoseeassell and str(token2address) != '0' or (
+                            dollarbalancetoken1 > mcotoseeassell and gelukt == ("buy " + str(token1smallcasename)) and str(
                         token2address) != '0'):
-                        token = token2smallcasename.upper
-                        details = {'symbol': token, 'address': token2address, 'decimals': token2decimals,
-                                   'name': token}
-                        erc20tokens = ethbalance.add_token(token, details)
-                        balance_token2 = math.floor(
-                            ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                        if balance_token2 > 3 and (gelukt) != ("buy " + str(token2smallcasename)):
+                        if dollarbalancetoken2 > mcotoseeassell and (gelukt) != ("buy " + str(token2smallcasename)):
                             gelukt2 = "buy " + token2smallcasename
-                        if balance_token2 < 3 and str(token3address) != '0' or (
-                                balance_token2 > 3 and gelukt == ("buy " + str(token2smallcasename)) and str(
+                        if dollarbalancetoken2 < mcotoseeassell and str(token3address) != '0' or (
+                                dollarbalancetoken2 > mcotoseeassell and gelukt == ("buy " + str(token2smallcasename)) and str(
                             token3address) != '0'):
-                            token = (token3smallcasename).upper
-                            details = {'symbol': token, 'address': token3address, 'decimals': token3decimals,
-                                       'name': token}
-                            erc20tokens = ethbalance.add_token(token, details)
-                            balance_token3 = math.floor(
-                                ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                            if balance_token3 > 3 and (gelukt) != ("buy " + str(token3smallcasename)):
+                            if dollarbalancetoken3 > mcotoseeassell and (gelukt) != ("buy " + str(token3smallcasename)):
                                 gelukt2 = "buy " + token3smallcasename
-                            if balance_token3 < 3 and str(token4address) != '0' or (
-                                    balance_token3 > 3 and gelukt == ("buy " + str(token3smallcasename)) and str(
+                            if dollarbalancetoken3 < mcotoseeassell and str(token4address) != '0' or (
+                                    dollarbalancetoken3 > mcotoseeassell and gelukt == ("buy " + str(token3smallcasename)) and str(
                                 token4address) != '0'):
-                                token = token4smallcasename.upper
-                                details = {'symbol': token, 'address': token4address, 'decimals': token4decimals,
-                                           'name': token}
-                                erc20tokens = ethbalance.add_token(token, details)
-                                balance_token4 = math.floor(
-                                    ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                                if balance_token4 > 3 and (gelukt) != ("buy " + str(token4smallcasename)):
+                                if dollarbalancetoken4 > mcotoseeassell and (gelukt) != ("buy " + str(token4smallcasename)):
                                     gelukt2 = "buy " + token4smallcasename
-                                if balance_token4 < 3 and str(token5address) != '0' or (
-                                        balance_token4 > 3 and gelukt == ("buy " + str(token4smallcasename)) and str(
+                                if dollarbalancetoken4 < mcotoseeassell and str(token5address) != '0' or (
+                                        dollarbalancetoken4 > mcotoseeassell and gelukt == ("buy " + str(token4smallcasename)) and str(
                                     token5address) != '0'):
-                                    token = token5smallcasename.upper
-                                    details = {'symbol': token, 'address': token5address, 'decimals': token5decimals,
-                                               'name': token}
-                                    erc20tokens = ethbalance.add_token(token, details)
-                                    balance_token5 = math.floor(
-                                        ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                                    if balance_token5 > 3 and (gelukt) != ("buy " + str(token5smallcasename)):
+                                    if dollarbalancetoken5 > mcotoseeassell and (gelukt) != ("buy " + str(token5smallcasename)):
                                         gelukt2 = "buy " + token5smallcasename
-                                    if balance_token5 < 3 and str(token6address) != '0' or (
-                                            balance_token5 > 3 and gelukt == (
+                                    if dollarbalancetoken5 < mcotoseeassell and str(token6address) != '0' or (
+                                            dollarbalancetoken5 > mcotoseeassell and gelukt == (
                                             "buy " + str(token5smallcasename)) and str(token6address) != '0'):
-                                        token = token6smallcasename.upper
-                                        details = {'symbol': token, 'address': token6address,
-                                                   'decimals': token6decimals,
-                                                   'name': token}
-                                        erc20tokens = ethbalance.add_token(token, details)
-                                        balance_token6 = math.floor(
-                                            ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                                        if balance_token6 > 3 and (gelukt) != ("buy " + str(token5smallcasename)):
+                                        if dollarbalancetoken6 > mcotoseeassell and (gelukt) != ("buy " + str(token5smallcasename)):
                                             gelukt2 = "buy " + token6smallcasename
-                                        if balance_token6 < 3 and str(token7address) != '0' or (
-                                                balance_token6 > 3 and gelukt == (
+                                        if dollarbalancetoken6 < mcotoseeassell and str(token7address) != '0' or (
+                                                dollarbalancetoken6 > mcotoseeassell and gelukt == (
                                                 "buy " + str(token6smallcasename)) and str(token7address) != '0'):
-                                            token = token7smallcasename.upper
-                                            details = {'symbol': token, 'address': token7address,
-                                                       'decimals': token7decimals,
-                                                       'name': token}
-                                            erc20tokens = ethbalance.add_token(token, details)
-                                            balance_token7 = math.floor(
-                                                ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                                            if balance_token7 > 3 and (gelukt) != (
+                                            if dollarbalancetoken7 > mcotoseeassell and (gelukt) != (
                                                     "buy " + str(token6smallcasename)):
                                                 gelukt2 = "buy " + token7smallcasename
-                                            if balance_token7 < 3 and str(token8address) != '0' or (
-                                                    balance_token7 > 3 and gelukt == (
+                                            if dollarbalancetoken7 < mcotoseeassell and str(token8address) != '0' or (
+                                                    dollarbalancetoken7 > mcotoseeassell and gelukt == (
                                                     "buy " + str(token7smallcasename)) and str(token8address) != '0'):
-                                                token = token8smallcasename.upper
-                                                details = {'symbol': token, 'address': token8address,
-                                                           'decimals': token8decimals,
-                                                           'name': token}
-                                                erc20tokens = ethbalance.add_token(token, details)
-                                                balance_token8 = math.floor(
-                                                    ethbalance.get_token_balance(token, ethereum_address)[
-                                                        'balance'])
-                                                if balance_token8 > 3 and (gelukt) != (
+                                                if dollarbalancetoken8 > mcotoseeassell and (gelukt) != (
                                                         "buy " + str(token8smallcasename)):
                                                     gelukt2 = "buy " + token8smallcasename
-                                                if balance_token8 < 3 and str(token9address) != '0' or (
-                                                        balance_token8 > 3 and gelukt == (
+                                                if dollarbalancetoken8 < mcotoseeassell and str(token9address) != '0' or (
+                                                        dollarbalancetoken8 > mcotoseeassell and gelukt == (
                                                         "buy " + str(token8smallcasename)) and str(
                                                     token9address) != '0'):
-                                                    token = token9smallcasename.upper
-                                                    details = {'symbol': token, 'address': token9address,
-                                                               'decimals': token9decimals,
-                                                               'name': token}
-                                                    erc20tokens = ethbalance.add_token(token, details)
-                                                    balance_token9 = math.floor(
-                                                        ethbalance.get_token_balance(token, ethereum_address)[
-                                                            'balance'])
-                                                    if balance_token9 > 3 and (gelukt) != (
+                                                    if dollarbalancetoken9 > mcotoseeassell and (gelukt) != (
                                                             "buy " + str(token9smallcasename)):
                                                         gelukt2 = "buy " + token9smallcasename
-                                                    if balance_token9 < 3 and str(token10address) != '0' and (
+                                                    if dollarbalancetoken9 < mcotoseeassell and str(token10address) != '0' and (
                                                             gelukt) != (
                                                             "buy " + str(token10smallcasename)) or (
-                                                            balance_token9 > 3 and gelukt == (
+                                                            dollarbalancetoken9 > mcotoseeassell and gelukt == (
                                                             "buy " + str(token9smallcasename)) and str(
                                                         token10address) != '0'):
-                                                        token = token10smallcasename.upper
-                                                        details = {'symbol': token, 'address': token10address,
-                                                                   'decimals': token10decimals,
-                                                                   'name': token}
-                                                        erc20tokens = ethbalance.add_token(token, details)
-                                                        balance_token10 = math.floor(
-                                                            ethbalance.get_token_balance(token, ethereum_address)[
-                                                                'balance'])
-                                                        if balance_token10 > 3:
+                                                        if dollarbalancetoken10 > mcotoseeassell:
                                                             gelukt2 = "buy " + token10smallcasename
                 if 'gelukt2' not in locals():
                     gelukt2 = 'nothing'
 
             except Exception as e:
-                o = 0
-                time.sleep(3)
-                if maincoinoption == "0x0000000000000000000000000000000000000000":
-                    ethbalance = pyetherbalance.PyEtherBalance(infura_url)
-                    balance_eth = ethbalance.get_eth_balance(my_address)
-                    ethamount2 = (float(balance_eth['balance']))
-                else:
-                    token2 = str(cg.get_coin_info_from_contract_address_by_id(contract_address=maincoinoption,
-                                                                              id='ethereum')[
-                                     'symbol']).upper
-                    token2lower = str(cg.get_coin_info_from_contract_address_by_id(contract_address=maincoinoption,
-                                                                                   id='ethereum')[
-                                          'symbol'])
-                    if maincoinoption == "0xdac17f958d2ee523a2206206994597c13d831ec7":
-                        selldecimals = int(api(maincoinoption))
-                    if maincoinoption == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48":
-                        selldecimals = int(api(maincoinoption))
-                    if maincoinoption == "0x6b175474e89094c44da98b954eedeac495271d0f":
-                        selldecimals = int(api(maincoinoption))
-                    if maincoinoption == "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599":
-                        selldecimals = int(api(maincoinoption))
-                    if maincoinoption == '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2':
-                        selldecimals = int(api(maincoinoption))
-                    details2 = {'symbol': token2lower, 'address': maincoinoption,
-                                'decimals': selldecimals,
-                                'name': token2}
-                    erc20tokens2 = ethbalance.add_token(token2, details2)
-                    ethamount2 = math.floor(
-                        ethbalance.get_token_balance(token2, ethereum_address)['balance'])
-                if (
-                        maincoinoption == "0x0000000000000000000000000000000000000000" and ethamount2 > 0.01 and gelukt != "sell") or (
-                        maincoinoption != "0x0000000000000000000000000000000000000000" and ethamount2 > 1 and gelukt != "sell"):
+                exception_type, exception_object, exception_traceback = sys.exc_info()
+                if configfile.debugmode == '1':
+                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
+                QtTest.QTest.qWait(3000)
+                if (dollarbalancemaintoken > mcotoseeassell and gelukt != "sell"):
                     gelukt2 = "sell"
-                if (
-                        maincoinoption == "0x0000000000000000000000000000000000000000" and ethamount2 > 0.01 and gelukt == "sell") or (
-                        maincoinoption != "0x0000000000000000000000000000000000000000" and ethamount2 > 1 and gelukt == "sell"):
+                if (dollarbalancemaintoken > mcotoseeassell and gelukt == "sell"):
                     gelukt2 = "nothing"
-                    ethamount2 = 0.05
-                if (ethamount2 < 0.01 and maincoinoption == "0x0000000000000000000000000000000000000000") or (
-                        ethamount2 < 1 and maincoinoption != "0x0000000000000000000000000000000000000000"):
-                    token = token1smallcasename.upper
-                    details = {'symbol': token, 'address': token1address, 'decimals': token1decimals,
-                               'name': token}
-                    erc20tokens = ethbalance.add_token(token, details)
-                    balance_token1 = math.floor(ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                    if balance_token1 > 3 and gelukt != ("buy " + str(token1smallcasename)):
+                if dollarbalancemaintoken > mcotoseeassell and (gelukt2 == "nothing" or "gelukt2" not in locals()):
+                    if dollarbalancetoken1 > mcotoseeassell and gelukt != ("buy " + str(token1smallcasename)):
                         gelukt2 = "buy " + token1smallcasename
-                    if balance_token1 < 3 and str(token2address) != '0' or (
-                            balance_token1 > 3 and gelukt == ("buy " + str(token1smallcasename)) and str(
+                    if dollarbalancetoken1 < mcotoseeassell and str(token2address) != '0' or (
+                            dollarbalancetoken1 > mcotoseeassell and gelukt == (
+                            "buy " + str(token1smallcasename)) and str(
                         token2address) != '0'):
-                        token = token2smallcasename.upper
-                        details = {'symbol': token, 'address': token2address, 'decimals': token2decimals,
-                                   'name': token}
-                        erc20tokens = ethbalance.add_token(token, details)
-                        balance_token2 = math.floor(
-                            ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                        if balance_token2 > 3 and (gelukt) != ("buy " + str(token2smallcasename)):
+                        if dollarbalancetoken2 > mcotoseeassell and (gelukt) != ("buy " + str(token2smallcasename)):
                             gelukt2 = "buy " + token2smallcasename
-                        if balance_token2 < 3 and str(token3address) != '0' or (
-                                balance_token2 > 3 and gelukt == ("buy " + str(token2smallcasename)) and str(
+                        if dollarbalancetoken2 < mcotoseeassell and str(token3address) != '0' or (
+                                dollarbalancetoken2 > mcotoseeassell and gelukt == (
+                                "buy " + str(token2smallcasename)) and str(
                             token3address) != '0'):
-                            token = (token3smallcasename).upper
-                            details = {'symbol': token, 'address': token3address, 'decimals': token3decimals,
-                                       'name': token}
-                            erc20tokens = ethbalance.add_token(token, details)
-                            balance_token3 = math.floor(
-                                ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                            if balance_token3 > 3 and (gelukt) != ("buy " + str(token3smallcasename)):
+                            if dollarbalancetoken3 > mcotoseeassell and (gelukt) != ("buy " + str(token3smallcasename)):
                                 gelukt2 = "buy " + token3smallcasename
-                            if balance_token3 < 3 and str(token4address) != '0' or (
-                                    balance_token3 > 3 and gelukt == ("buy " + str(token3smallcasename)) and str(
+                            if dollarbalancetoken3 < mcotoseeassell and str(token4address) != '0' or (
+                                    dollarbalancetoken3 > mcotoseeassell and gelukt == (
+                                    "buy " + str(token3smallcasename)) and str(
                                 token4address) != '0'):
-                                token = token4smallcasename.upper
-                                details = {'symbol': token, 'address': token4address, 'decimals': token4decimals,
-                                           'name': token}
-                                erc20tokens = ethbalance.add_token(token, details)
-                                balance_token4 = math.floor(
-                                    ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                                if balance_token4 > 3 and (gelukt) != ("buy " + str(token4smallcasename)):
+                                if dollarbalancetoken4 > mcotoseeassell and (gelukt) != (
+                                        "buy " + str(token4smallcasename)):
                                     gelukt2 = "buy " + token4smallcasename
-                                if balance_token4 < 3 and str(token5address) != '0' or (
-                                        balance_token4 > 3 and gelukt == (
-                                        "buy " + str(token4smallcasename)) and str(token5address) != '0'):
-                                    token = token5smallcasename.upper
-                                    details = {'symbol': token, 'address': token5address, 'decimals': token5decimals,
-                                               'name': token}
-                                    erc20tokens = ethbalance.add_token(token, details)
-                                    balance_token5 = math.floor(
-                                        ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                                    if balance_token5 > 3 and (gelukt) != ("buy " + str(token5smallcasename)):
+                                if dollarbalancetoken4 < mcotoseeassell and str(token5address) != '0' or (
+                                        dollarbalancetoken4 > mcotoseeassell and gelukt == (
+                                        "buy " + str(token4smallcasename)) and str(
+                                    token5address) != '0'):
+                                    if dollarbalancetoken5 > mcotoseeassell and (gelukt) != (
+                                            "buy " + str(token5smallcasename)):
                                         gelukt2 = "buy " + token5smallcasename
-                                    if balance_token5 < 3 and str(token6address) != '0' or (
-                                            balance_token5 > 3 and gelukt == (
+                                    if dollarbalancetoken5 < mcotoseeassell and str(token6address) != '0' or (
+                                            dollarbalancetoken5 > mcotoseeassell and gelukt == (
                                             "buy " + str(token5smallcasename)) and str(token6address) != '0'):
-                                        token = token6smallcasename.upper
-                                        details = {'symbol': token, 'address': token6address,
-                                                   'decimals': token6decimals,
-                                                   'name': token}
-                                        erc20tokens = ethbalance.add_token(token, details)
-                                        balance_token6 = math.floor(
-                                            ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                                        if balance_token6 > 3 and (gelukt) != ("buy " + str(token5smallcasename)):
+                                        if dollarbalancetoken6 > mcotoseeassell and (gelukt) != (
+                                                "buy " + str(token5smallcasename)):
                                             gelukt2 = "buy " + token6smallcasename
-                                        if balance_token6 < 3 and str(token7address) != '0' or (
-                                                balance_token6 > 3 and gelukt == (
+                                        if dollarbalancetoken6 < mcotoseeassell and str(token7address) != '0' or (
+                                                dollarbalancetoken6 > mcotoseeassell and gelukt == (
                                                 "buy " + str(token6smallcasename)) and str(token7address) != '0'):
-                                            token = token7smallcasename.upper
-                                            details = {'symbol': token, 'address': token7address,
-                                                       'decimals': token7decimals,
-                                                       'name': token}
-                                            erc20tokens = ethbalance.add_token(token, details)
-                                            balance_token7 = math.floor(
-                                                ethbalance.get_token_balance(token, ethereum_address)['balance'])
-                                            if balance_token7 > 3 and (gelukt) != (
+                                            if dollarbalancetoken7 > mcotoseeassell and (gelukt) != (
                                                     "buy " + str(token6smallcasename)):
                                                 gelukt2 = "buy " + token7smallcasename
-                                            if balance_token7 < 3 and str(token8address) != '0' or (
-                                                    balance_token7 > 3 and gelukt == (
-                                                    "buy " + str(token7smallcasename)) and str(
-                                                token8address) != '0'):
-                                                token = token8smallcasename.upper
-                                                details = {'symbol': token, 'address': token8address,
-                                                           'decimals': token8decimals,
-                                                           'name': token}
-                                                erc20tokens = ethbalance.add_token(token, details)
-                                                balance_token8 = math.floor(
-                                                    ethbalance.get_token_balance(token, ethereum_address)[
-                                                        'balance'])
-                                                if balance_token8 > 3 and (gelukt) != (
+                                            if dollarbalancetoken7 < mcotoseeassell and str(token8address) != '0' or (
+                                                    dollarbalancetoken7 > mcotoseeassell and gelukt == (
+                                                    "buy " + str(token7smallcasename)) and str(token8address) != '0'):
+                                                if dollarbalancetoken8 > mcotoseeassell and (gelukt) != (
                                                         "buy " + str(token8smallcasename)):
                                                     gelukt2 = "buy " + token8smallcasename
-                                                if balance_token8 < 3 and str(token9address) != '0' or (
-                                                        balance_token8 > 3 and gelukt == (
+                                                if dollarbalancetoken8 < mcotoseeassell and str(
+                                                        token9address) != '0' or (
+                                                        dollarbalancetoken8 > mcotoseeassell and gelukt == (
                                                         "buy " + str(token8smallcasename)) and str(
                                                     token9address) != '0'):
-                                                    token = token9smallcasename.upper
-                                                    details = {'symbol': token, 'address': token9address,
-                                                               'decimals': token9decimals,
-                                                               'name': token}
-                                                    erc20tokens = ethbalance.add_token(token, details)
-                                                    balance_token9 = math.floor(
-                                                        ethbalance.get_token_balance(token, ethereum_address)[
-                                                            'balance'])
-                                                    if balance_token9 > 3 and (gelukt) != (
+                                                    if dollarbalancetoken9 > mcotoseeassell and (gelukt) != (
                                                             "buy " + str(token9smallcasename)):
                                                         gelukt2 = "buy " + token9smallcasename
-                                                    if balance_token9 < 3 and str(token10address) != '0' and (
+                                                    if dollarbalancetoken9 < mcotoseeassell and str(
+                                                            token10address) != '0' and (
                                                             gelukt) != (
                                                             "buy " + str(token10smallcasename)) or (
-                                                            balance_token9 > 3 and gelukt == (
+                                                            dollarbalancetoken9 > mcotoseeassell and gelukt == (
                                                             "buy " + str(token9smallcasename)) and str(
                                                         token10address) != '0'):
-                                                        token = token10smallcasename.upper
-                                                        details = {'symbol': token, 'address': token10address,
-                                                                   'decimals': token10decimals,
-                                                                   'name': token}
-                                                        erc20tokens = ethbalance.add_token(token, details)
-                                                        balance_token10 = math.floor(
-                                                            ethbalance.get_token_balance(token, ethereum_address)[
-                                                                'balance'])
-                                                        if balance_token10 > 3:
+                                                        if dollarbalancetoken10 > mcotoseeassell:
                                                             gelukt2 = "buy " + token10smallcasename
                 if 'gelukt2' not in locals():
                     gelukt2 = 'nothing'
@@ -3604,14 +3334,236 @@ class Worker(QObject):
                 gelukt3 = gelukt2
             except:
                 gelukt2 = '0'
-            return {'keer': keer, 'gelukt': gelukt, 'gelukt2': gelukt2, 'balance_token1': balance_token1,
-                    'balance_token2': balance_token2, 'balance_token3': balance_token3,
-                    'balance_token4': balance_token4,
-                    'balance_token5': balance_token5, 'balance_token6': balance_token6,
-                    'balance_token7': balance_token7,
-                    'balance_token8': balance_token8, 'balance_token9': balance_token9,
-                    'balance_token10': balance_token10,
-                    'maintokenbalance': maintokenbalance}
+            return {'keer': keer, 'gelukt': gelukt, 'gelukt2': gelukt2,'maintokenbalance': maintokenbalance}
+
+
+        def gettotaltokenbalance(token1address, token1smallcasename, token2address, token2smallcasename, token3address,
+                     token3smallcasename,
+                     token4address, token4smallcasename, token5address, token5smallcasename, token6address,
+                     token6smallcasename,
+                     token7address, token7smallcasename, token8address, token8smallcasename, token9address,
+                     token9smallcasename,
+                     token10address,ethaddress,token1decimals, token2decimals, token3decimals, token4decimals, token5decimals, token6decimals,
+                      token7decimals, token8decimals, token9decimals, token10decimals,maindecimals,my_address):
+            print('(re)Preparing bot...')
+            ethbalance = pyetherbalance.PyEtherBalance(infura_url)
+            priceeth = int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
+            threeeth=10000000000
+            ethereum_address=my_address
+            try: #balances
+                if ethaddress == "0x0000000000000000000000000000000000000000":
+                    balance_eth = ethbalance.get_eth_balance(my_address)['balance']
+                    dollarbalancemaintoken=priceeth*balance_eth
+                else:
+                    details = {'symbol': 'potter', 'address': ethaddress, 'decimals': maindecimals,
+                               'name': 'potter'}
+                    erc20tokens = ethbalance.add_token('potter', details)
+                    balance_eth = ethbalance.get_token_balance('potter', ethereum_address)['balance']
+                    maintokeneth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(ethaddress),
+                                                                          1000000000000)
+                    if maindecimals != 18:
+                        mainusd = (priceeth / (maintokeneth)) / (
+                                10 ** (18 - (maindecimals)))
+                    else:
+                        mainusd = (priceeth / (maintokeneth))
+                    dollarbalancemaintoken=mainusd*balance_eth
+
+
+                balance_token1=0
+                if token1address != '0' or '':
+                    token = token1smallcasename.upper
+                    details = {'symbol': token, 'address': token1address, 'decimals': token1decimals,
+                               'name': token}
+                    erc20tokens = ethbalance.add_token(token, details)
+                    balance_token1 = ethbalance.get_token_balance(token, ethereum_address)['balance']
+                balance_token2 = 0
+                if token2address != '0' or '':
+                    token = token2smallcasename.upper
+                    details = {'symbol': token, 'address': token2address, 'decimals': token2decimals,
+                               'name': token}
+                    erc20tokens = ethbalance.add_token(token, details)
+                    balance_token2 = ethbalance.get_token_balance(token, ethereum_address)['balance']
+                balance_token3 = 0
+                if token3address != '0' or '':
+                    token = token3smallcasename.upper
+                    details = {'symbol': token, 'address': token3address, 'decimals': token3decimals,
+                               'name': token}
+                    erc20tokens = ethbalance.add_token(token, details)
+                    balance_token3 = ethbalance.get_token_balance(token, ethereum_address)['balance']
+                balance_token4 = 0
+                if token4address != '0' or '':
+                    token = token4smallcasename.upper
+                    details = {'symbol': token, 'address': token4address, 'decimals': token4decimals,
+                               'name': token}
+                    erc20tokens = ethbalance.add_token(token, details)
+                    balance_token4 = ethbalance.get_token_balance(token, ethereum_address)['balance']
+                balance_token5 = 0
+                if token5address != '0' or '':
+                    token = token5smallcasename.upper
+                    details = {'symbol': token, 'address': token5address, 'decimals': token5decimals,
+                               'name': token}
+                    erc20tokens = ethbalance.add_token(token, details)
+                    balance_token5 = ethbalance.get_token_balance(token, ethereum_address)['balance']
+                balance_token6 = 0
+                if token6address != '0' or '':
+                    token = token6smallcasename.upper
+                    details = {'symbol': token, 'address': token6address, 'decimals': token6decimals,
+                               'name': token}
+                    erc20tokens = ethbalance.add_token(token, details)
+                    balance_token6 = ethbalance.get_token_balance(token, ethereum_address)['balance']
+                balance_token7 = 0
+                if token7address != '0' or '':
+                    token = token7smallcasename.upper
+                    details = {'symbol': token, 'address': token7address, 'decimals': token7decimals,
+                               'name': token}
+                    erc20tokens = ethbalance.add_token(token, details)
+                    balance_token7 = ethbalance.get_token_balance(token, ethereum_address)['balance']
+                balance_token8 = 0
+                if token8address != '0' or '':
+                    token = token8smallcasename.upper
+                    details = {'symbol': token, 'address': token8address, 'decimals': token8decimals,
+                               'name': token}
+                    erc20tokens = ethbalance.add_token(token, details)
+                    balance_token8 = ethbalance.get_token_balance(token, ethereum_address)['balance']
+                balance_token9 = 0
+                if token9address != '0' or '':
+                    token = token9smallcasename.upper
+                    details = {'symbol': token, 'address': token9address, 'decimals': token9decimals,
+                               'name': token}
+                    erc20tokens = ethbalance.add_token(token, details)
+                    balance_token9 = ethbalance.get_token_balance(token, ethereum_address)['balance']
+                balance_token10 = 0
+                if token10address != '0' or '':
+                    token = token10smallcasename.upper
+                    details = {'symbol': token, 'address': token10address, 'decimals': token10decimals,
+                               'name': token}
+                    erc20tokens = ethbalance.add_token(token, details)
+                    balance_token10 = ethbalance.get_token_balance(token, ethereum_address)['balance']
+            except Exception as e:
+                exception_type, exception_object, exception_traceback = sys.exc_info()
+                if configfile.debugmode == '1':
+                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
+            try: #prices
+                pricetoken1usd = 0
+                pricetoken2usd = 0
+                pricetoken3usd = 0
+                pricetoken4usd = 0
+                pricetoken5usd = 0
+                pricetoken6usd = 0
+                pricetoken7usd = 0
+                pricetoken8usd = 0
+                pricetoken9usd = 0
+                pricetoken10usd = 0
+                
+                if str(token1address) != '0' or '':
+                        token1eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token1address),
+                                                                              1000000000000)
+                        if token1decimals != 18:
+                            pricetoken1usd = (priceeth / (token1eth)) / (
+                                    10 ** (18 - (token1decimals)))
+                        else:
+                            pricetoken1usd = (priceeth / (token1eth))
+                if str(token3address) != '0' or '':
+                    token3eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token3address),
+                                                                          1000000000000)
+                    if token3decimals != 18:
+                        pricetoken3usd = (priceeth / (token3eth)) / (
+                                10 ** (18 - (token3decimals)))
+                    else:
+                        pricetoken3usd = (priceeth / (token3eth))
+                if str(token4address) != '0' or '':
+                    token4eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token4address),
+                                                                          1000000000000)
+                    if token4decimals != 18:
+                        pricetoken4usd = (priceeth / (token4eth)) / (
+                                10 ** (18 - (token4decimals)))
+                    else:
+                        pricetoken4usd = (priceeth / (token4eth))
+                if str(token5address) != '0' or '':
+                    token5eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token5address),
+                                                                          1000000000000)
+                    if token5decimals != 18:
+                        pricetoken5usd = (priceeth / (token5eth)) / (
+                                10 ** (18 - (token5decimals)))
+                    else:
+                        pricetoken5usd = (priceeth / (token5eth))
+                if str(token6address) != '0' or '':
+                    token6eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token6address),
+                                                                          1000000000000)
+                    if token6decimals != 18:
+                        pricetoken6usd = (priceeth / (token6eth)) / (
+                                10 ** (18 - (token6decimals)))
+                    else:
+                        pricetoken6usd = (priceeth / (token6eth))
+                if str(token7address) != '0' or '':
+                    token7eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token7address),
+                                                                          1000000000000)
+                    if token7decimals != 18:
+                        pricetoken7usd = (priceeth / (token7eth)) / (
+                                10 ** (18 - (token7decimals)))
+                    else:
+                        pricetoken7usd = (priceeth / (token7eth))
+                if str(token8address) != '0' or '':
+                    token8eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token8address),
+                                                                          1000000000000)
+                    if token8decimals != 18:
+                        pricetoken8usd = (priceeth / (token8eth)) / (
+                                10 ** (18 - (token8decimals)))
+                    else:
+                        pricetoken8usd = (priceeth / (token8eth))
+                if str(token9address) != '0' or '':
+                    token9eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token9address),
+                                                                          1000000000000)
+                    if token9decimals != 18:
+                        pricetoken9usd = (priceeth / (token9eth)) / (
+                                10 ** (18 - (token9decimals)))
+                    else:
+                        pricetoken9usd = (priceeth / (token9eth))
+                if str(token10address) != '0' or '':
+                    token10eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token10address),
+                                                                          1000000000000)
+                    if token10decimals != 18:
+                        pricetoken10usd = (priceeth / (token10eth)) / (
+                                10 ** (18 - (token10decimals)))
+                    else:
+                        pricetoken10usd = (priceeth / (token10eth))
+                if str(token2address) != '0' or '':
+                    token2eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token2address),
+                                                                          1000000000000)
+                    if token2decimals != 18:
+                        pricetoken2usd = (priceeth / (token2eth)) / (
+                                10 ** (18 - (token2decimals)))
+                    else:
+                        pricetoken2usd = (priceeth / (token2eth))
+            except Exception as e:
+                exception_type, exception_object, exception_traceback = sys.exc_info()
+                if configfile.debugmode == '1':
+                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
+            try: #dollarbalances
+                dollarbalancetoken1= pricetoken1usd*balance_token1*100
+                dollarbalancetoken2 = pricetoken2usd * balance_token2*threeeth*100
+                dollarbalancetoken3 = pricetoken3usd * balance_token3*threeeth*100
+                dollarbalancetoken4 = pricetoken4usd * balance_token4*threeeth*100
+                dollarbalancetoken5 = pricetoken5usd * balance_token5*threeeth*100
+                dollarbalancetoken6 = pricetoken6usd * balance_token6*threeeth*100
+                dollarbalancetoken7= pricetoken7usd*balance_token7*threeeth*100
+                dollarbalancetoken8 = pricetoken8usd * balance_token8*threeeth*100
+                dollarbalancetoken9 = pricetoken9usd * balance_token9*threeeth*100
+                dollarbalancetoken10 = pricetoken10usd * balance_token10*threeeth*100
+                totalbalancedollarscript = int(dollarbalancetoken1 + dollarbalancetoken2 + dollarbalancetoken3 + dollarbalancetoken4 + dollarbalancetoken5 + dollarbalancetoken6 + dollarbalancetoken7 + dollarbalancetoken8 + dollarbalancetoken9 + dollarbalancetoken10 + dollarbalancemaintoken)
+            except Exception as e:
+                exception_type, exception_object, exception_traceback = sys.exc_info()
+                if configfile.debugmode == '1':
+                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
+            maintokenbalance=balance_eth
+            return {'totalbalancedollarscript': totalbalancedollarscript, 'dollarbalancemaintoken': dollarbalancemaintoken,'dollarbalancetoken1': dollarbalancetoken1, 'dollarbalancetoken2': dollarbalancetoken2, 'dollarbalancetoken3': dollarbalancetoken3, 'dollarbalancetoken4': dollarbalancetoken4, 'dollarbalancetoken5': dollarbalancetoken5,'dollarbalancetoken6': dollarbalancetoken6, 'dollarbalancetoken7': dollarbalancetoken7,'dollarbalancetoken8': dollarbalancetoken8,'dollarbalancetoken9': dollarbalancetoken9, 'dollarbalancetoken10': dollarbalancetoken10,'balance_token1':balance_token1,'balance_token2':balance_token2,'balance_token3':balance_token3,'balance_token4':balance_token4,'balance_token5':balance_token5,'balance_token6':balance_token6,'balance_token7':balance_token7,'balance_token8':balance_token8,'balance_token9':balance_token9,'balance_token10':balance_token10,'maintokenbalance':maintokenbalance}
+
+
+
+            
+            
+
+            
 
         def getprice(token1address, token1smallcasename, token2address, token2smallcasename, token3address,
                      token3smallcasename,
@@ -3631,12 +3583,50 @@ class Worker(QObject):
                      balance_token2, balance_token3, balance_token4,
                      balance_token5, balance_token6, balance_token7,
                      balance_token8, balance_token9, balance_token10,
-                     maintokenbalance, ethaddress, maindecimals):
-            time.sleep(timesleep)
-            time.sleep(1 / 6)
-            threeeth = 10 ** 18 * 1 * incaseofbuyinghowmuch
+                     maintokenbalance, ethaddress, maindecimals,totalbalancedollarscript):
+            QtTest.QTest.qWait(timesleep*1000)
+            QtTest.QTest.qWait(166)
+            if ethaddress == "0x0000000000000000000000000000000000000000" and maintokenbalance > 0.01:
+                threeeth = int(maintokenbalance*1000000000000000000)
+            if ethaddress == "0x0000000000000000000000000000000000000000" and maintokenbalance < 0.01:
+                threeeth = 1000000000000
+            if ethaddress != "0x0000000000000000000000000000000000000000":
+                if ethaddress == "0x6b175474e89094c44da98b954eedeac495271d0f":
+                    jajaja = int(cg.get_price(ids='dai', vs_currencies='usd')['dai']['usd'])
+                    priceeth =int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
+                    ethtest = (jajaja / priceeth)*maintokenbalance
+                    if ethtest < 0.01:
+                        threeeth = 1000000000000
+                    else:
+                        threeeth=int((ethtest)*1000000000000000000)
+                if ethaddress == "0xdac17f958d2ee523a2206206994597c13d831ec7":
+                    jajaja = int(cg.get_price(ids='tether', vs_currencies='usd')['tether']['usd'])
+                    priceeth =int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
+                    ethtest = (jajaja / priceeth)*maintokenbalance
+                    if ethtest < 0.01:
+                        threeeth = 1000000000000
+                    else:
+                        threeeth=int((ethtest)*1000000000000000000)
+                if ethaddress == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48":
+                    jajaja = int(cg.get_price(ids='usd-coin', vs_currencies='usd')['usd-coin']['usd'])
+                    priceeth =int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
+                    ethtest = (jajaja / priceeth)*maintokenbalance
+                    if ethtest < 0.01:
+                        threeeth = 1000000000000
+                    else:
+                        threeeth=int((ethtest)*1000000000000000000)
+                if ethaddress == "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599":
+                    jajaja = int(cg.get_price(ids='wrapped-bitcoin', vs_currencies='usd')['wrapped-bitcoin']['usd'])
+                    priceeth =int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
+                    ethtest = (jajaja / priceeth)*maintokenbalance
+                    if ethtest < 0.01:
+                        threeeth = 1000000000000
+                    else:
+                        threeeth=int((ethtest)*1000000000000000000)
+
             if 'buy' in gelukt:
                 priceright = 'buy'
+                threeeth= int((totalbalancedollarscript/int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd']))*1000000000000000000)
             else:
                 priceright = 'sell'
             if priceright == 'sell':
@@ -3719,7 +3709,7 @@ class Worker(QObject):
                         dollarbalancetoken2 = pricetoken2usd * balance_token2
                     else:
                         pricetoken2usd = (priceeth['ethereum']['usd'] / (token2eth2))
-                dollarbalancetoken2 = pricetoken2usd * balance_token2
+                    dollarbalancetoken2 = pricetoken2usd * balance_token2
                 if str(token3address) != '0':
                     if priceright == 'sell':
                         token3eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token3address),
@@ -3907,9 +3897,9 @@ class Worker(QObject):
                                                                 priceeth['ethereum']['usd'] / (token10eth2))
                                                         dollarbalancetoken10 = pricetoken10usd * balance_token10
             except Exception as e:
-                exc_type, exc_obj, exc_tb = sys.exc_info()
-                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                print(exc_type, fname, exc_tb.tb_lineno)
+                exception_type, exception_object, exception_traceback = sys.exc_info()
+                if configfile.debugmode == '1':
+                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
             if str(token1address) != '0':
                 weergave1 = ('   [' + token1smallcasename + '  ' + str("{:.6f}".format(pricetoken1usd) + ']'))
             try:
@@ -3941,7 +3931,9 @@ class Worker(QObject):
                     weergave1 = weergave1 + (
                             '    [' + token10smallcasename + '  ' + str("{:.6f}".format(pricetoken10usd)) + ']')
             except Exception as e:
-                o = 0
+                exception_type, exception_object, exception_traceback = sys.exc_info()
+                if configfile.debugmode == '1':
+                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
             try:
                 weergave = weergave1
                 token1totoken2 = 0
@@ -4742,7 +4734,6 @@ class Worker(QObject):
                                                                               token10high - token10low))
                                                 else:
                                                     token9totoken10 = 0.1
-            notyet = 3
             return {'priceeth': priceeth, 'pricetoken1usd': pricetoken1usd, 'pricetoken2usd': pricetoken2usd,
                         'token1totoken2': token1totoken2, 'token2totoken1': token2totoken1,
                         'pricetoken3usd': pricetoken3usd,
@@ -4809,7 +4800,7 @@ class Worker(QObject):
                         'token10totoken6': token10totoken6, 'token10totoken7': token10totoken7,
                         'token10totoken8': token10totoken8,
                         'token10totoken9': token10totoken9, 'token10totoken3': token10totoken3, 'weergave': weergave,
-                        'notyet': notyet, 'dollarbalancetoken1': dollarbalancetoken1, 'dollarbalancetoken2': dollarbalancetoken2, 'dollarbalancetoken3': dollarbalancetoken3, 'dollarbalancetoken4': dollarbalancetoken4, 'dollarbalancetoken5': dollarbalancetoken5,'dollarbalancetoken6': dollarbalancetoken6, 'dollarbalancetoken7': dollarbalancetoken7,'dollarbalancetoken8': dollarbalancetoken8,'dollarbalancetoken9': dollarbalancetoken9, 'dollarbalancetoken10': dollarbalancetoken10,'dollarbalancemaintoken': dollarbalancemaintoken}
+                        'dollarbalancetoken1': dollarbalancetoken1, 'dollarbalancetoken2': dollarbalancetoken2, 'dollarbalancetoken3': dollarbalancetoken3, 'dollarbalancetoken4': dollarbalancetoken4, 'dollarbalancetoken5': dollarbalancetoken5,'dollarbalancetoken6': dollarbalancetoken6, 'dollarbalancetoken7': dollarbalancetoken7,'dollarbalancetoken8': dollarbalancetoken8,'dollarbalancetoken9': dollarbalancetoken9, 'dollarbalancetoken10': dollarbalancetoken10,'dollarbalancemaintoken': dollarbalancemaintoken}
 
         if 'step' not in globals():
             step=1
@@ -4834,12 +4825,12 @@ class Worker(QObject):
                         'decimals': paytokendecimals,
                         'name': paytokenname}
             erc20tokens2 = ethbalance.add_token(token2, details2)
-            ethamount2 = math.floor(ethbalance.get_token_balance(paytokenname, my_address)['balance'])
+            ethamount2 = ethbalance.get_token_balance(paytokenname, my_address)['balance']
             if ethamount2 < paytokenamount:
                 print("You are not holding the required token, the application will now stop")
                 exit()
                 subprocess.call(["taskkill", "/F", "/IM", "bot.exe"])
-                time.sleep(4294960)
+                QtTest.QTest.qWait(4294960*1000)
         if 'step' not in globals():
             step=1
         else:
@@ -4851,6 +4842,49 @@ class Worker(QObject):
             # note that "step" value will not necessarily be same for every thread
             self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
         while self.__abort != True:
+            w3 = Web3(Web3.HTTPProvider(infura_url))
+            w33 = Web3()
+            address = my_address
+            private_key = my_pk
+            uniswap_wrapper = Uniswap(address, private_key, web3=w3, version=2)
+            ethereum_address = address
+            pieuw = gettotaltokenbalance(token1address, token1smallcasename, token2address,
+                                         token2smallcasename, token3address,
+                                         token3smallcasename,
+                                         token4address, token4smallcasename, token5address,
+                                         token5smallcasename, token6address,
+                                         token6smallcasename,
+                                         token7address, token7smallcasename, token8address,
+                                         token8smallcasename, token9address,
+                                         token9smallcasename,
+                                         token10address, ethaddress, token1decimals,
+                                         token2decimals, token3decimals, token4decimals,
+                                         token5decimals, token6decimals,
+                                         token7decimals, token8decimals, token9decimals,
+                                         token10decimals, maindecimals, my_address)
+            totalbalancedollarscript = pieuw['totalbalancedollarscript']
+            dollarbalancemaintoken = pieuw['dollarbalancemaintoken']
+            dollarbalancetoken1= pieuw['dollarbalancetoken1']
+            dollarbalancetoken2 = pieuw['dollarbalancetoken2']
+            dollarbalancetoken3 = pieuw['dollarbalancetoken3']
+            dollarbalancetoken4 = pieuw['dollarbalancetoken4']
+            dollarbalancetoken5 = pieuw['dollarbalancetoken5']
+            dollarbalancetoken6 = pieuw['dollarbalancetoken6']
+            dollarbalancetoken7 = pieuw['dollarbalancetoken7']
+            dollarbalancetoken8 = pieuw['dollarbalancetoken8']
+            dollarbalancetoken9 = pieuw['dollarbalancetoken9']
+            dollarbalancetoken10 = pieuw['dollarbalancetoken10']
+            balance_token1 = pieuw['balance_token1']
+            balance_token2 = pieuw['balance_token2']
+            balance_token3 = pieuw['balance_token3']
+            balance_token4 = pieuw['balance_token4']
+            balance_token5 = pieuw['balance_token5']
+            balance_token6 = pieuw['balance_token6']
+            balance_token7 = pieuw['balance_token7']
+            balance_token8 = pieuw['balance_token8']
+            balance_token9 = pieuw['balance_token9']
+            balance_token10 = pieuw['balance_token10']
+            maintokenbalance = pieuw['maintokenbalance']
             try:
                 w33 = Web3()
                 try:
@@ -4899,22 +4933,12 @@ class Worker(QObject):
                                         token6address, token7address, token8address, token9address, token10address,
                                         maincoinoption, token1decimals, token2decimals, token3decimals, token4decimals,
                                         token5decimals, token6decimals, token7decimals, token8decimals, token9decimals,
-                                        token10decimals)
+                                        token10decimals,dollarbalancemaintoken,mcotoseeassell,dollarbalancetoken1,dollarbalancetoken2,dollarbalancetoken3,dollarbalancetoken4,dollarbalancetoken5,dollarbalancetoken6,dollarbalancetoken7,dollarbalancetoken8,dollarbalancetoken9,dollarbalancetoken10,balance_token1,balance_token2,balance_token3,balance_token4,balance_token5,balance_token6,balance_token7,balance_token8,balance_token9,balance_token10)
 
                     gelukt = rara['gelukt']
                     gelukt2 = rara['gelukt2']
                     keer = rara['keer']
-                    balance_token1 = rara['balance_token1']
-                    balance_token2 = rara['balance_token2']
-                    balance_token3 = rara['balance_token3']
-                    balance_token4 = rara['balance_token4']
-                    balance_token5 = rara['balance_token5']
-                    balance_token6 = rara['balance_token6']
-                    balance_token7 = rara['balance_token7']
-                    balance_token8 = rara['balance_token8']
-                    balance_token9 = rara['balance_token9']
-                    balance_token10 = rara['balance_token10']
-                    maintokenbalance = rara['maintokenbalance']
+
                     print('Last thing we did is ' + gelukt + '. Second token available for trading is ' + gelukt2)
                 if 'step' not in globals():
                     step = 1
@@ -4930,27 +4954,63 @@ class Worker(QObject):
                         self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
                         break
                     keer = keer + 1
-                    if keer > 300 or 'gelukt' not in globals() or gelukt == "mislukt" or gelukt == "mislukt buy" or gelukt == "mislukt sell":
+                    if keer > 300 or 'gelukt' not in locals() or gelukt == "mislukt" or gelukt == "mislukt buy" or gelukt == "mislukt sell":
+                        pieuw = gettotaltokenbalance(token1address, token1smallcasename, token2address,
+                                                     token2smallcasename, token3address,
+                                                     token3smallcasename,
+                                                     token4address, token4smallcasename, token5address,
+                                                     token5smallcasename, token6address,
+                                                     token6smallcasename,
+                                                     token7address, token7smallcasename, token8address,
+                                                     token8smallcasename, token9address,
+                                                     token9smallcasename,
+                                                     token10address, ethaddress, token1decimals,
+                                                     token2decimals, token3decimals, token4decimals,
+                                                     token5decimals, token6decimals,
+                                                     token7decimals, token8decimals, token9decimals,
+                                                     token10decimals, maindecimals, my_address)
+                        totalbalancedollarscript = pieuw['totalbalancedollarscript']
+                        dollarbalancemaintoken = pieuw['dollarbalancemaintoken']
+                        dollarbalancetoken1 = pieuw['dollarbalancetoken1']
+                        dollarbalancetoken2 = pieuw['dollarbalancetoken2']
+                        dollarbalancetoken3 = pieuw['dollarbalancetoken3']
+                        dollarbalancetoken4 = pieuw['dollarbalancetoken4']
+                        dollarbalancetoken5 = pieuw['dollarbalancetoken5']
+                        dollarbalancetoken6 = pieuw['dollarbalancetoken6']
+                        dollarbalancetoken7 = pieuw['dollarbalancetoken7']
+                        dollarbalancetoken8 = pieuw['dollarbalancetoken8']
+                        dollarbalancetoken9 = pieuw['dollarbalancetoken9']
+                        dollarbalancetoken10 = pieuw['dollarbalancetoken10']
+                        balance_token1 = pieuw['balance_token1']
+                        balance_token2 = pieuw['balance_token2']
+                        balance_token3 = pieuw['balance_token3']
+                        balance_token4 = pieuw['balance_token4']
+                        balance_token5 = pieuw['balance_token5']
+                        balance_token6 = pieuw['balance_token6']
+                        balance_token7 = pieuw['balance_token7']
+                        balance_token8 = pieuw['balance_token8']
+                        balance_token9 = pieuw['balance_token9']
+                        balance_token10 = pieuw['balance_token10']
+                        maintokenbalance = pieuw['maintokenbalance']
                         rara = checkbalance(infura_url, my_address, token1address, token2address, token3address,
                                             token4address,
                                             token5address,
                                             token6address, token7address, token8address, token9address, token10address,
                                             maincoinoption, token1decimals, token2decimals, token3decimals,
-                                            token4decimals, token5decimals, token6decimals, token7decimals,
-                                            token8decimals, token9decimals, token10decimals)
+                                            token4decimals,
+                                            token5decimals, token6decimals, token7decimals, token8decimals,
+                                            token9decimals,
+                                            token10decimals, dollarbalancemaintoken, mcotoseeassell,
+                                            dollarbalancetoken1, dollarbalancetoken2, dollarbalancetoken3,
+                                            dollarbalancetoken4, dollarbalancetoken5, dollarbalancetoken6,
+                                            dollarbalancetoken7, dollarbalancetoken8, dollarbalancetoken9,
+                                            dollarbalancetoken10, balance_token1, balance_token2, balance_token3,
+                                            balance_token4, balance_token5, balance_token6, balance_token7,
+                                            balance_token8, balance_token9, balance_token10)
                         gelukt = rara['gelukt']
                         gelukt2 = rara['gelukt2']
                         keer = rara['keer']
-                        balance_token1 = rara['balance_token1']
-                        balance_token2 = rara['balance_token2']
-                        balance_token3 = rara['balance_token3']
-                        balance_token4 = rara['balance_token4']
-                        balance_token5 = rara['balance_token5']
-                        balance_token6 = rara['balance_token6']
-                        balance_token7 = rara['balance_token7']
-                        balance_token8 = rara['balance_token8']
-                        balance_token9 = rara['balance_token9']
-                        balance_token10 = rara['balance_token10']
+
                         maintokenbalance = rara['maintokenbalance']
 
                     try:
@@ -5011,69 +5071,10 @@ class Worker(QObject):
                                       balance_token7=balance_token7,
                                       balance_token8=balance_token8, balance_token9=balance_token9,
                                       balance_token10=balance_token10,
-                                      maintokenbalance=maintokenbalance, ethaddress=maincoinoption, maindecimals=maindecimals)
-                        dollarbalancetoken1 = ku['dollarbalancetoken1']
-                        dollarbalancetoken2 = ku['dollarbalancetoken2']
-                        dollarbalancetoken3 = ku['dollarbalancetoken3']
-                        dollarbalancetoken4 = ku['dollarbalancetoken4']
-                        dollarbalancetoken5 = ku['dollarbalancetoken5']
-                        dollarbalancetoken6 = ku['dollarbalancetoken6']
-                        dollarbalancetoken7 = ku['dollarbalancetoken7']
-                        dollarbalancetoken8 = ku['dollarbalancetoken8']
-                        dollarbalancetoken9 = ku['dollarbalancetoken9']
-                        dollarbalancetoken10 = ku['dollarbalancetoken10']
-                        dollarbalancemaintoken = ku['dollarbalancemaintoken']
-                        totaldollars = dollarbalancetoken1 + dollarbalancetoken2 + dollarbalancetoken3 + dollarbalancetoken4 + dollarbalancetoken5 + dollarbalancetoken6 + dollarbalancetoken7 + dollarbalancetoken8 + dollarbalancetoken9 + dollarbalancetoken10 + dollarbalancemaintoken
-                        weergavegeld=str(token1smallcasename)+':$'+str(dollarbalancetoken1)
-                        if dollarbalancetoken2!=0:
-                            weergavegeld=weergavegeld+'   '+str(token2smallcasename)+':$'+str(dollarbalancetoken2)
-                            if dollarbalancetoken3 != 0:
-                                weergavegeld = weergavegeld + '   ' + str(token3smallcasename) + ':$' + str(
-                                    dollarbalancetoken3)
-                                if dollarbalancetoken4 != 0:
-                                    weergavegeld = weergavegeld + '   ' + str(token4smallcasename) + ':$' + str(
-                                        dollarbalancetoken4)
-                                    if dollarbalancetoken5 != 0:
-                                        weergavegeld = weergavegeld + '   ' + str(token5smallcasename) + ':$' + str(
-                                            dollarbalancetoken5)
-                                        if dollarbalancetoken6 != 0:
-                                            weergavegeld = weergavegeld + '   ' + str(token6smallcasename) + ':$' + str(
-                                                dollarbalancetoken6)
-                                            if dollarbalancetoken7 != 0:
-                                                weergavegeld = weergavegeld + '   ' + str(
-                                                    token7smallcasename) + ':$' + str(dollarbalancetoken7)
-                                                if dollarbalancetoken8 != 0:
-                                                    weergavegeld = weergavegeld + '   ' + str(
-                                                        token8smallcasename) + ':$' + str(dollarbalancetoken8)
-                                                    if dollarbalancetoken9 != 0:
-                                                        weergavegeld = weergavegeld + '   ' + str(
-                                                            token9smallcasename) + ':$' + str(dollarbalancetoken9)
-                                                        if dollarbalancetoken10 != 0:
-                                                            weergavegeld = weergavegeld + '   ' + str(
-                                                                token10smallcasename) + ':$' + str(dollarbalancetoken10)
-                        if 'nogeenkeer' not in locals():
-                            nogeenkeer=1
-                            print('Current balance:  '+weergavegeld)
-                        else:
-                            nogeenkeer=nogeenkeer+1
-                            if nogeenkeer > 300:
-                                print('Current balance:  ' + weergavegeld)
-                                nogeenkeer=1
-                        if 'step' not in globals():
-                            step = 1
-                        else:
-                            step = step + 1
-                        self.sig_step.emit(self.__id, 'step ' + str(step))
-                        QCoreApplication.processEvents()
-                        if self.__abort == True:
-                            # note that "step" value will not necessarily be same for every thread
-                            self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
-                            break
-
+                                      maintokenbalance=maintokenbalance, ethaddress=maincoinoption, maindecimals=maindecimals,totalbalancedollarscript=totalbalancedollarscript)
                         try:
                             weergave12 = ku['weergave']
                             weergave = weergave12
-                            notyet = ku['notyet']
                             priceeth = ku['priceeth']
                             pricetoken1usd = ku['pricetoken1usd']
                             pricetoken2usd = ku['pricetoken2usd']
@@ -5213,6 +5214,69 @@ class Worker(QObject):
 
                             token10totoken9 = ku['token10totoken9']
                             token10totoken3 = ku['token10totoken3']
+                        except:
+                            o = 0
+                        
+                        dollarbalancetoken1 = balance_token1*pricetoken1usd
+                        dollarbalancetoken2 = balance_token2 * pricetoken2usd
+                        dollarbalancetoken3 = balance_token3 * pricetoken3usd
+                        dollarbalancetoken4 = balance_token4 * pricetoken4usd
+                        dollarbalancetoken5 = balance_token5 * pricetoken5usd
+                        dollarbalancetoken6 = balance_token6 * pricetoken6usd
+                        dollarbalancetoken7 = balance_token7 * pricetoken7usd
+                        dollarbalancetoken8 = balance_token8 * pricetoken8usd
+                        dollarbalancetoken9 = balance_token9 * pricetoken9usd
+                        dollarbalancetoken10 = balance_token10 * pricetoken10usd
+                        totaldollars = dollarbalancetoken1 + dollarbalancetoken2 + dollarbalancetoken3 + dollarbalancetoken4 + dollarbalancetoken5 + dollarbalancetoken6 + dollarbalancetoken7 + dollarbalancetoken8 + dollarbalancetoken9 + dollarbalancetoken10 + dollarbalancemaintoken
+                        weergavegeld=str(configfile.maincoinoption)+':$'+str("{:.2f}".format(dollarbalancemaintoken))
+                        if dollarbalancetoken1>0:
+                            weergavegeld=weergavegeld+'   '+str(token1smallcasename)+':$'+str("{:.2f}".format(dollarbalancetoken1))
+                        if dollarbalancetoken2>0:
+                            weergavegeld=weergavegeld+'   '+str(token2smallcasename)+':$'+str("{:.2f}".format(dollarbalancetoken2))
+                        if dollarbalancetoken3 > 0:
+                            weergavegeld = weergavegeld + '   ' + str(token3smallcasename) + ':$' + str("{:.2f}".format(
+                                    dollarbalancetoken3))
+                        if dollarbalancetoken4 > 0:
+                                    weergavegeld = weergavegeld + '   ' + str(token4smallcasename) + ':$' + str("{:.2f}".format(
+                                        dollarbalancetoken4))
+                        if dollarbalancetoken5 > 0:
+                                        weergavegeld = weergavegeld + '   ' + str(token5smallcasename) + ':$' + str("{:.2f}".format(
+                                            dollarbalancetoken5))
+                        if dollarbalancetoken6 > 0:
+                                            weergavegeld = weergavegeld + '   ' + str(token6smallcasename) + ':$' + str("{:.2f}".format(
+                                                dollarbalancetoken6))
+                        if dollarbalancetoken7 > 0:
+                                                weergavegeld = weergavegeld + '   ' + str(
+                                                    token7smallcasename) + ':$' + str("{:.2f}".format(dollarbalancetoken7))
+                        if dollarbalancetoken8 > 0:
+                                                    weergavegeld = weergavegeld + '   ' + str(
+                                                        token8smallcasename) + ':$' + str("{:.2f}".format(dollarbalancetoken8))
+                        if dollarbalancetoken9 > 0:
+                                                        weergavegeld = weergavegeld + '   ' + str(
+                                                            token9smallcasename) + ':$' + str("{:.2f}".format(dollarbalancetoken9))
+                        if dollarbalancetoken10 > 0:
+                                                            weergavegeld = weergavegeld + '   ' + str(
+                                                                token10smallcasename) + ':$' + str("{:.2f}".format(dollarbalancetoken10))
+                        if 'nogeenkeer' not in locals():
+                            nogeenkeer=1
+                            print('Current balance:  '+weergavegeld)
+                        else:
+                            nogeenkeer=nogeenkeer+1
+                            if nogeenkeer > 300:
+                                print('Current balance:  ' + weergavegeld)
+                                nogeenkeer=1
+                        if 'step' not in globals():
+                            step = 1
+                        else:
+                            step = step + 1
+                        self.sig_step.emit(self.__id, 'step ' + str(step))
+                        QCoreApplication.processEvents()
+                        if self.__abort == True:
+                            # note that "step" value will not necessarily be same for every thread
+                            self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+                            break
+
+                        try:
 
                             if 'pricetoken1usd2' in globals() and 0 == 1:
                                 try:
@@ -5273,6 +5337,7 @@ class Worker(QObject):
                             exception_type, exception_object, exception_traceback = sys.exc_info()
                             if configfile.debugmode == '1':
                                 print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
+                        notyet=1
                         if 'step' not in globals():
                             step = 1
                         else:
@@ -5284,12 +5349,15 @@ class Worker(QObject):
                             # note that "step" value will not necessarily be same for every thread
                             self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
                             break
-
-                        if "weergave1" not in locals():
-                            print(str(strftime("%H:%M:%S", localtime())) + weergave + "  Current total balance($): $" +str(totaldollars))
+                        if totaldollars<0:
+                            totaldollars2=0
+                        else:
+                            totaldollars2=totaldollars
+                        if "weergave1" not in locals() and "notyet" in locals():
+                            print(str(strftime("%H:%M:%S", localtime())) + weergave + "  Current total balance($): $" +str("{:.2f}".format(totaldollars2)))
                         if "weergave1" in locals():
                             if weergave != weergave1:
-                                print(str(strftime("%H:%M:%S", localtime())) + weergave+ "  Current total balance($): $" +str(totaldollars))
+                                print(str(strftime("%H:%M:%S", localtime())) + weergave+ "  Current total balance($): $" +str("{:.2f}".format(totaldollars2)))
 
                     except Exception as e:
                         exception_type, exception_object, exception_traceback = sys.exc_info()
@@ -5311,10 +5379,13 @@ class Worker(QObject):
                             # note that "step" value will not necessarily be same for every thread
                             self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
                             break
-                        time.sleep(1)
-                        notyet = 4
-                    notyet == 3
-                    if notyet == 3:
+                        QtTest.QTest.qWait(1000)
+                        notyet = 0
+                    if 'notyet' not in locals():
+                        notyet=0
+                    else:
+                        notyet = notyet+1
+                    if notyet > 0:
                         if 'step' not in globals():
                             step = 1
                         else:
@@ -5449,9 +5520,9 @@ class Worker(QObject):
                 internetcheck = is_connected()
                 if internetcheck is False:
                     try:
-                        time.sleep(5)
+                        QtTest.QTest.qWait(5000)
                     except:
-                        time.sleep(5)
+                        QtTest.QTest.qWait(5000)
                 if 'step' not in globals():
                     step = 1
                 else:
@@ -5699,6 +5770,18 @@ class Ui_MainWindow(QGraphicsObject):
 
             self.debugmode = QtWidgets.QCheckBox(self.centralwidget)
             self.debugmode.setGeometry(QtCore.QRect(840, 10, 111, 20))
+
+            self.mcotoseeassell = QtWidgets.QLineEdit(self.centralwidget)
+            self.mcotoseeassell.setGeometry(QtCore.QRect(400, 0, 81, 21))
+            self.label_99 = QtWidgets.QLabel(self.centralwidget)
+            self.label_99.setGeometry(QtCore.QRect(230, 0, 180, 21))
+            font = QtGui.QFont()
+            font.setPointSize(10)
+            font.setBold(False)
+            font.setWeight(50)
+            self.label_99.setFont(font)
+            self.label_99.setObjectName("label_99")
+
             self.token1stoploss = QtWidgets.QLineEdit(self.centralwidget)
             self.token1stoploss.setGeometry(QtCore.QRect(960, 50, 71, 16))
             self.token1stoploss.setObjectName("token1stoploss")
@@ -5749,7 +5832,9 @@ class Ui_MainWindow(QGraphicsObject):
             self.diffdepositaddress.setObjectName("diffdepositaddress")
 
         except Exception as e:
-            print(e)
+            exception_type, exception_object, exception_traceback = sys.exc_info()
+            if configfile.debugmode == '1':
+                print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
 
         if 1 == 1:
             self.token1stoploss.setText(configfile.token1stoploss)
@@ -5785,6 +5870,10 @@ class Ui_MainWindow(QGraphicsObject):
         self.token1ethaddress = QtWidgets.QLineEdit(self.centralwidget)
         self.token1ethaddress.setGeometry(QtCore.QRect(70, 50, 121, 16))
         self.token1ethaddress.setObjectName("token1ethaddress")
+
+        if configfile.mcotoseeassell != '':
+            self.mcotoseeassell.setText(configfile.mcotoseeassell)
+
         if configfile.token1ethaddress != '0':
             self.token1ethaddress.setText(configfile.token1ethaddress)
         self.token2low = QtWidgets.QLineEdit(self.centralwidget)
@@ -6182,7 +6271,7 @@ class Ui_MainWindow(QGraphicsObject):
         if configfile.maxgweinumber != '0':
             self.maxgweinumber.setText(str(configfile.maxgweinumber))
         if configfile.diffdepositaddress!= '0':
-            self.diffdepositaddress.setText(str(configfile.maxgweinumber))
+            self.diffdepositaddress.setText(str(configfile.diffdepositaddress))
 
         try:
             if configfile.maxgwei != '0':
@@ -6600,6 +6689,7 @@ class Ui_MainWindow(QGraphicsObject):
         self.label_11.setText(_translate("MainWindow", "Token address"))
         self.label_12.setText(_translate("MainWindow", "High($)"))
         self.label_13.setText(_translate("MainWindow", "Low($)"))
+        self.label_99.setText(_translate("MainWindow", "Buy/Sell boundary ($):"))
         self.stopbutton.setText(_translate("MainWindow", "Stop"))
         self.sleepbox.setText(_translate("MainWindow", "Seconds between checking price (min. 1 sec)"))
         self.tokentokennumeratorbox.setText(_translate("MainWindow", "Tokentokennumerator (3.3= standard)"))
@@ -6609,7 +6699,7 @@ class Ui_MainWindow(QGraphicsObject):
         self.label_14.setText(_translate("MainWindow", "Max slippage (1%=0.01)"))
         self.label_16.setText(_translate("MainWindow", "$ to keep in ETH after trade"))
         self.label_17.setText(_translate("MainWindow", "GWEI option (see ethgasstattion.com)"))
-        self.label_18.setText(_translate("MainWindow", "Main coin/token"))
+        self.label_18.setText(_translate("MainWindow", "Main coin/token:"))
         self.stoplosstoken1.setText(_translate("MainWindow", "Stoploss($):"))
         self.stoplosstoken2.setText(_translate("MainWindow", "Stoploss($):"))
         self.stoplosstoken3.setText(_translate("MainWindow", "Stoploss($):"))
@@ -6744,7 +6834,9 @@ class Ui_MainWindow(QGraphicsObject):
             if self.gweioption.currentText() == 'Cheap':
                 speed = 'safeLow'
         except Exception as e:
-            o = 0
+            exception_type, exception_object, exception_traceback = sys.exc_info()
+            if configfile.debugmode == '1':
+                print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
         try:
             self.secondscheckingprice_2.setEnabled(False)
             self.secondscheckingprice.setEnabled(False)
@@ -6894,8 +6986,13 @@ class Ui_MainWindow(QGraphicsObject):
             self.stoplosstoken8.setDisabled(True)
             self.stoplosstoken9.setDisabled(True)
             self.stoplosstoken10.setDisabled(True)
+            self.mcotoseeassell.setDisabled(True)
+            self.mcotoseeassell.setReadOnly(True)
+
         except Exception as e:
-            o = 0
+            exception_type, exception_object, exception_traceback = sys.exc_info()
+            if configfile.debugmode == '1':
+                print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
 
         try:
             if self.activatetoken1.isChecked():
@@ -7722,12 +7819,28 @@ class Ui_MainWindow(QGraphicsObject):
                 b = '\n'
                 regex = "(?<=%s).*?(?=%s)" % (a, b)
                 lol115 = re.sub(regex, '\'0\'', lol114)
-
+            maxgweinumber = self.maxgweinumber.text()
+            a = 'maxgweinumber='
+            b = '\n'
+            regex = "(?<=%s).*?(?=%s)" % (a, b)
+            lol116 = re.sub(regex, '\'' + str(maxgweinumber) + '\'', lol115)
+            diffdepositaddress = self.diffdepositaddress.text()
+            a = 'diffdepositaddress='
+            b = '\n'
+            regex = "(?<=%s).*?(?=%s)" % (a, b)
+            lol117 = re.sub(regex, '\'' + str(diffdepositaddress) + '\'', lol116)
+            mcotoseeassell = self.mcotoseeassell.text()
+            a = 'mcotoseeassell='
+            b = '\n'
+            regex = "(?<=%s).*?(?=%s)" % (a, b)
+            lol118 = re.sub(regex, '\'' + str(mcotoseeassell) + '\'', lol117)
             with open("./configfile.py", "w", encoding="utf-8") as f:
-                f.write(lol115)
+                f.write(lol118)
                 f.close()
         except Exception as e:
-            o = 0
+            exception_type, exception_object, exception_traceback = sys.exc_info()
+            if configfile.debugmode == '1':
+                print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
         self.log.append('starting {} threads'.format(self.NUM_THREADS))
         self.startbutton.setDisabled(True)
         self.stopbutton.setEnabled(True)
@@ -7820,6 +7933,9 @@ class Ui_MainWindow(QGraphicsObject):
                 self.token2ethaddress.setEnabled(True)
                 self.token2low.setEnabled(True)
                 self.token2high.setEnabled(True)
+
+                self.mcotoseeassell.setEnabled(True)
+                self.mcotoseeassell.setReadOnly(False)
 
                 self.activatetoken3.setEnabled(True)
                 self.tradewithETHtoken3.setEnabled(True)
@@ -7934,7 +8050,9 @@ class Ui_MainWindow(QGraphicsObject):
                 self.maxgweinumber.setEnabled(True)
                 self.diffdepositaddress.setEnabled(True)
             except Exception as e:
-                o = 0
+                exception_type, exception_object, exception_traceback = sys.exc_info()
+                if configfile.debugmode == '1':
+                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
         print('Bot stopped')
         lol2()
 
@@ -7948,5 +8066,7 @@ if __name__ == "__main__":
     try:
         sys.exit(app.exec_())
     except Exception as e:
-        o = 0
+        exception_type, exception_object, exception_traceback = sys.exc_info()
+        if configfile.debugmode == '1':
+            print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
     print(lollol2)
