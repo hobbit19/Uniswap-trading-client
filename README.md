@@ -39,6 +39,8 @@ my_pk = ''</pre>
 
 <b>Main coin/token</b>: The token or coin you want to trade tokens for and with
 
+<b>Buy/Sell boundary</b>: The amount of balance (calculated in $) that a token or your main coin/token has to be present to deduct whether the latest action was a buy or a sell. For instance: in the value is 100 ,your maincoin option ethereum and have 120$ worth of ethereum on your address, the bot will see the latest action as "sell".
+
 <b>Token ETH address</b>: Fill the token eth address you want to trade (such as 0x00000000000000000)
 
 <b>Low($)</b>: The price you want the trader to sell the token for (0.01 = 1 dollar cent)
@@ -75,8 +77,12 @@ my_pk = ''</pre>
   As an example, if the current price of token1 is $0.9 and its set "high"=$1 and "low"=$0, the value of this token is seen as "90%". Token2 also has a high of $1, but the         current price is 0.2$, value of this token is seen as 20%. The tokentokenmnumerator is set at 3.3. If we divide the 90% by the 20%, we get 4.5, which is higher than 3.3, which   means that token1 gets traded for token2 instantly. If the tokentokennumerator was set to 5, the swap would not happen.
   
 <br> </br>
-<H2>Changelog v0.3</h2>
+<H2>Changelog v1</h2>
 
+-Several bug fixes that were found after testing all feature
+-Added current balances in $. The bot now tells you how much balance your account has.
+-Added buy-sell boundary. This value tells the bot how much ETH (or token such as USDT) is needed to be on the address to see the last action as a sell.
+...
 - Repacked into an executable due to edited modules and questions about python usage
 - Fixed problems regarding threading, the trader works much faster now
 - Further updates in custom gas strategies
@@ -86,19 +92,15 @@ my_pk = ''</pre>
 <br> </br>
 <H2>Current bugs</h2>
 
-- <del>Can't add ETH tokens with less than 18 decimals (The price it shows will be wrong)</del>
-- <del>Starting the bot after it is been stopped may close the application in Linux (No problem in Windows)</del>
+
 - Sloppy dinamic design of GUI
-- <del>Gas-strategies: all are seen as "Fast"</del>
 - Sometimes lag when updating names or when starting the bot (0-10 seconds)
 - More: Let me know!
 
 <br> </br>
 <H2>To do</H2>
 
-- <del>Add debugmode</del>
 - New, more user-friendly design
-- <del>Create an executable </del>
 
 (Depends on whether the application is used)
 
