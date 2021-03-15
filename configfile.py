@@ -9,6 +9,7 @@ ethtokeep='50'
 
 speed='fast'
 maincoinoption='Ethereum'
+mcotoseeassell='100'
 
 diffdepositaddress='0'
 maxgweinumber='0'
