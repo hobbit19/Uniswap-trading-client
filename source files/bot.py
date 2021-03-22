@@ -1,4 +1,7 @@
+#!python
+#cython: language_level=3
 import datetime
+from itertools import permutations
 import time
 from uniswap import Uniswap
 from web3 import Web3, middleware, _utils
@@ -11,7 +14,6 @@ import subprocess
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
-
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QApplication, QPushButton, QTextEdit, QVBoxLayout, QWidget,QGraphicsObject
 from PyQt5.QtCore import QCoreApplication
@@ -27,6 +29,7 @@ sys.path.insert(0, './')
 import configfile
 
 
+sys.setrecursionlimit(1500)
 
 QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)  # enable highdpi scaling
 QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)  # use highdpi icons
@@ -73,4850 +76,1037 @@ class Worker(QObject):
     sig_msg = pyqtSignal(str)  # message to be shown to user
 
     def __init__(self, id: int):
-        super().__init__()
-        self.__id = id
-        self.__abort = False
+            super().__init__()
+            self.__id = id
+            self.__abort = False
 
     def work(self):
-        thread_name = QThread.currentThread().objectName()
-        thread_id = int(QThread.currentThreadId())  # cast to int() is necessary
-        self.sig_msg.emit('Running worker #{} from thread "{}" (#{})'.format(self.__id, thread_name, thread_id))
-
-
-        if 'step' not in globals():
-            step=1
-        else:
-            step=step+1
-        self.sig_step.emit(self.__id, 'step ' + str(step))
-        QCoreApplication.processEvents()
-        if self.__abort==True:
-            # note that "step" value will not necessarily be same for every thread
-            self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
-
-        importlib.reload(configfile)
-        w33 = Web3()
-        cg = CoinGeckoAPI()
-        maxgwei=int(configfile.maxgwei)
-        if configfile.maxgweinumber == '':
-            maxgweinumber=0
-        else:
-            maxgweinumber = int(configfile.maxgweinumber)
-        diffdeposit=float(configfile.diffdeposit)
-        diffdepositaddress = str(configfile.diffdepositaddress)
-        speed = str(configfile.speed)
-        max_slippage = float(configfile.max_slippage)
-        incaseofbuyinghowmuch = int(configfile.incaseofbuyinghowmuch)
-        ethtokeep = int(configfile.ethtokeep)
-        timesleepaftertrade = int(configfile.secondscheckingprice_2)
-        timesleep = int(configfile.secondscheckingprice)
-        infura_url = str(configfile.infuraurl)
-        infuraurl = infura_url
-        tokentokennumerator = float(configfile.tokentokennumerator)
-        activatetoken1 = float(configfile.activatetoken1)
-        tradewithETHtoken1 = float(configfile.tradewithETHtoken1)
-        tradewithERCtoken1 = float(configfile.tradewithERCtoken1)
-        token1ethaddress = str(configfile.token1ethaddress)
-        token1low = float(configfile.token1low)
-        token1high = float(configfile.token1high)
-        token1ethaddress = str(configfile.token1ethaddress)
-        token1low = float(configfile.token1low)
-        token1high = float(configfile.token1high)
-        activatetoken2 = float(configfile.activatetoken2)
-        tradewithETHtoken2 = float(configfile.tradewithETHtoken2)
-        tradewithERCtoken2 = float(configfile.tradewithERCtoken2)
-        token2ethaddress = str(configfile.token2ethaddress)
-        token2low = float(configfile.token2low)
-        token2high = float(configfile.token2high)
-        token2ethaddress = str(configfile.token2ethaddress)
-        token2low = float(configfile.token2low)
-        token2high = float(configfile.token2high)
-        activatetoken3 = float(configfile.activatetoken3)
-        tradewithETHtoken3 = float(configfile.tradewithETHtoken3)
-        tradewithERCtoken3 = float(configfile.tradewithERCtoken3)
-        token3ethaddress = str(configfile.token3ethaddress)
-        token3low = float(configfile.token3low)
-        token3high = float(configfile.token3high)
-        token3ethaddress = str(configfile.token3ethaddress)
-        token3low = float(configfile.token3low)
-        token3high = float(configfile.token3high)
-        activatetoken4 = float(configfile.activatetoken4)
-        tradewithETHtoken4 = float(configfile.tradewithETHtoken4)
-        tradewithERCtoken4 = float(configfile.tradewithERCtoken4)
-        token4ethaddress = str(configfile.token4ethaddress)
-        token4low = float(configfile.token4low)
-        token4high = float(configfile.token4high)
-        token4ethaddress = str(configfile.token4ethaddress)
-        token4low = float(configfile.token4low)
-        token4high = float(configfile.token4high)
-        activatetoken5 = float(configfile.activatetoken5)
-        tradewithETHtoken5 = float(configfile.tradewithETHtoken5)
-        tradewithERCtoken5 = float(configfile.tradewithERCtoken5)
-        token5ethaddress = str(configfile.token5ethaddress)
-        token5low = float(configfile.token5low)
-        token5high = float(configfile.token5high)
-        token5ethaddress = str(configfile.token5ethaddress)
-        token5low = float(configfile.token5low)
-        token5high = float(configfile.token5high)
-        activatetoken6 = float(configfile.activatetoken6)
-        tradewithETHtoken6 = float(configfile.tradewithETHtoken6)
-        tradewithERCtoken6 = float(configfile.tradewithERCtoken6)
-        token6ethaddress = str(configfile.token6ethaddress)
-        token6low = float(configfile.token6low)
-        token6high = float(configfile.token6high)
-        token6ethaddress = str(configfile.token6ethaddress)
-        token6low = float(configfile.token6low)
-        token6high = float(configfile.token6high)
-        activatetoken7 = float(configfile.activatetoken7)
-        tradewithETHtoken7 = float(configfile.tradewithETHtoken7)
-        tradewithERCtoken7 = float(configfile.tradewithERCtoken7)
-        token7ethaddress = str(configfile.token7ethaddress)
-        token7low = float(configfile.token7low)
-        token7high = float(configfile.token7high)
-        token7ethaddress = str(configfile.token7ethaddress)
-        token7low = float(configfile.token7low)
-        token7high = float(configfile.token7high)
-        activatetoken8 = float(configfile.activatetoken8)
-        tradewithETHtoken8 = float(configfile.tradewithETHtoken8)
-        tradewithERCtoken8 = float(configfile.tradewithERCtoken8)
-        token8ethaddress = str(configfile.token8ethaddress)
-        token8low = float(configfile.token8low)
-        token8high = float(configfile.token8high)
-        token8ethaddress = str(configfile.token8ethaddress)
-        token8low = float(configfile.token8low)
-        token8high = float(configfile.token8high)
-        activatetoken9 = float(configfile.activatetoken9)
-        tradewithETHtoken9 = float(configfile.tradewithETHtoken9)
-        tradewithERCtoken9 = float(configfile.tradewithERCtoken9)
-        token9ethaddress = str(configfile.token9ethaddress)
-        token9low = float(configfile.token9low)
-        token9high = float(configfile.token9high)
-        token9ethaddress = str(configfile.token9ethaddress)
-        token9low = float(configfile.token9low)
-        token9high = float(configfile.token9high)
-        activatetoken10 = float(configfile.activatetoken10)
-        tradewithETHtoken10 = float(configfile.tradewithETHtoken10)
-        tradewithERCtoken10 = float(configfile.tradewithERCtoken10)
-        token10ethaddress = str(configfile.token10ethaddress)
-        token10low = float(configfile.token10low)
-        token10high = float(configfile.token10high)
-        token10ethaddress = str(configfile.token10ethaddress)
-        token10low = float(configfile.token10low)
-        token10high = float(configfile.token10high)
-        mcotoseeassell=float(configfile.mcotoseeassell)
-
-        stoplosstoken10 = float(configfile.token10stoploss)
-        stoplosstoken9 = float(configfile.token9stoploss)
-        stoplosstoken8 = float(configfile.token8stoploss)
-        stoplosstoken7 = float(configfile.token7stoploss)
-        stoplosstoken6 = float(configfile.token6stoploss)
-        stoplosstoken5 = float(configfile.token5stoploss)
-        stoplosstoken4 = float(configfile.token4stoploss)
-        stoplosstoken3 = float(configfile.token3stoploss)
-        stoplosstoken2 = float(configfile.token2stoploss)
-        stoplosstoken1 = float(configfile.token10stoploss)
-
-        stoplosschecktoken1 = float(configfile.stoplosstoken1)
-        stoplosschecktoken2 = float(configfile.stoplosstoken2)
-        stoplosschecktoken3 = float(configfile.stoplosstoken3)
-        stoplosschecktoken4 = float(configfile.stoplosstoken4)
-        stoplosschecktoken5 = float(configfile.stoplosstoken5)
-        stoplosschecktoken6 = float(configfile.stoplosstoken6)
-        stoplosschecktoken7 = float(configfile.stoplosstoken7)
-        stoplosschecktoken8 = float(configfile.stoplosstoken8)
-        stoplosschecktoken9 = float(configfile.stoplosstoken9)
-        stoplosschecktoken10 = float(configfile.stoplosstoken10)
-        debugmode = int(configfile.debugmode)
-        token1address = token1ethaddress
-        token2address = token2ethaddress
-        token3address = token3ethaddress
-        token4address = token4ethaddress
-        token5address = token5ethaddress
-        token6address = token6ethaddress
-        token7address = token7ethaddress
-        token8address = token8ethaddress
-        token9address = token9ethaddress
-        token10address = token10ethaddress
-        fasttoken1 = 0
-        fasttoken2 = 0
-        fasttoken3 = 0
-        fasttoken4 = 0
-        fasttoken5 = 0
-        fasttoken6 = 0
-        fasttoken7 = 0
-        fasttoken8 = 0
-        fasttoken9 = 0
-        fasttoken10 = 0
-        
-        if float(token1high) < float(token1low) or float(token2high) < float(token2low) or float(token3high) < float(token3low) or float(token4high) < float(token4low) or float(token5high) < float(token5low) or float(token6high) < float(token6low) or float(token7high) < float(token7low) or float(token8high) < float(token8low) or float(token9high) < float(token9low) or float(token10high) < float(token10low) or float(stoplosstoken1) > float(token1high) or float(stoplosstoken2) > float(token2high) or float(stoplosstoken3) > float(token3high) or float(stoplosstoken4) > float(token4high) or float(stoplosstoken5) > float(token5high) or float(stoplosstoken6) > float(token6high) or float(stoplosstoken7) > float(token7high) or float(stoplosstoken8) > float(token8high) or float(stoplosstoken9) > float(token9high) or float(stoplosstoken10) > float(token10high):
-            print(
-                'Stopping the script, a tokenlow is higher than its tokenhigh or a stoploss it higher than the tokenhigh')
-            QtTest.QTest.qWait(42949000)
-        my_address = str(configfile.my_address)
-        my_pk = str(configfile.my_pk)
-        pk = my_pk
-        if configfile.maincoinoption == 'Ethereum':
-            ethaddress = "0x0000000000000000000000000000000000000000"
-        if configfile.maincoinoption == 'DAI':
-            ethaddress = "0x6b175474e89094c44da98b954eedeac495271d0f"
-        if configfile.maincoinoption == 'USDT':
-            ethaddress = "0xdac17f958d2ee523a2206206994597c13d831ec7"
-        if configfile.maincoinoption == 'USDC':
-            ethaddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
-        if configfile.maincoinoption == 'wBTC':
-            ethaddress = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
-        maincoinname= configfile.maincoinoption
-        maincoinoption = ethaddress
-        append = QtCore.pyqtSignal(str)
-
-        if 'step' not in globals():
-            step=1
-        else:
-            step=step+1
-        self.sig_step.emit(self.__id, 'step ' + str(step))
-        QCoreApplication.processEvents()
-        if self.__abort==True:
-            # note that "step" value will not necessarily be same for every thread
-            self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
-        totaldollars=1
-        try:
-            token1smallcasename = 0
-            token2smallcasename = 0
-            token3smallcasename = 0
-            token4smallcasename = 0
-            token5smallcasename = 0
-            token6smallcasename = 0
-            token7smallcasename = 0
-            token8smallcasename = 0
-            token9smallcasename = 0
-            token10smallcasename = 0
-            token1smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=token1address, id='ethereum')['symbol']
-            token2smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=token2address, id='ethereum')['symbol']
-            token3smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=token3address, id='ethereum')['symbol']
-            token4smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=token4address, id='ethereum')['symbol']
-            token5smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=token5address, id='ethereum')['symbol']
-            token6smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=token6address, id='ethereum')['symbol']
-            token7smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=token7address, id='ethereum')['symbol']
-            token8smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=token8address, id='ethereum')[
-                    'symbol']
-            token9smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=token9address, id='ethereum')[
-                    'symbol']
-            token10smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=token10address, id='ethereum')[
-                    'symbol']
-        except Exception as e:
-            o = 0
-
-        def apidecimals(ethaddress):
-            res = requests.get(
-                'https://api.ethplorer.io/getTokenInfo/' + ethaddress + '?apiKey=EK-5nuDS-iZCPJhW-SYGLU')
-            data = int((res.json())["decimals"])
-            return data
-
-        try:
-            token1decimals = 0
-            token2decimals = 0
-            token3decimals = 0
-            token4decimals = 0
-            token5decimals = 0
-            token6decimals = 0
-            token7decimals = 0
-            token8decimals = 0
-            token9decimals = 0
-            token10decimals = 0
-            maindecimals = apidecimals(ethaddress)
-            token1decimals = apidecimals(token1address)
-            token2decimals = apidecimals(token2address)
-            token3decimals = apidecimals(token3address)
-            token4decimals = apidecimals(token4address)
-            token5decimals = apidecimals(token5address)
-            token6decimals = apidecimals(token6address)
-            token7decimals = apidecimals(token7address)
-            token8decimals = apidecimals(token8address)
-            token9decimals = apidecimals(token9address)
-            token10decimals = apidecimals(token10address)
-
-        except:
-            o = 0
-
-        if 'step' not in globals():
-            step=1
-        else:
-            step=step+1
-        self.sig_step.emit(self.__id, 'step ' + str(step))
-        QCoreApplication.processEvents()
-        if self.__abort==True:
-            # note that "step" value will not necessarily be same for every thread
-            self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
-
-        def letstrade(keer2, tradewithERCtoken1, tradewithERCtoken2, tradewithERCtoken3, tradewithERCtoken4,
-                      tradewithERCtoken5, tradewithERCtoken6, tradewithERCtoken9, tradewithERCtoken7,
-                      tradewithERCtoken8, tradewithERCtoken10, activatetoken1, activatetoken2, activatetoken3,
-                      activatetoken4, activatetoken5, activatetoken6, activatetoken9, activatetoken7,
-                      activatetoken8, activatetoken10, tradewithETHtoken1, tradewithETHtoken2, tradewithETHtoken3,
-                      tradewithETHtoken4, tradewithETHtoken5, tradewithETHtoken6, tradewithETHtoken9,
-                      tradewithETHtoken7, tradewithETHtoken8, tradewithETHtoken10, my_address, pk, max_slippage,
-                      infura_url, gelukt,
-                      tokentokennumerator,
-                      weergave, notyet, priceeth, pricetoken1usd, pricetoken2usd, token1totoken2, token2totoken1,
-                      pricetoken3usd, pricetoken4usd, pricetoken5usd,
-                      pricetoken6usd, pricetoken7usd, pricetoken8usd, pricetoken9usd, pricetoken10usd,
-                      token1totoken7, token1totoken8, token1totoken9,
-                      token1totoken3, token1totoken4, token1totoken5, token1totoken6, token1totoken10,
-                      token2totoken3, token2totoken4, token2totoken5,
-                      token2totoken6, token2totoken7, token2totoken8, token2totoken9, token2totoken10,
-                      token3totoken1, token3totoken2, token3totoken4,
-                      token3totoken5, token3totoken6, token3totoken7, token3totoken8, token3totoken9,
-                      token3totoken10, token4totoken1, token4totoken2,
-                      token4totoken3, token4totoken5, token4totoken6, token4totoken7, token4totoken8,
-                      token4totoken9, token4totoken10, token5totoken1,
-                      token5totoken2, token5totoken4, token5totoken3, token5totoken6, token5totoken7,
-                      token5totoken8, token5totoken9, token5totoken10,
-                      token6totoken1, token6totoken2, token6totoken4, token6totoken5, token6totoken3,
-                      token6totoken7, token6totoken8, token6totoken9,
-                      token6totoken10, token7totoken1, token7totoken2, token7totoken4, token7totoken5,
-                      token7totoken6, token7totoken3, token7totoken8,
-                      token7totoken9, token7totoken10, token8totoken1, token8totoken2, token8totoken4,
-                      token8totoken5, token8totoken6, token8totoken7,
-                      token8totoken3, token8totoken9, token8totoken10, token9totoken1, token9totoken2,
-                      token9totoken4, token9totoken5, token9totoken6,
-                      token9totoken7, token9totoken8, token9totoken3, token9totoken10, token10totoken1,
-                      token10totoken2, token10totoken4, token10totoken5,
-                      token10totoken6, token10totoken7, token10totoken8, token10totoken9, token10totoken3,
-                      token1address, token1smallcasename, token2address, token2smallcasename, token3address,
-                      token3smallcasename,
-                      token4address, token4smallcasename, token5address, token5smallcasename, token6address,
-                      token6smallcasename,
-                      token7address, token7smallcasename, token8address, token8smallcasename, token9address,
-                      token9smallcasename,
-                      token10address, token10smallcasename, token1high, token1low, token2high, token2low,
-                      token3high,
-                      token3low,
-                      token4high, token4low, token5high, token5low, token6high, token6low, token7high, token7low,
-                      token8high,
-                      token8low, token9high, token9low, token10high, token10low, incaseofbuyinghowmuch,
-                      timesleepaftertrade,
-                      ethtokeep, maincoinoption, fasttoken1, fasttoken2, fasttoken3, fasttoken4, fasttoken5, fasttoken6,
-                      fasttoken7, fasttoken8, fasttoken9, fasttoken10, stoplosstoken1, stoplosstoken2, stoplosstoken3,
-                      stoplosstoken4, stoplosstoken5, stoplosstoken6, stoplosstoken7, stoplosstoken8, stoplosstoken9,
-                      stoplosstoken10, stoplosschecktoken1, stoplosschecktoken2, stoplosschecktoken3,
-                      stoplosschecktoken4, stoplosschecktoken5, stoplosschecktoken6, stoplosschecktoken7,
-                      stoplosschecktoken8, stoplosschecktoken9, stoplosschecktoken10,
-                      token1decimals, token2decimals, token3decimals, token4decimals, token5decimals, token6decimals,
-                      token7decimals, token8decimals, token9decimals, token10decimals, speed,maxgwei,maxgweinumber,diffdeposit,diffdepositaddress):
-
-            def makeTrade(buytokenaddress, selltokenaddress, my_address, pk, max_slippage, infura_url,
-                          buysmallcasesymbol, sellsmallcasesymbol, ethtokeep, speed,maxgwei,maxgweinumber,diffdeposit,diffdepositaddress,ethaddress):
-                def api2(ethaddress):
-                    res = requests.get(
-                        'https://api.ethplorer.io/getTokenInfo/' + ethaddress + '?apiKey=EK-5nuDS-iZCPJhW-SYGLU')
-                    data = int((res.json())["decimals"])
-                    return data
-                selldecimals = int(api2(selltokenaddress))
-                try:
-                    def api(speed):
-                        res = requests.get(
-                            'https://data-api.defipulse.com/api/v1/egs/api/ethgasAPI.json?api-key=f2ff6e6755c2123799676dbe8ed3af94574000b4c9b56d1f159510ec91b0')
-                        data = int(res.json()[speed] / 10)
-                        return data
-
-                    gwei2 = api(speed)
-                    print('Gwei for ' + str(speed) + ' trading at the moment: ' + str(gwei2))
-                    gwei=types.Wei(Web3.toWei(gwei2, "gwei"))
-
-                except Exception as e:
-                    o = 0
-                    exception_type, exception_object, exception_traceback = sys.exc_info()
-                    if configfile.debugmode == '1':
-                        print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                    w33.eth.setGasPriceStrategy(fast_gas_price_strategy)
-                if (maxgwei==0) or (maxgwei==1 and gwei2 <= maxgweinumber):
-
-                    try:
-                        uniconnect = Uniswap(my_address, pk, web3=Web3(
-                            w33.HTTPProvider(infura_url)),
-                                             version=2, max_slippage=max_slippage)
-                        eth = Web3.toChecksumAddress(selltokenaddress)
-                        token = w33.toChecksumAddress(buytokenaddress)
-                        selldecimals = int(api2(selltokenaddress))
-                    except Exception as e:
-                        exception_type, exception_object, exception_traceback = sys.exc_info()
-                        if configfile.debugmode == '1':
-                            print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                    try:
-                        if sellsmallcasesymbol == "eth":
-                            ethbalance = pyetherbalance.PyEtherBalance(infura_url)
-                            balance_eth = ethbalance.get_eth_balance(my_address)
-                            priceeth = cg.get_price(ids='ethereum', vs_currencies='usd')
-                            ethamount2 = (float(balance_eth['balance'])) - (
-                                    ethtokeep / (float(priceeth['ethereum']['usd'])))
-                        else:
-                            ethbalance = pyetherbalance.PyEtherBalance(infura_url)
-                            balance_eth = ethbalance.get_eth_balance(my_address)['balance']
-                            token2 = sellsmallcasesymbol.upper
-                            details2 = {'symbol': sellsmallcasesymbol.upper, 'address': selltokenaddress,
-                                        'decimals': selldecimals,
-                                        'name': sellsmallcasesymbol.upper}
-                            erc20tokens2 = ethbalance.add_token(token2, details2)
-                            ethamount2 = ethbalance.get_token_balance(token2, ethereum_address)['balance']
-                        tradeamount = ethamount2 * 10 ** selldecimals
-                        ethamount = tradeamount
-                        eth = Web3.toChecksumAddress(selltokenaddress)
-                        token = w33.toChecksumAddress(buytokenaddress)
-                        contractaddress = token
-                    except Exception as e:
-                        o = 0
-                        exception_type, exception_object, exception_traceback = sys.exc_info()
-                        if configfile.debugmode == '1':
-                            print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                    tradeamount = (ethamount2 * 10 ** selldecimals)
-                    ethamount = ethamount2
-                    contractaddress = token
-                    if int(diffdeposit) == 0:
-                        uniconnect.make_trade(eth, token, int(tradeamount),gwei,my_address,pk,my_address)
-                    if int(diffdeposit) == 1:
-                        uniconnect.make_trade(eth, token, int(tradeamount), gwei, my_address, pk,diffdepositaddress)
-
-                    if buytokenaddress == ethaddress:
-                        gelukt = 'sell'
-                    if buytokenaddress != ethaddress:
-                        gelukt = 'buy ' + buysmallcasesymbol
-                    return {'gelukt': gelukt}
-                else:
-                    print('Current gwei of gasstrategy is higher than max-gwei')
-                    gelukt='mislukt'
-                    return {'gelukt': gelukt}
-
-            try:  # self added
-                o = 0
-            except:
-                o = 0
-            try:  # stop loss
-                if (
-                        pricetoken1usd < stoplosstoken1 and stoplosschecktoken1 == 1 and activatetoken1 == 1 and tradewithETHtoken1 == 1 and gelukt == "buy " + token1smallcasename) or (
-                        pricetoken1usd < stoplosstoken1 and activatetoken1 == 1 and tradewithETHtoken1 == 1 and gelukt2 == "buy " + token1smallcasename and stoplosschecktoken1 == 1):
-                    print("Selling " + str(
-                        token1smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                        pricetoken1usd) + ')')
-                    if maincoinoption != '0x0000000000000000000000000000000000000000':
-                        buysmallcasesymbol = str(
-                            cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                         id='ethereum')['symbol'])
-                    else:
-                        buysmallcasesymbol = 'eth'
-                    kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token1address,
-                                     my_address=my_address,
-                                     pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                     buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    gelukt = kaka['gelukt']
-                    if gelukt != 'mislukt':
-                        QtTest.QTest.qWait(timesleepaftertrade*1000)
-                    keer = 9999
-                    fasttoken1 = 0
-                if (
-                        pricetoken2usd < stoplosstoken2 and activatetoken2 == 1 and stoplosschecktoken2 == 1 and tradewithETHtoken2 == 1 and gelukt == "buy " + token2smallcasename) or (
-                        pricetoken2usd < stoplosstoken2 and activatetoken2 == 1 and tradewithETHtoken2 == 1 and gelukt2 == "buy " + token2smallcasename and stoplosschecktoken2 == 1):
-                    print("Selling " + str(
-                        token2smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                        pricetoken2usd) + ')')
-                    if maincoinoption != '0x0000000000000000000000000000000000000000':
-                        buysmallcasesymbol = str(
-                            cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                         id='ethereum')['symbol'])
-                    else:
-                        buysmallcasesymbol = 'eth'
-                    kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token2address,
-                                     my_address=my_address,
-                                     pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                     buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    gelukt = kaka['gelukt']
-                    if gelukt != 'mislukt':
-                        QtTest.QTest.qWait(timesleepaftertrade*1000)
-                    keer = 9999
-                    fasttoken2 = 0
-                if (
-                        pricetoken3usd < stoplosstoken3 and activatetoken3 == 1 and stoplosschecktoken3 == 1 and tradewithETHtoken3 == 1 and gelukt == "buy " + token3smallcasename) or (
-                        pricetoken3usd < stoplosstoken3 and activatetoken3 == 1 and tradewithETHtoken3 == 1 and gelukt2 == "buy " + token3smallcasename and stoplosschecktoken3 == 1):
-                    print("Selling " + str(
-                        token3smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                        pricetoken3usd) + ')')
-                    if maincoinoption != '0x0000000000000000000000000000000000000000':
-                        buysmallcasesymbol = str(
-                            cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                         id='ethereum')['symbol'])
-                    else:
-                        buysmallcasesymbol = 'eth'
-                    kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token3address,
-                                     my_address=my_address,
-                                     pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                     buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    gelukt = kaka['gelukt']
-                    if gelukt != 'mislukt':
-                        QtTest.QTest.qWait(timesleepaftertrade*1000)
-                    keer = 9999
-                    fasttoken3 = 0
-                if (
-                        pricetoken4usd < stoplosstoken4 and activatetoken4 == 1 and stoplosschecktoken4 == 1 and tradewithETHtoken4 == 1 and gelukt == "buy " + token4smallcasename) or (
-                        pricetoken4usd < stoplosstoken4 and activatetoken4 == 1 and tradewithETHtoken4 == 1 and gelukt2 == "buy " + token4smallcasename and stoplosschecktoken4 == 1):
-                    print("Selling " + str(
-                        token4smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                        pricetoken4usd) + ')')
-                    if maincoinoption != '0x0000000000000000000000000000000000000000':
-                        buysmallcasesymbol = str(
-                            cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                         id='ethereum')['symbol'])
-                    else:
-                        buysmallcasesymbol = 'eth'
-                    kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token4address,
-                                     my_address=my_address,
-                                     pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                     buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    gelukt = kaka['gelukt']
-                    if gelukt != 'mislukt':
-                        QtTest.QTest.qWait(timesleepaftertrade*1000)
-                    keer = 9999
-                    fasttoken4 = 0
-                if (
-                        pricetoken5usd < stoplosstoken5 and activatetoken5 == 1 and stoplosschecktoken5 == 1 and tradewithETHtoken5 == 1 and gelukt == "buy " + token5smallcasename) or (
-                        pricetoken5usd < stoplosstoken5 and activatetoken5 == 1 and tradewithETHtoken5 == 1 and gelukt2 == "buy " + token5smallcasename and stoplosschecktoken5 == 1):
-                    print("Selling " + str(
-                        token5smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                        pricetoken5usd) + ')')
-                    if maincoinoption != '0x0000000000000000000000000000000000000000':
-                        buysmallcasesymbol = str(
-                            cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                         id='ethereum')['symbol'])
-                    else:
-                        buysmallcasesymbol = 'eth'
-                    kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token5address,
-                                     my_address=my_address,
-                                     pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                     buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    gelukt = kaka['gelukt']
-                    if gelukt != 'mislukt':
-                        QtTest.QTest.qWait(timesleepaftertrade*1000)
-                    keer = 9999
-                    fasttoken5 = 0
-                if (
-                        pricetoken6usd < stoplosstoken6 and activatetoken6 == 1 and stoplosschecktoken6 == 1 and tradewithETHtoken6 == 1 and gelukt == "buy " + token6smallcasename) or (
-                        pricetoken6usd < stoplosstoken6 and activatetoken6 == 1 and tradewithETHtoken6 == 1 and gelukt2 == "buy " + token6smallcasename and stoplosschecktoken6 == 1):
-                    print("Selling " + str(
-                        token6smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                        pricetoken6usd) + ')')
-                    if maincoinoption != '0x0000000000000000000000000000000000000000':
-                        buysmallcasesymbol = str(
-                            cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                         id='ethereum')['symbol'])
-                    else:
-                        buysmallcasesymbol = 'eth'
-                    kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token6address,
-                                     my_address=my_address,
-                                     pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                     buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    gelukt = kaka['gelukt']
-                    if gelukt != 'mislukt':
-                        QtTest.QTest.qWait(timesleepaftertrade*1000)
-                    keer = 9999
-                    fasttoken6 = 0
-                if (
-                        pricetoken7usd < stoplosstoken7 and activatetoken7 == 1 and stoplosschecktoken7 == 1 and tradewithETHtoken7 == 1 and gelukt == "buy " + token7smallcasename) or (
-                        pricetoken7usd < stoplosstoken7 and activatetoken7 == 1 and tradewithETHtoken7 == 1 and gelukt2 == "buy " + token7smallcasename and stoplosschecktoken7 == 1):
-                    print("Selling " + str(
-                        token7smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                        pricetoken7usd) + ')')
-                    if maincoinoption != '0x0000000000000000000000000000000000000000':
-                        buysmallcasesymbol = str(
-                            cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                         id='ethereum')['symbol'])
-                    else:
-                        buysmallcasesymbol = 'eth'
-                    kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token7address,
-                                     my_address=my_address,
-                                     pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                     buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    gelukt = kaka['gelukt']
-                    if gelukt != 'mislukt':
-                        QtTest.QTest.qWait(timesleepaftertrade*1000)
-                    keer = 9999
-                    fasttoken7 = 0
-                if (
-                        pricetoken8usd < stoplosstoken8 and activatetoken8 == 1 and stoplosschecktoken8 == 1 and tradewithETHtoken8 == 1 and gelukt == "buy " + token8smallcasename) or (
-                        pricetoken8usd < stoplosstoken8 and activatetoken8 == 1 and tradewithETHtoken8 == 1 and gelukt2 == "buy " + token8smallcasename and stoplosschecktoken8 == 1):
-                    print("Selling " + str(
-                        token8smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                        pricetoken8usd) + ')')
-                    if maincoinoption != '0x0000000000000000000000000000000000000000':
-                        buysmallcasesymbol = str(
-                            cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                         id='ethereum')['symbol'])
-                    else:
-                        buysmallcasesymbol = 'eth'
-                    kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token8address,
-                                     my_address=my_address,
-                                     pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                     buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    gelukt = kaka['gelukt']
-                    if gelukt != 'mislukt':
-                        QtTest.QTest.qWait(timesleepaftertrade*1000)
-                    keer = 9999
-                    fasttoken8 = 0
-                if (
-                        pricetoken9usd < stoplosstoken9 and activatetoken9 == 1 and stoplosschecktoken9 == 1 and tradewithETHtoken9 == 1 and gelukt == "buy " + token9smallcasename) or (
-                        pricetoken9usd < stoplosstoken9 and activatetoken9 == 1 and tradewithETHtoken9 == 1 and gelukt2 == "buy " + token9smallcasename and stoplosschecktoken9 == 1):
-                    print("Selling " + str(
-                        token9smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                        pricetoken9usd) + ')')
-                    if maincoinoption != '0x0000000000000000000000000000000000000000':
-                        buysmallcasesymbol = str(
-                            cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                         id='ethereum')['symbol'])
-                    else:
-                        buysmallcasesymbol = 'eth'
-                    kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token9address,
-                                     my_address=my_address,
-                                     pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                     buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    gelukt = kaka['gelukt']
-                    if gelukt != 'mislukt':
-                        QtTest.QTest.qWait(timesleepaftertrade*1000)
-                    keer = 9999
-                    fasttoken9 = 0
-                if (
-                        pricetoken10usd < stoplosstoken10 and activatetoken10 == 1 and stoplosschecktoken10 == 1 and tradewithETHtoken10 == 1 and gelukt == "buy " + token10smallcasename) or (
-                        pricetoken10usd < stoplosstoken10 and activatetoken10 == 1 and tradewithETHtoken10 == 1 and gelukt2 == "buy " + token10smallcasename and stoplosschecktoken10 == 1):
-                    print("Selling " + str(
-                        token10smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                        pricetoken10usd) + ')')
-                    if maincoinoption != '0x0000000000000000000000000000000000000000':
-                        buysmallcasesymbol = str(
-                            cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                         id='ethereum')['symbol'])
-                    else:
-                        buysmallcasesymbol = 'eth'
-                    kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token10address,
-                                     my_address=my_address,
-                                     pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                     buysmallcasesymbol=buysmallcasesymbol,
-                                     sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                    gelukt = kaka['gelukt']
-                    if gelukt != 'mislukt':
-                        QtTest.QTest.qWait(timesleepaftertrade*1000)
-                    keer = 9999
-                    fasttoken10 = 0
-            except:
-                exception_type, exception_object, exception_traceback = sys.exc_info()
-                traceback.print_exc()
-                if configfile.debugmode == '1':
-                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                gelukt = 'mislukt'
-            try:  # sell alt and buy ETH trades
-                if (token1address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1:
-                    if (pricetoken1usd > token1high and gelukt == "buy " + token1smallcasename) or (
-                            pricetoken1usd > token1high and gelukt2 == "buy " + token1smallcasename) or (
-                            activatetoken1 == 1 and gelukt == 'buy ' + token1smallcasename and fasttoken1 == 1):
-                        print("Selling " + str(
-                            token1smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                            pricetoken1usd) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            buysmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            buysmallcasesymbol = 'eth'
-                        kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token1address,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-                        fasttoken1 = 0
-                if (token2address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1:
-                    if (pricetoken2usd >= token2high and gelukt == "buy " + token2smallcasename) or (
-                            pricetoken2usd > token2high and gelukt2 == "buy " + token2smallcasename) or (
-                            fasttoken2 == 1):
-                        print("Selling " + str(
-                            token2smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                            pricetoken2usd) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            buysmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            buysmallcasesymbol = 'eth'
-                        kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token2address,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-                        fasttoken2 = 0
-                if (token3address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1:
-                    if (pricetoken3usd > token3high and gelukt == "buy " + token3smallcasename) or (
-                            pricetoken3usd > token3high and gelukt2 == "buy " + token3smallcasename) or (
-                            fasttoken3 == 1):
-                        print("Selling " + str(
-                            token3smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                            pricetoken3usd) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            buysmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            buysmallcasesymbol = 'eth'
-                        kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token3address,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-                        fasttoken3 = 0
-                if (token4address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1:
-                    if (pricetoken4usd > token4high and gelukt == "buy " + token4smallcasename) or (
-                            pricetoken4usd > token4high and gelukt2 == "buy " + token4smallcasename) or (
-                            fasttoken4 == 1):
-                        print("Selling " + str(
-                            token4smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                            pricetoken4usd) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            buysmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            buysmallcasesymbol = 'eth'
-                        kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token4address,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-                        fasttoken4 = 0
-                if (token5address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1:
-                    if (pricetoken5usd > token5high and gelukt == "buy " + token5smallcasename) or (
-                            pricetoken5usd > token5high and gelukt2 == "buy " + token5smallcasename) or (
-                            fasttoken5 == 1):
-                        print("Selling " + str(
-                            token5smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                            pricetoken5usd) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            buysmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            buysmallcasesymbol = 'eth'
-                        kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token5address,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-                        fasttoken5 = 0
-                if (token6address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1:
-                    if (pricetoken6usd > token6high and gelukt == "buy " + token6smallcasename) or (
-                            pricetoken6usd > token6high and gelukt2 == "buy " + token6smallcasename) or (
-                            fasttoken6 == 1):
-                        print("Selling " + str(
-                            token6smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                            pricetoken6usd) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            buysmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            buysmallcasesymbol = 'eth'
-                        kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token6address,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-                        fasttoken6 = 0
-                if (token7address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1:
-                    if (pricetoken7usd > token7high and gelukt == "buy " + token7smallcasename) or (
-                            pricetoken7usd > token7high and gelukt2 == "buy " + token7smallcasename) or (
-                            fasttoken7 == 1):
-                        print("Selling " + str(
-                            token7smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                            pricetoken7usd) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            buysmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            buysmallcasesymbol = 'eth'
-                        kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token7address,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-                        fasttoken7 = 0
-                if (token8address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1:
-                    if (pricetoken8usd > token8high and gelukt == "buy " + token8smallcasename) or (
-                            pricetoken8usd > token8high and gelukt2 == "buy " + token8smallcasename) or (
-                            fasttoken8 == 1):
-                        print("Selling " + str(
-                            token8smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                            pricetoken8usd) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            buysmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            buysmallcasesymbol = 'eth'
-                        kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token8address,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-                        fasttoken8 = 0
-                if (token9address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1:
-                    if (pricetoken9usd > token9high and gelukt == "buy " + token9smallcasename) or (
-                            pricetoken9usd > token9high and gelukt2 == "buy " + token9smallcasename) or (
-                            fasttoken9 == 1):
-                        print("Selling " + str(
-                            token9smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                            pricetoken9usd) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            buysmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            buysmallcasesymbol = 'eth'
-                        kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token9address,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-                        fasttoken9 = 0
-                if (token10address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1:
-                    if (pricetoken10usd > token10high and gelukt == "buy " + token10smallcasename) or (
-                            pricetoken10usd > token10high and gelukt2 == "buy " + token10smallcasename) or (
-                            fasttoken10 == 1):
-                        print("Selling " + str(
-                            token10smallcasename) + ' for Maincoin-option (current price in USD: ' + str(
-                            pricetoken10usd) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            buysmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            buysmallcasesymbol = 'eth'
-                        kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=token10address,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=buysmallcasesymbol,
-                                         sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-                        fasttoken10 = 0
-            except Exception as e:
-                exception_type, exception_object, exception_traceback = sys.exc_info()
-                if configfile.debugmode == '1':
-                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                gelukt = "mislukt"
-            try:  # sell ETH and buy ALT
-                if (token1address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1:
-                    if (pricetoken1usd < token1low and gelukt == "sell") or (
-                            pricetoken1usd < token1low and gelukt2 == "sell"):
-                        print(
-                            "Buying " + str(token1smallcasename) + ' (Current price: ' + str(float(pricetoken1usd)) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            sellsmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            sellsmallcasesymbol = 'eth'
-                            selldecimals = 18
-                        kaka = makeTrade(buytokenaddress=token1address, selltokenaddress=ethaddress,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=token1smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-                if (token2address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1:
-                    if (pricetoken2usd < token2low and gelukt == "sell") or (
-                            pricetoken2usd < token2low and gelukt2 == "sell"):
-                        print("Buying " + str((token2smallcasename)) + ' (Current price: ' + str(
-                            float(pricetoken2usd)) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            sellsmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            sellsmallcasesymbol = 'eth'
-                            selldecimals = 18
-                        kaka = makeTrade(buytokenaddress=token2address, selltokenaddress=ethaddress,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=token2smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-                if (token3address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1:
-                    if (pricetoken3usd < token3low and gelukt == "sell") or (
-                            pricetoken3usd < token3low and gelukt2 == "sell"):
-                        print("Buying " + str(token3smallcasename) + ' (Current price: ' + str(pricetoken3usd) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            sellsmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            sellsmallcasesymbol = 'eth'
-                            selldecimals = 18
-                        kaka = makeTrade(buytokenaddress=token3address, selltokenaddress=ethaddress,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=token3smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-                if (token4address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1:
-                    if (pricetoken4usd < token4low and gelukt == "sell") or (
-                            pricetoken4usd < token4low and gelukt2 == "sell"):
-                        print("Buying " + str(token4smallcasename) + ' (Current price: ' + str(pricetoken4usd) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            sellsmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            sellsmallcasesymbol = 'eth'
-                            selldecimals = 18
-                        kaka = makeTrade(buytokenaddress=token4address, selltokenaddress=ethaddress,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=token4smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-                if (token5address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1:
-                    if (pricetoken5usd < token5low and gelukt == "sell") or (
-                            pricetoken5usd < token5low and gelukt2 == "sell"):
-                        print("Buying " + str(token5smallcasename) + ' (Current price: ' + str(pricetoken5usd) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            sellsmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            sellsmallcasesymbol = 'eth'
-                            selldecimals = 18
-                        kaka = makeTrade(buytokenaddress=token5address, selltokenaddress=ethaddress,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=token5smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-                if (token6address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1:
-                    if (pricetoken6usd < token6low and gelukt == "sell") or (
-                            pricetoken6usd < token6low and gelukt2 == "sell"):
-                        print("Buying " + str(token6smallcasename) + ' (Current price: ' + str(pricetoken6usd) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            sellsmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            sellsmallcasesymbol = 'eth'
-                            selldecimals = 18
-                        kaka = makeTrade(buytokenaddress=token6address, selltokenaddress=ethaddress,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=token6smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-                if (token7address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1:
-                    if (pricetoken7usd < token7low and gelukt == "sell") or (
-                            pricetoken7usd < token7low and gelukt2 == "sell"):
-                        print("Buying " + str(token7smallcasename) + ' (Current price: ' + str(pricetoken7usd) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            sellsmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            sellsmallcasesymbol = 'eth'
-                            selldecimals = 18
-                        kaka = makeTrade(buytokenaddress=token7address, selltokenaddress=ethaddress,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=token7smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-                if (token8address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1:
-                    if (pricetoken8usd < token8low and gelukt == "sell") or (
-                            pricetoken8usd < token8low and gelukt2 == "sell"):
-                        print("Buying " + str(token8smallcasename) + ' (Current price: ' + str(pricetoken8usd) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            sellsmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            sellsmallcasesymbol = 'eth'
-                            selldecimals = 18
-                        kaka = makeTrade(buytokenaddress=token8address, selltokenaddress=ethaddress,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=token8smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-                if (token9address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1:
-                    if (pricetoken9usd < token9low and gelukt == "sell") or (
-                            pricetoken9usd < token9low and gelukt2 == "sell"):
-                        print("Buying " + str(token9smallcasename) + ' (Current price: ' + str(pricetoken9usd) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            sellsmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            sellsmallcasesymbol = 'eth'
-                            selldecimals = 18
-                        kaka = makeTrade(buytokenaddress=token9address, selltokenaddress=ethaddress,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=token9smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-                if (token10address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1:
-                    if (pricetoken10usd < token10low and gelukt == "sell") or (
-                            pricetoken10usd < token10low and gelukt2 == "sell"):
-                        print("Buying " + str(token10smallcasename) + ' (Current price: ' + str(pricetoken10usd) + ')')
-                        if maincoinoption != '0x0000000000000000000000000000000000000000':
-                            sellsmallcasesymbol = str(
-                                cg.get_coin_info_from_contract_address_by_id(contract_address=ethaddress,
-                                                                             id='ethereum')['symbol'])
-                        else:
-                            sellsmallcasesymbol = 'eth'
-                            selldecimals = 18
-                        kaka = makeTrade(buytokenaddress=token10address, selltokenaddress=ethaddress,
-                                         my_address=my_address,
-                                         pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                         buysmallcasesymbol=token10smallcasename,
-                                         sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                        gelukt = kaka['gelukt']
-                        if gelukt != 'mislukt':
-                            QtTest.QTest.qWait(timesleepaftertrade*1000)
-                        keer = 9999
-            except Exception as e:
-                exception_type, exception_object, exception_traceback = sys.exc_info()
-                if configfile.debugmode == '1':
-                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                gelukt = "mislukt"
-            try:  # token to token
-                if token1address != 0:
-                    try:  # token1 to others
-                        if (token1address != 0) and (
-                                token2address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1 \
-                                and activatetoken2 == 1 and tradewithETHtoken2 == 1 and tradewithERCtoken1 == 1 and tradewithERCtoken2 == 1:
-                            if (
-                                    token1totoken2 > tokentokennumerator and gelukt == "buy " + token1smallcasename) or (
-                                    token1totoken2 > tokentokennumerator and gelukt2 == "buy " + token1smallcasename):
-                                print("Trading " + str(token1smallcasename) + ' ($' + str(
-                                    pricetoken1usd) + ') for ' + str(token2smallcasename) + " ($" + str(
-                                    pricetoken2usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token2address, selltokenaddress=token1address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token2smallcasename,
-                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token1address != 0) and (
-                                token3address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1 \
-                                and activatetoken3 == 1 and tradewithETHtoken3 == 1 and tradewithERCtoken1 == 1 and tradewithERCtoken3 == 1:
-                            if (
-                                    token1totoken3 > tokentokennumerator and gelukt == "buy " + token1smallcasename) or (
-                                    token1totoken3 > tokentokennumerator and gelukt2 == "buy " + token1smallcasename):
-                                print("Trading " + str(token1smallcasename) + ' ($' + str(
-                                    pricetoken1usd) + ') for ' + str(token3smallcasename) + " ($" + str(
-                                    pricetoken3usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token3address, selltokenaddress=token1address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token3smallcasename,
-                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token1address != 0) and (
-                                token4address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1 \
-                                and activatetoken4 == 1 and tradewithETHtoken4 == 1 and tradewithERCtoken1 == 1 and tradewithERCtoken4 == 1:
-                            if (
-                                    token1totoken4 > tokentokennumerator and gelukt == "buy " + token1smallcasename) or (
-                                    token1totoken4 > tokentokennumerator and gelukt2 == "buy " + token1smallcasename):
-                                print("Trading " + str(token1smallcasename) + ' ($' + str(
-                                    pricetoken1usd) + ') for ' + str(token4smallcasename) + " ($" + str(
-                                    pricetoken4usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token4address, selltokenaddress=token1address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token4smallcasename,
-                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                        QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token1address != 0) and (
-                                token5address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1 \
-                                and activatetoken5 == 1 and tradewithETHtoken5 == 1 and tradewithERCtoken1 == 1 and tradewithERCtoken5 == 1:
-                            if (
-                                    token1totoken5 > tokentokennumerator and gelukt == "buy " + token1smallcasename) or (
-                                    token1totoken5 > tokentokennumerator and gelukt2 == "buy " + token1smallcasename):
-                                print("Trading " + str(token1smallcasename) + ' ($' + str(
-                                    pricetoken1usd) + ') for ' + str(token5smallcasename) + " ($" + str(
-                                    pricetoken5usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token5address, selltokenaddress=token1address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token5smallcasename,
-                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token1address != 0) and (
-                                token6address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1 \
-                                and activatetoken6 == 1 and tradewithETHtoken6 == 1 and tradewithERCtoken1 == 1 and tradewithERCtoken6 == 1:
-                            if (
-                                    token1totoken6 > tokentokennumerator and gelukt == "buy " + token1smallcasename) or (
-                                    token1totoken6 > tokentokennumerator and gelukt2 == "buy " + token1smallcasename):
-                                print("Trading " + str(token1smallcasename) + ' ($' + str(
-                                    pricetoken1usd) + ') for ' + str(token6smallcasename) + " ($" + str(
-                                    pricetoken6usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token6address, selltokenaddress=token1address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token6smallcasename,
-                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token1address != 0) and (
-                                token7address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1 \
-                                and activatetoken7 == 1 and tradewithETHtoken7 == 1 and tradewithERCtoken1 == 1 and tradewithERCtoken7 == 1:
-                            if (
-                                    token1totoken7 > tokentokennumerator and gelukt == "buy " + token1smallcasename) or (
-                                    token1totoken7 > tokentokennumerator and gelukt2 == "buy " + token1smallcasename):
-                                print("Trading " + str(token1smallcasename) + ' ($' + str(
-                                    pricetoken1usd) + ') for ' + str(token7smallcasename) + " ($" + str(
-                                    pricetoken7usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token7address, selltokenaddress=token1address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token7smallcasename,
-                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token1address != 0) and (
-                                token8address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1 \
-                                and activatetoken8 == 1 and tradewithETHtoken8 == 1 and tradewithERCtoken1 == 1 and tradewithERCtoken8 == 1:
-                            if (
-                                    token1totoken8 > tokentokennumerator and gelukt == "buy " + token1smallcasename) or (
-                                    token1totoken8 > tokentokennumerator and gelukt2 == "buy " + token1smallcasename):
-                                print("Trading " + str(token1smallcasename) + ' ($' + str(
-                                    pricetoken1usd) + ') for ' + str(token8smallcasename) + " ($" + str(
-                                    pricetoken8usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token8address, selltokenaddress=token1address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token8smallcasename,
-                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token1address != 0) and (
-                                token9address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1 \
-                                and activatetoken9 == 1 and tradewithETHtoken9 == 1 and tradewithERCtoken1 == 1 and tradewithERCtoken9 == 1:
-                            if (
-                                    token1totoken9 > tokentokennumerator and gelukt == "buy " + token1smallcasename) or (
-                                    token1totoken9 > tokentokennumerator and gelukt2 == "buy " + token1smallcasename):
-                                print("Trading " + str(token1smallcasename) + ' ($' + str(
-                                    pricetoken1usd) + ') for ' + str(token9smallcasename) + " ($" + str(
-                                    pricetoken9usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token9address, selltokenaddress=token1address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token9smallcasename,
-                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token1address != 0) and (
-                                token10address != 0) and activatetoken1 == 1 and tradewithETHtoken1 == 1 \
-                                and activatetoken10 == 1 and tradewithETHtoken10 == 1 and tradewithERCtoken1 == 1 and tradewithERCtoken10 == 1:
-                            if (
-                                    token1totoken10 > tokentokennumerator and gelukt == "buy " + token1smallcasename) or (
-                                    token1totoken10 > tokentokennumerator and gelukt2 == "buy " + token1smallcasename):
-                                print("Trading " + str(token1smallcasename) + ' ($' + str(
-                                    pricetoken1usd) + ') for ' + str(token10smallcasename) + " ($" + str(
-                                    pricetoken10usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token10address, selltokenaddress=token1address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token10smallcasename,
-                                                 sellsmallcasesymbol=token1smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                    except Exception as e:
-                        o = 0
-                        exception_type, exception_object, exception_traceback = sys.exc_info()
-                        if configfile.debugmode == '1':
-                            print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                        gelukt = "mislukt"
-                if token2address != 0:
-                    try:  # token2 to others
-                        if (token2address != 0) and (
-                                token1address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1 \
-                                and activatetoken1 == 1 and tradewithETHtoken1 == 1 and tradewithERCtoken2 == 1 and tradewithERCtoken1 == 1:
-                            if (
-                                    token2totoken1 > tokentokennumerator and gelukt == "buy " + token2smallcasename) or (
-                                    token2totoken1 > tokentokennumerator and gelukt2 == "buy " + token2smallcasename):
-                                print("Trading " + str(token2smallcasename) + ' ($' + str(
-                                    pricetoken2usd) + ') for ' + str(token1smallcasename) + " ($" + str(
-                                    pricetoken1usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token1address, selltokenaddress=token2address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token1smallcasename,
-                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token2address != 0) and (
-                                token3address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1 \
-                                and activatetoken3 == 1 and tradewithETHtoken3 == 1 and tradewithERCtoken2 == 1 and tradewithERCtoken3 == 1:
-                            if (
-                                    token2totoken3 > tokentokennumerator and gelukt == "buy " + token2smallcasename) or (
-                                    token2totoken3 > tokentokennumerator and gelukt2 == "buy " + token2smallcasename):
-                                print("Trading " + str(token2smallcasename) + ' ($' + str(
-                                    pricetoken2usd) + ') for ' + str(token3smallcasename) + " ($" + str(
-                                    pricetoken3usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token3address, selltokenaddress=token2address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token3smallcasename,
-                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token2address != 0) and (
-                                token4address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1 \
-                                and activatetoken4 == 1 and tradewithETHtoken4 == 1 and tradewithERCtoken2 == 1 and tradewithERCtoken4 == 1:
-                            if (
-                                    token2totoken4 > tokentokennumerator and gelukt == "buy " + token2smallcasename) or (
-                                    token2totoken4 > tokentokennumerator and gelukt2 == "buy " + token2smallcasename):
-                                print("Trading " + str(token2smallcasename) + ' ($' + str(
-                                    pricetoken2usd) + ') for ' + str(token4smallcasename) + " ($" + str(
-                                    pricetoken4usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token4address, selltokenaddress=token2address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token4smallcasename,
-                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token2address != 0) and (
-                                token5address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1 \
-                                and activatetoken5 == 1 and tradewithETHtoken5 == 1 and tradewithERCtoken2 == 1 and tradewithERCtoken5 == 1:
-                            if (
-                                    token2totoken5 > tokentokennumerator and gelukt == "buy " + token2smallcasename) or (
-                                    token2totoken5 > tokentokennumerator and gelukt2 == "buy " + token2smallcasename):
-                                print("Trading " + str(token2smallcasename) + ' ($' + str(
-                                    pricetoken2usd) + ') for ' + str(token5smallcasename) + " ($" + str(
-                                    pricetoken5usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token5address, selltokenaddress=token2address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token5smallcasename,
-                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token2address != 0) and (
-                                token6address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1 \
-                                and activatetoken6 == 1 and tradewithETHtoken6 == 1 and tradewithERCtoken2 == 1 and tradewithERCtoken6 == 1:
-                            if (
-                                    token2totoken6 > tokentokennumerator and gelukt == "buy " + token2smallcasename) or (
-                                    token2totoken6 > tokentokennumerator and gelukt2 == "buy " + token2smallcasename):
-                                print("Trading " + str(token2smallcasename) + ' ($' + str(
-                                    pricetoken2usd) + ') for ' + str(token6smallcasename) + " ($" + str(
-                                    pricetoken6usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token6address, selltokenaddress=token2address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token6smallcasename,
-                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token2address != 0) and (
-                                token7address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1 \
-                                and activatetoken7 == 1 and tradewithETHtoken7 == 1 and tradewithERCtoken2 == 1 and tradewithERCtoken7 == 1:
-                            if (
-                                    token2totoken7 > tokentokennumerator and gelukt == "buy " + token2smallcasename) or (
-                                    token2totoken7 > tokentokennumerator and gelukt2 == "buy " + token2smallcasename):
-                                print("Trading " + str(token2smallcasename) + ' ($' + str(
-                                    pricetoken2usd) + ') for ' + str(token7smallcasename) + " ($" + str(
-                                    pricetoken7usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token7address, selltokenaddress=token2address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token7smallcasename,
-                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token2address != 0) and (
-                                token8address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1 \
-                                and activatetoken8 == 1 and tradewithETHtoken8 == 1 and tradewithERCtoken2 == 1 and tradewithERCtoken8 == 1:
-                            if (
-                                    token2totoken8 > tokentokennumerator and gelukt == "buy " + token2smallcasename) or (
-                                    token2totoken8 > tokentokennumerator and gelukt2 == "buy " + token2smallcasename):
-                                print("Trading " + str(token2smallcasename) + ' ($' + str(
-                                    pricetoken2usd) + ') for ' + str(token8smallcasename) + " ($" + str(
-                                    pricetoken8usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token8address, selltokenaddress=token2address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token8smallcasename,
-                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token2address != 0) and (
-                                token9address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1 \
-                                and activatetoken9 == 1 and tradewithETHtoken9 == 1 and tradewithERCtoken2 == 1 and tradewithERCtoken9 == 1:
-                            if (
-                                    token2totoken9 > tokentokennumerator and gelukt == "buy " + token2smallcasename) or (
-                                    token2totoken9 > tokentokennumerator and gelukt2 == "buy " + token2smallcasename):
-                                print("Trading " + str(token2smallcasename) + ' ($' + str(
-                                    pricetoken2usd) + ') for ' + str(token9smallcasename) + " ($" + str(
-                                    pricetoken9usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token9address, selltokenaddress=token2address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token9smallcasename,
-                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token2address != 0) and (
-                                token10address != 0) and activatetoken2 == 1 and tradewithETHtoken2 == 1 \
-                                and activatetoken10 == 1 and tradewithETHtoken10 == 1 and tradewithERCtoken2 == 1 and tradewithERCtoken10 == 1:
-                            if (
-                                    token2totoken10 > tokentokennumerator and gelukt == "buy " + token2smallcasename) or (
-                                    token2totoken10 > tokentokennumerator and gelukt2 == "buy " + token2smallcasename):
-                                print("Trading " + str(token2smallcasename) + ' ($' + str(
-                                    pricetoken2usd) + ') for ' + str(token10smallcasename) + " ($" + str(
-                                    pricetoken10usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token10address, selltokenaddress=token2address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token10smallcasename,
-                                                 sellsmallcasesymbol=token2smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                    except Exception as e:
-                        o = 0
-                        exception_type, exception_object, exception_traceback = sys.exc_info()
-                        if configfile.debugmode == '1':
-                            print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                        gelukt = "mislukt"
-                if token3address != 0:
-                    try:  # token3 to others
-                        if (token3address != 0) and (
-                                token1address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1 \
-                                and activatetoken1 == 1 and tradewithETHtoken1 == 1 and tradewithERCtoken3 == 1 and tradewithERCtoken1 == 1:
-                            if (
-                                    token3totoken1 > tokentokennumerator and gelukt == "buy " + token3smallcasename) or (
-                                    token3totoken1 > tokentokennumerator and gelukt2 == "buy " + token3smallcasename):
-                                print("Trading " + str(token3smallcasename) + ' ($' + str(
-                                    pricetoken3usd) + ') for ' + str(token1smallcasename) + " ($" + str(
-                                    pricetoken1usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token1address, selltokenaddress=token3address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token1smallcasename,
-                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token3address != 0) and (
-                                token2address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1 \
-                                and activatetoken2 == 1 and tradewithETHtoken2 == 1 and tradewithERCtoken3 == 1 and tradewithERCtoken2 == 1:
-                            if (
-                                    token3totoken2 > tokentokennumerator and gelukt == "buy " + token3smallcasename) or (
-                                    token3totoken2 > tokentokennumerator and gelukt2 == "buy " + token3smallcasename):
-                                print("Trading " + str(token3smallcasename) + ' ($' + str(
-                                    pricetoken3usd) + ') for ' + str(token2smallcasename) + " ($" + str(
-                                    pricetoken2usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token2address, selltokenaddress=token3address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token2smallcasename,
-                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token3address != 0) and (
-                                token4address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1 \
-                                and activatetoken4 == 1 and tradewithETHtoken4 == 1 and tradewithERCtoken3 == 1 and tradewithERCtoken4 == 1:
-                            if (
-                                    token3totoken4 > tokentokennumerator and gelukt == "buy " + token3smallcasename) or (
-                                    token3totoken4 > tokentokennumerator and gelukt2 == "buy " + token3smallcasename):
-                                print("Trading " + str(token3smallcasename) + ' ($' + str(
-                                    pricetoken3usd) + ') for ' + str(token4smallcasename) + " ($" + str(
-                                    pricetoken4usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token4address, selltokenaddress=token3address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token4smallcasename,
-                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token3address != 0) and (
-                                token5address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1 \
-                                and activatetoken5 == 1 and tradewithETHtoken5 == 1 and tradewithERCtoken3 == 1 and tradewithERCtoken5 == 1:
-                            if (
-                                    token3totoken5 > tokentokennumerator and gelukt == "buy " + token3smallcasename) or (
-                                    token3totoken5 > tokentokennumerator and gelukt2 == "buy " + token3smallcasename):
-                                print("Trading " + str(token3smallcasename) + ' ($' + str(
-                                    pricetoken3usd) + ') for ' + str(token5smallcasename) + " ($" + str(
-                                    pricetoken5usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token5address, selltokenaddress=token3address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token5smallcasename,
-                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token3address != 0) and (
-                                token6address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1 \
-                                and activatetoken6 == 1 and tradewithETHtoken6 == 1 and tradewithERCtoken3 == 1 and tradewithERCtoken6 == 1:
-                            if (
-                                    token3totoken6 > tokentokennumerator and gelukt == "buy " + token3smallcasename) or (
-                                    token3totoken6 > tokentokennumerator and gelukt2 == "buy " + token3smallcasename):
-                                print("Trading " + str(token3smallcasename) + ' ($' + str(
-                                    pricetoken3usd) + ') for ' + str(token6smallcasename) + " ($" + str(
-                                    pricetoken6usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token6address, selltokenaddress=token3address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token6smallcasename,
-                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token3address != 0) and (
-                                token7address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1 \
-                                and activatetoken7 == 1 and tradewithETHtoken7 == 1 and tradewithERCtoken3 == 1 and tradewithERCtoken7 == 1:
-                            if (
-                                    token3totoken7 > tokentokennumerator and gelukt == "buy " + token3smallcasename) or (
-                                    token3totoken7 > tokentokennumerator and gelukt2 == "buy " + token3smallcasename):
-                                print("Trading " + str(token3smallcasename) + ' ($' + str(
-                                    pricetoken3usd) + ') for ' + str(token7smallcasename) + " ($" + str(
-                                    pricetoken7usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token7address, selltokenaddress=token3address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token7smallcasename,
-                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token3address != 0) and (
-                                token8address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1 \
-                                and activatetoken8 == 1 and tradewithETHtoken8 == 1 and tradewithERCtoken3 == 1 and tradewithERCtoken8 == 1:
-                            if (
-                                    token3totoken8 > tokentokennumerator and gelukt == "buy " + token3smallcasename) or (
-                                    token3totoken8 > tokentokennumerator and gelukt2 == "buy " + token3smallcasename):
-                                print("Trading " + str(token3smallcasename) + ' ($' + str(
-                                    pricetoken3usd) + ') for ' + str(token8smallcasename) + " ($" + str(
-                                    pricetoken8usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token8address, selltokenaddress=token3address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token8smallcasename,
-                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token3address != 0) and (
-                                token9address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1 \
-                                and activatetoken9 == 1 and tradewithETHtoken9 == 1 and tradewithERCtoken3 == 1 and tradewithERCtoken9 == 1:
-                            if (
-                                    token3totoken9 > tokentokennumerator and gelukt == "buy " + token3smallcasename) or (
-                                    token3totoken9 > tokentokennumerator and gelukt2 == "buy " + token3smallcasename):
-                                print("Trading " + str(token3smallcasename) + ' ($' + str(
-                                    pricetoken3usd) + ') for ' + str(token9smallcasename) + " ($" + str(
-                                    pricetoken9usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token9address, selltokenaddress=token3address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token9smallcasename,
-                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token3address != 0) and (
-                                token10address != 0) and activatetoken3 == 1 and tradewithETHtoken3 == 1 \
-                                and activatetoken10 == 1 and tradewithETHtoken10 == 1 and tradewithERCtoken3 == 1 and tradewithERCtoken10 == 1:
-                            if (
-                                    token3totoken10 > tokentokennumerator and gelukt == "buy " + token3smallcasename) or (
-                                    token3totoken10 > tokentokennumerator and gelukt2 == "buy " + token3smallcasename):
-                                print("Trading " + str(token3smallcasename) + ' ($' + str(
-                                    pricetoken3usd) + ') for ' + str(token10smallcasename) + " ($" + str(
-                                    pricetoken10usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token10address, selltokenaddress=token3address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token10smallcasename,
-                                                 sellsmallcasesymbol=token3smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                    except Exception as e:
-                        o = 0
-                        exception_type, exception_object, exception_traceback = sys.exc_info()
-                        if configfile.debugmode == '1':
-                            print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                        gelukt = "mislukt"
-                if token4address != 0:
-                    try:  # token4 to others
-                        if (token4address != 0) and (
-                                token2address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1 \
-                                and activatetoken2 == 1 and tradewithETHtoken2 == 1 and tradewithERCtoken4 == 1 and tradewithERCtoken2 == 1:
-                            if (
-                                    token4totoken2 > tokentokennumerator and gelukt == "buy " + token4smallcasename) or (
-                                    token4totoken2 > tokentokennumerator and gelukt2 == "buy " + token4smallcasename):
-                                print("Trading " + str(token4smallcasename) + ' ($' + str(
-                                    pricetoken4usd) + ') for ' + str(token2smallcasename) + " ($" + str(
-                                    pricetoken2usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token2address, selltokenaddress=token4address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token2smallcasename,
-                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token4address != 0) and (
-                                token1address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1 \
-                                and activatetoken1 == 1 and tradewithETHtoken1 == 1 and tradewithERCtoken4 == 1 and tradewithERCtoken1 == 1:
-                            if (
-                                    token4totoken1 > tokentokennumerator and gelukt == "buy " + token4smallcasename) or (
-                                    token4totoken1 > tokentokennumerator and gelukt2 == "buy " + token4smallcasename):
-                                print("Trading " + str(token4smallcasename) + ' ($' + str(
-                                    pricetoken4usd) + ') for ' + str(token1smallcasename) + " ($" + str(
-                                    pricetoken1usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token1address, selltokenaddress=token4address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token1smallcasename,
-                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token4address != 0) and (
-                                token3address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1 \
-                                and activatetoken3 == 1 and tradewithETHtoken3 == 1 and tradewithERCtoken4 == 1 and tradewithERCtoken3 == 1:
-                            if (
-                                    token4totoken3 > tokentokennumerator and gelukt == "buy " + token4smallcasename) or (
-                                    token4totoken3 > tokentokennumerator and gelukt2 == "buy " + token4smallcasename):
-                                print("Trading " + str(token4smallcasename) + ' ($' + str(
-                                    pricetoken4usd) + ') for ' + str(token3smallcasename) + " ($" + str(
-                                    pricetoken3usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token3address, selltokenaddress=token4address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token3smallcasename,
-                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token4address != 0) and (
-                                token5address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1 \
-                                and activatetoken5 == 1 and tradewithETHtoken5 == 1 and tradewithERCtoken4 == 1 and tradewithERCtoken5 == 1:
-                            if (
-                                    token4totoken5 > tokentokennumerator and gelukt == "buy " + token4smallcasename) or (
-                                    token4totoken5 > tokentokennumerator and gelukt2 == "buy " + token4smallcasename):
-                                print("Trading " + str(token4smallcasename) + ' ($' + str(
-                                    pricetoken4usd) + ') for ' + str(token5smallcasename) + " ($" + str(
-                                    pricetoken5usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token5address, selltokenaddress=token4address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token5smallcasename,
-                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token4address != 0) and (
-                                token6address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1 \
-                                and activatetoken6 == 1 and tradewithETHtoken6 == 1 and tradewithERCtoken4 == 1 and tradewithERCtoken6 == 1:
-                            if (
-                                    token4totoken6 > tokentokennumerator and gelukt == "buy " + token4smallcasename) or (
-                                    token4totoken6 > tokentokennumerator and gelukt2 == "buy " + token4smallcasename):
-                                print("Trading " + str(token4smallcasename) + ' ($' + str(
-                                    pricetoken4usd) + ') for ' + str(token6smallcasename) + " ($" + str(
-                                    pricetoken6usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token6address, selltokenaddress=token4address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token6smallcasename,
-                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token4address != 0) and (
-                                token7address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1 \
-                                and activatetoken7 == 1 and tradewithETHtoken7 == 1 and tradewithERCtoken4 == 1 and tradewithERCtoken7 == 1:
-                            if (
-                                    token4totoken7 > tokentokennumerator and gelukt == "buy " + token4smallcasename) or (
-                                    token4totoken7 > tokentokennumerator and gelukt2 == "buy " + token4smallcasename):
-                                print("Trading " + str(token4smallcasename) + ' ($' + str(
-                                    pricetoken4usd) + ') for ' + str(token7smallcasename) + " ($" + str(
-                                    pricetoken7usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token7address, selltokenaddress=token4address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token7smallcasename,
-                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token4address != 0) and (
-                                token8address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1 \
-                                and activatetoken8 == 1 and tradewithETHtoken8 == 1 and tradewithERCtoken4 == 1 and tradewithERCtoken8 == 1:
-                            if (
-                                    token4totoken8 > tokentokennumerator and gelukt == "buy " + token4smallcasename) or (
-                                    token4totoken8 > tokentokennumerator and gelukt2 == "buy " + token4smallcasename):
-                                print("Trading " + str(token4smallcasename) + ' ($' + str(
-                                    pricetoken4usd) + ') for ' + str(token8smallcasename) + " ($" + str(
-                                    pricetoken8usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token8address, selltokenaddress=token4address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token8smallcasename,
-                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token4address != 0) and (
-                                token9address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1 \
-                                and activatetoken9 == 1 and tradewithETHtoken9 == 1 and tradewithERCtoken4 == 1 and tradewithERCtoken9 == 1:
-                            if (
-                                    token4totoken9 > tokentokennumerator and gelukt == "buy " + token4smallcasename) or (
-                                    token4totoken9 > tokentokennumerator and gelukt2 == "buy " + token4smallcasename):
-                                print("Trading " + str(token4smallcasename) + ' ($' + str(
-                                    pricetoken4usd) + ') for ' + str(token9smallcasename) + " ($" + str(
-                                    pricetoken9usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token9address, selltokenaddress=token4address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token9smallcasename,
-                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token4address != 0) and (
-                                token10address != 0) and activatetoken4 == 1 and tradewithETHtoken4 == 1 \
-                                and activatetoken10 == 1 and tradewithETHtoken10 == 1 and tradewithERCtoken4 == 1 and tradewithERCtoken10 == 1:
-                            if (
-                                    token4totoken10 > tokentokennumerator and gelukt == "buy " + token4smallcasename) or (
-                                    token4totoken10 > tokentokennumerator and gelukt2 == "buy " + token4smallcasename):
-                                print("Trading " + str(token4smallcasename) + ' ($' + str(
-                                    pricetoken4usd) + ') for ' + str(token10smallcasename) + " ($" + str(
-                                    pricetoken10usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token10address, selltokenaddress=token4address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token10smallcasename,
-                                                 sellsmallcasesymbol=token4smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                    except Exception as e:
-                        o = 0
-                        exception_type, exception_object, exception_traceback = sys.exc_info()
-                        if configfile.debugmode == '1':
-                            print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                        gelukt = "mislukt"
-                if token5address != 0:
-                    try:  # token5 to others
-                        if (token5address != 0) and (
-                                token2address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1 \
-                                and activatetoken2 == 1 and tradewithETHtoken2 == 1 and tradewithERCtoken5 == 1 and tradewithERCtoken2 == 1:
-                            if (
-                                    token5totoken2 > tokentokennumerator and gelukt == "buy " + token5smallcasename) or (
-                                    token5totoken2 > tokentokennumerator and gelukt2 == "buy " + token5smallcasename):
-                                print("Trading " + str(token5smallcasename) + ' ($' + str(
-                                    pricetoken5usd) + ') for ' + str(token2smallcasename) + " ($" + str(
-                                    pricetoken2usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token2address, selltokenaddress=token5address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token2smallcasename,
-                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token5address != 0) and (
-                                token3address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1 \
-                                and activatetoken3 == 1 and tradewithETHtoken3 == 1 and tradewithERCtoken5 == 1 and tradewithERCtoken3 == 1:
-                            if (
-                                    token5totoken3 > tokentokennumerator and gelukt == "buy " + token5smallcasename) or (
-                                    token5totoken3 > tokentokennumerator and gelukt2 == "buy " + token5smallcasename):
-                                print("Trading " + str(token5smallcasename) + ' ($' + str(
-                                    pricetoken5usd) + ') for ' + str(token3smallcasename) + " ($" + str(
-                                    pricetoken3usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token3address, selltokenaddress=token5address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token3smallcasename,
-                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token5address != 0) and (
-                                token1address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1 \
-                                and activatetoken1 == 1 and tradewithETHtoken1 == 1 and tradewithERCtoken5 == 1 and tradewithERCtoken1 == 1:
-                            if (
-                                    token5totoken1 > tokentokennumerator and gelukt == "buy " + token5smallcasename) or (
-                                    token5totoken1 > tokentokennumerator and gelukt2 == "buy " + token5smallcasename):
-                                print("Trading " + str(token5smallcasename) + ' ($' + str(
-                                    pricetoken5usd) + ') for ' + str(token1smallcasename) + " ($" + str(
-                                    pricetoken1usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token1address, selltokenaddress=token5address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token1smallcasename,
-                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token5address != 0) and (
-                                token4address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1 \
-                                and activatetoken4 == 1 and tradewithETHtoken4 == 1 and tradewithERCtoken5 == 1 and tradewithERCtoken4 == 1:
-                            if (
-                                    token5totoken4 > tokentokennumerator and gelukt == "buy " + token5smallcasename) or (
-                                    token5totoken4 > tokentokennumerator and gelukt2 == "buy " + token5smallcasename):
-                                print("Trading " + str(token5smallcasename) + ' ($' + str(
-                                    pricetoken5usd) + ') for ' + str(token4smallcasename) + " ($" + str(
-                                    pricetoken4usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token4address, selltokenaddress=token5address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token4smallcasename,
-                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token5address != 0) and (
-                                token6address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1 \
-                                and activatetoken6 == 1 and tradewithETHtoken6 == 1 and tradewithERCtoken5 == 1 and tradewithERCtoken6 == 1:
-                            if (
-                                    token5totoken6 > tokentokennumerator and gelukt == "buy " + token5smallcasename) or (
-                                    token5totoken6 > tokentokennumerator and gelukt2 == "buy " + token5smallcasename):
-                                print("Trading " + str(token5smallcasename) + ' ($' + str(
-                                    pricetoken5usd) + ') for ' + str(token6smallcasename) + " ($" + str(
-                                    pricetoken6usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token6address, selltokenaddress=token5address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token6smallcasename,
-                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token5address != 0) and (
-                                token7address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1 \
-                                and activatetoken7 == 1 and tradewithETHtoken7 == 1 and tradewithERCtoken5 == 1 and tradewithERCtoken7 == 1:
-                            if (
-                                    token5totoken7 > tokentokennumerator and gelukt == "buy " + token5smallcasename) or (
-                                    token5totoken7 > tokentokennumerator and gelukt2 == "buy " + token5smallcasename):
-                                print("Trading " + str(token5smallcasename) + ' ($' + str(
-                                    pricetoken5usd) + ') for ' + str(token7smallcasename) + " ($" + str(
-                                    pricetoken7usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token7address, selltokenaddress=token5address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token7smallcasename,
-                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token5address != 0) and (
-                                token8address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1 \
-                                and activatetoken8 == 1 and tradewithETHtoken8 == 1 and tradewithERCtoken5 == 1 and tradewithERCtoken8 == 1:
-                            if (
-                                    token5totoken8 > tokentokennumerator and gelukt == "buy " + token5smallcasename) or (
-                                    token5totoken8 > tokentokennumerator and gelukt2 == "buy " + token5smallcasename):
-                                print("Trading " + str(token5smallcasename) + ' ($' + str(
-                                    pricetoken5usd) + ') for ' + str(token8smallcasename) + " ($" + str(
-                                    pricetoken8usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token8address, selltokenaddress=token5address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token8smallcasename,
-                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token5address != 0) and (
-                                token9address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1 \
-                                and activatetoken9 == 1 and tradewithETHtoken9 == 1 and tradewithERCtoken5 == 1 and tradewithERCtoken9 == 1:
-                            if (
-                                    token5totoken9 > tokentokennumerator and gelukt == "buy " + token5smallcasename) or (
-                                    token5totoken9 > tokentokennumerator and gelukt2 == "buy " + token5smallcasename):
-                                print("Trading " + str(token5smallcasename) + ' ($' + str(
-                                    pricetoken5usd) + ') for ' + str(token9smallcasename) + " ($" + str(
-                                    pricetoken9usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token9address, selltokenaddress=token5address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token9smallcasename,
-                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token5address != 0) and (
-                                token10address != 0) and activatetoken5 == 1 and tradewithETHtoken5 == 1 \
-                                and activatetoken10 == 1 and tradewithETHtoken10 == 1 and tradewithERCtoken5 == 1 and tradewithERCtoken10 == 1:
-                            if (
-                                    token5totoken10 > tokentokennumerator and gelukt == "buy " + token5smallcasename) or (
-                                    token5totoken10 > tokentokennumerator and gelukt2 == "buy " + token5smallcasename):
-                                print("Trading " + str(token5smallcasename) + ' ($' + str(
-                                    pricetoken5usd) + ') for ' + str(token10smallcasename) + " ($" + str(
-                                    pricetoken10usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token10address, selltokenaddress=token5address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token10smallcasename,
-                                                 sellsmallcasesymbol=token5smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                    except Exception as e:
-                        o = 0
-                        exception_type, exception_object, exception_traceback = sys.exc_info()
-                        if configfile.debugmode == '1':
-                            print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                        gelukt = "mislukt"
-                if token6address != 0:
-                    try:  # token6 to others
-                        if (token6address != 0) and (
-                                token2address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1 \
-                                and activatetoken2 == 1 and tradewithETHtoken2 == 1 and tradewithERCtoken6 == 1 and tradewithERCtoken2 == 1:
-                            if (
-                                    token6totoken2 > tokentokennumerator and gelukt == "buy " + token6smallcasename) or (
-                                    token6totoken2 > tokentokennumerator and gelukt2 == "buy " + token6smallcasename):
-                                print("Trading " + str(token6smallcasename) + ' ($' + str(
-                                    pricetoken6usd) + ') for ' + str(token2smallcasename) + " ($" + str(
-                                    pricetoken2usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token2address, selltokenaddress=token6address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token2smallcasename,
-                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token6address != 0) and (
-                                token3address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1 \
-                                and activatetoken3 == 1 and tradewithETHtoken3 == 1 and tradewithERCtoken6 == 1 and tradewithERCtoken3 == 1:
-                            if (
-                                    token6totoken3 > tokentokennumerator and gelukt == "buy " + token6smallcasename) or (
-                                    token6totoken3 > tokentokennumerator and gelukt2 == "buy " + token6smallcasename):
-                                print("Trading " + str(token6smallcasename) + ' ($' + str(
-                                    pricetoken6usd) + ') for ' + str(token3smallcasename) + " ($" + str(
-                                    pricetoken3usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token3address, selltokenaddress=token6address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token3smallcasename,
-                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token6address != 0) and (
-                                token4address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1 \
-                                and activatetoken4 == 1 and tradewithETHtoken4 == 1 and tradewithERCtoken6 == 1 and tradewithERCtoken4 == 1:
-                            if (
-                                    token6totoken4 > tokentokennumerator and gelukt == "buy " + token6smallcasename) or (
-                                    token6totoken4 > tokentokennumerator and gelukt2 == "buy " + token6smallcasename):
-                                print("Trading " + str(token6smallcasename) + ' ($' + str(
-                                    pricetoken6usd) + ') for ' + str(token4smallcasename) + " ($" + str(
-                                    pricetoken4usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token4address, selltokenaddress=token6address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token4smallcasename,
-                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token6address != 0) and (
-                                token1address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1 \
-                                and activatetoken1 == 1 and tradewithETHtoken1 == 1 and tradewithERCtoken6 == 1 and tradewithERCtoken1 == 1:
-                            if (
-                                    token6totoken1 > tokentokennumerator and gelukt == "buy " + token6smallcasename) or (
-                                    token6totoken1 > tokentokennumerator and gelukt2 == "buy " + token6smallcasename):
-                                print("Trading " + str(token6smallcasename) + ' ($' + str(
-                                    pricetoken6usd) + ') for ' + str(token1smallcasename) + " ($" + str(
-                                    pricetoken1usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token1address, selltokenaddress=token6address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token1smallcasename,
-                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token6address != 0) and (
-                                token5address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1 \
-                                and activatetoken5 == 1 and tradewithETHtoken5 == 1 and tradewithERCtoken6 == 1 and tradewithERCtoken5 == 1:
-                            if (
-                                    token6totoken5 > tokentokennumerator and gelukt == "buy " + token6smallcasename) or (
-                                    token6totoken5 > tokentokennumerator and gelukt2 == "buy " + token6smallcasename):
-                                print("Trading " + str(token6smallcasename) + ' ($' + str(
-                                    pricetoken6usd) + ') for ' + str(token5smallcasename) + " ($" + str(
-                                    pricetoken5usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token5address, selltokenaddress=token6address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token5smallcasename,
-                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token6address != 0) and (
-                                token7address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1 \
-                                and activatetoken7 == 1 and tradewithETHtoken7 == 1 and tradewithERCtoken6 == 1 and tradewithERCtoken7 == 1:
-                            if (
-                                    token6totoken7 > tokentokennumerator and gelukt == "buy " + token6smallcasename) or (
-                                    token6totoken7 > tokentokennumerator and gelukt2 == "buy " + token6smallcasename):
-                                print("Trading " + str(token6smallcasename) + ' ($' + str(
-                                    pricetoken6usd) + ') for ' + str(token7smallcasename) + " ($" + str(
-                                    pricetoken7usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token7address, selltokenaddress=token6address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token7smallcasename,
-                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token6address != 0) and (
-                                token8address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1 \
-                                and activatetoken8 == 1 and tradewithETHtoken8 == 1 and tradewithERCtoken6 == 1 and tradewithERCtoken8 == 1:
-                            if (
-                                    token6totoken8 > tokentokennumerator and gelukt == "buy " + token6smallcasename) or (
-                                    token6totoken8 > tokentokennumerator and gelukt2 == "buy " + token6smallcasename):
-                                print("Trading " + str(token6smallcasename) + ' ($' + str(
-                                    pricetoken6usd) + ') for ' + str(token8smallcasename) + " ($" + str(
-                                    pricetoken8usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token8address, selltokenaddress=token6address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token8smallcasename,
-                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token6address != 0) and (
-                                token9address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1 \
-                                and activatetoken9 == 1 and tradewithETHtoken9 == 1 and tradewithERCtoken6 == 1 and tradewithERCtoken9 == 1:
-                            if (
-                                    token6totoken9 > tokentokennumerator and gelukt == "buy " + token6smallcasename) or (
-                                    token6totoken9 > tokentokennumerator and gelukt2 == "buy " + token6smallcasename):
-                                print("Trading " + str(token6smallcasename) + ' ($' + str(
-                                    pricetoken6usd) + ') for ' + str(token9smallcasename) + " ($" + str(
-                                    pricetoken9usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token9address, selltokenaddress=token6address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token9smallcasename,
-                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token6address != 0) and (
-                                token10address != 0) and activatetoken6 == 1 and tradewithETHtoken6 == 1 \
-                                and activatetoken10 == 1 and tradewithETHtoken10 == 1 and tradewithERCtoken6 == 1 and tradewithERCtoken10 == 1:
-                            if (
-                                    token6totoken10 > tokentokennumerator and gelukt == "buy " + token6smallcasename) or (
-                                    token6totoken10 > tokentokennumerator and gelukt2 == "buy " + token6smallcasename):
-                                print("Trading " + str(token6smallcasename) + ' ($' + str(
-                                    pricetoken6usd) + ') for ' + str(token10smallcasename) + " ($" + str(
-                                    pricetoken10usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token10address, selltokenaddress=token6address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token10smallcasename,
-                                                 sellsmallcasesymbol=token6smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                    except Exception as e:
-                        o = 0
-                        exception_type, exception_object, exception_traceback = sys.exc_info()
-                        if configfile.debugmode == '1':
-                            print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                        gelukt = "mislukt"
-                if token7address != 0:
-                    try:  # token7 to others
-                        if (token7address != 0) and (
-                                token2address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1 \
-                                and activatetoken2 == 1 and tradewithETHtoken2 == 1 and tradewithERCtoken7 == 1 and tradewithERCtoken2 == 1:
-                            if (
-                                    token7totoken2 > tokentokennumerator and gelukt == "buy " + token7smallcasename) or (
-                                    token7totoken2 > tokentokennumerator and gelukt2 == "buy " + token7smallcasename):
-                                print("Trading " + str(token7smallcasename) + ' ($' + str(
-                                    pricetoken7usd) + ') for ' + str(token2smallcasename) + " ($" + str(
-                                    pricetoken2usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token2address, selltokenaddress=token7address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token2smallcasename,
-                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token7address != 0) and (
-                                token3address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1 \
-                                and activatetoken3 == 1 and tradewithETHtoken3 == 1 and tradewithERCtoken7 == 1 and tradewithERCtoken3 == 1:
-                            if (
-                                    token7totoken3 > tokentokennumerator and gelukt == "buy " + token7smallcasename) or (
-                                    token7totoken3 > tokentokennumerator and gelukt2 == "buy " + token7smallcasename):
-                                print("Trading " + str(token7smallcasename) + ' ($' + str(
-                                    pricetoken7usd) + ') for ' + str(token3smallcasename) + " ($" + str(
-                                    pricetoken3usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token3address, selltokenaddress=token7address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token3smallcasename,
-                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token7address != 0) and (
-                                token4address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1 \
-                                and activatetoken4 == 1 and tradewithETHtoken4 == 1 and tradewithERCtoken7 == 1 and tradewithERCtoken4 == 1:
-                            if (
-                                    token7totoken4 > tokentokennumerator and gelukt == "buy " + token7smallcasename) or (
-                                    token7totoken4 > tokentokennumerator and gelukt2 == "buy " + token7smallcasename):
-                                print("Trading " + str(token7smallcasename) + ' ($' + str(
-                                    pricetoken7usd) + ') for ' + str(token4smallcasename) + " ($" + str(
-                                    pricetoken4usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token4address, selltokenaddress=token7address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token4smallcasename,
-                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token7address != 0) and (
-                                token5address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1 \
-                                and activatetoken5 == 1 and tradewithETHtoken5 == 1 and tradewithERCtoken7 == 1 and tradewithERCtoken5 == 1:
-                            if (
-                                    token7totoken5 > tokentokennumerator and gelukt == "buy " + token7smallcasename) or (
-                                    token7totoken5 > tokentokennumerator and gelukt2 == "buy " + token7smallcasename):
-                                print("Trading " + str(token7smallcasename) + ' ($' + str(
-                                    pricetoken7usd) + ') for ' + str(token5smallcasename) + " ($" + str(
-                                    pricetoken5usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token5address, selltokenaddress=token7address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token5smallcasename,
-                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token7address != 0) and (
-                                token1address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1 \
-                                and activatetoken1 == 1 and tradewithETHtoken1 == 1 and tradewithERCtoken7 == 1 and tradewithERCtoken1 == 1:
-                            if (
-                                    token7totoken1 > tokentokennumerator and gelukt == "buy " + token7smallcasename) or (
-                                    token7totoken1 > tokentokennumerator and gelukt2 == "buy " + token7smallcasename):
-                                print("Trading " + str(token7smallcasename) + ' ($' + str(
-                                    pricetoken7usd) + ') for ' + str(token1smallcasename) + " ($" + str(
-                                    pricetoken1usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token1address, selltokenaddress=token7address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token1smallcasename,
-                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token7address != 0) and (
-                                token6address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1 \
-                                and activatetoken6 == 1 and tradewithETHtoken6 == 1 and tradewithERCtoken7 == 1 and tradewithERCtoken6 == 1:
-                            if (
-                                    token7totoken6 > tokentokennumerator and gelukt == "buy " + token7smallcasename) or (
-                                    token7totoken6 > tokentokennumerator and gelukt2 == "buy " + token7smallcasename):
-                                print("Trading " + str(token7smallcasename) + ' ($' + str(
-                                    pricetoken7usd) + ') for ' + str(token6smallcasename) + " ($" + str(
-                                    pricetoken6usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token6address, selltokenaddress=token7address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token6smallcasename,
-                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token7address != 0) and (
-                                token8address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1 \
-                                and activatetoken8 == 1 and tradewithETHtoken8 == 1 and tradewithERCtoken7 == 1 and tradewithERCtoken8 == 1:
-                            if (
-                                    token7totoken8 > tokentokennumerator and gelukt == "buy " + token7smallcasename) or (
-                                    token7totoken8 > tokentokennumerator and gelukt2 == "buy " + token7smallcasename):
-                                print("Trading " + str(token7smallcasename) + ' ($' + str(
-                                    pricetoken7usd) + ') for ' + str(token8smallcasename) + " ($" + str(
-                                    pricetoken8usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token8address, selltokenaddress=token7address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token8smallcasename,
-                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token7address != 0) and (
-                                token9address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1 \
-                                and activatetoken9 == 1 and tradewithETHtoken9 == 1 and tradewithERCtoken7 == 1 and tradewithERCtoken9 == 1:
-                            if (
-                                    token7totoken9 > tokentokennumerator and gelukt == "buy " + token7smallcasename) or (
-                                    token7totoken9 > tokentokennumerator and gelukt2 == "buy " + token7smallcasename):
-                                print("Trading " + str(token7smallcasename) + ' ($' + str(
-                                    pricetoken7usd) + ') for ' + str(token9smallcasename) + " ($" + str(
-                                    pricetoken9usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token9address, selltokenaddress=token7address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token9smallcasename,
-                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token7address != 0) and (
-                                token10address != 0) and activatetoken7 == 1 and tradewithETHtoken7 == 1 \
-                                and activatetoken10 == 1 and tradewithETHtoken10 == 1 and tradewithERCtoken7 == 1 and tradewithERCtoken10 == 1:
-                            if (
-                                    token7totoken10 > tokentokennumerator and gelukt == "buy " + token7smallcasename) or (
-                                    token7totoken10 > tokentokennumerator and gelukt2 == "buy " + token7smallcasename):
-                                print("Trading " + str(token7smallcasename) + ' ($' + str(
-                                    pricetoken7usd) + ') for ' + str(token10smallcasename) + " ($" + str(
-                                    pricetoken10usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token10address, selltokenaddress=token7address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token10smallcasename,
-                                                 sellsmallcasesymbol=token7smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                    except Exception as e:
-                        o = 0
-                        exception_type, exception_object, exception_traceback = sys.exc_info()
-                        if configfile.debugmode == '1':
-                            print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                        gelukt = "mislukt"
-                if token8address != 0:
-                    try:  # token8 to others
-                        if (token8address != 0) and (
-                                token2address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1 \
-                                and activatetoken2 == 1 and tradewithETHtoken2 == 1 and tradewithERCtoken8 == 1 and tradewithERCtoken2 == 1:
-                            if (
-                                    token8totoken2 > tokentokennumerator and gelukt == "buy " + token8smallcasename) or (
-                                    token8totoken2 > tokentokennumerator and gelukt2 == "buy " + token8smallcasename):
-                                print("Trading " + str(token8smallcasename) + ' ($' + str(
-                                    pricetoken8usd) + ') for ' + str(token2smallcasename) + " ($" + str(
-                                    pricetoken2usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token2address, selltokenaddress=token8address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token2smallcasename,
-                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token8address != 0) and (
-                                token3address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1 \
-                                and activatetoken3 == 1 and tradewithETHtoken3 == 1 and tradewithERCtoken8 == 1 and tradewithERCtoken3 == 1:
-                            if (
-                                    token8totoken3 > tokentokennumerator and gelukt == "buy " + token8smallcasename) or (
-                                    token8totoken3 > tokentokennumerator and gelukt2 == "buy " + token8smallcasename):
-                                print("Trading " + str(token8smallcasename) + ' ($' + str(
-                                    pricetoken8usd) + ') for ' + str(token3smallcasename) + " ($" + str(
-                                    pricetoken3usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token3address, selltokenaddress=token8address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token3smallcasename,
-                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token8address != 0) and (
-                                token4address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1 \
-                                and activatetoken4 == 1 and tradewithETHtoken4 == 1 and tradewithERCtoken8 == 1 and tradewithERCtoken4 == 1:
-                            if (
-                                    token8totoken4 > tokentokennumerator and gelukt == "buy " + token8smallcasename) or (
-                                    token8totoken4 > tokentokennumerator and gelukt2 == "buy " + token8smallcasename):
-                                print("Trading " + str(token8smallcasename) + ' ($' + str(
-                                    pricetoken8usd) + ') for ' + str(token4smallcasename) + " ($" + str(
-                                    pricetoken4usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token4address, selltokenaddress=token8address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token4smallcasename,
-                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token8address != 0) and (
-                                token5address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1 \
-                                and activatetoken5 == 1 and tradewithETHtoken5 == 1 and tradewithERCtoken8 == 1 and tradewithERCtoken5 == 1:
-                            if (
-                                    token8totoken5 > tokentokennumerator and gelukt == "buy " + token8smallcasename) or (
-                                    token8totoken5 > tokentokennumerator and gelukt2 == "buy " + token8smallcasename):
-                                print("Trading " + str(token8smallcasename) + ' ($' + str(
-                                    pricetoken8usd) + ') for ' + str(token5smallcasename) + " ($" + str(
-                                    pricetoken5usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token5address, selltokenaddress=token8address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token5smallcasename,
-                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token8address != 0) and (
-                                token6address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1 \
-                                and activatetoken6 == 1 and tradewithETHtoken6 == 1 and tradewithERCtoken8 == 1 and tradewithERCtoken6 == 1:
-                            if (
-                                    token8totoken6 > tokentokennumerator and gelukt == "buy " + token8smallcasename) or (
-                                    token8totoken6 > tokentokennumerator and gelukt2 == "buy " + token8smallcasename):
-                                print("Trading " + str(token8smallcasename) + ' ($' + str(
-                                    pricetoken8usd) + ') for ' + str(token6smallcasename) + " ($" + str(
-                                    pricetoken6usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token6address, selltokenaddress=token8address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token6smallcasename,
-                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token8address != 0) and (
-                                token1address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1 \
-                                and activatetoken1 == 1 and tradewithETHtoken1 == 1 and tradewithERCtoken8 == 1 and tradewithERCtoken1 == 1:
-                            if (
-                                    token8totoken1 > tokentokennumerator and gelukt == "buy " + token8smallcasename) or (
-                                    token8totoken1 > tokentokennumerator and gelukt2 == "buy " + token8smallcasename):
-                                print("Trading " + str(token8smallcasename) + ' ($' + str(
-                                    pricetoken8usd) + ') for ' + str(token1smallcasename) + " ($" + str(
-                                    pricetoken1usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token1address, selltokenaddress=token8address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token1smallcasename,
-                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token8address != 0) and (
-                                token7address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1 \
-                                and activatetoken7 == 1 and tradewithETHtoken7 == 1 and tradewithERCtoken8 == 1 and tradewithERCtoken7 == 1:
-                            if (
-                                    token8totoken7 > tokentokennumerator and gelukt == "buy " + token8smallcasename) or (
-                                    token8totoken7 > tokentokennumerator and gelukt2 == "buy " + token8smallcasename):
-                                print("Trading " + str(token8smallcasename) + ' ($' + str(
-                                    pricetoken8usd) + ') for ' + str(token7smallcasename) + " ($" + str(
-                                    pricetoken7usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token7address, selltokenaddress=token8address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token7smallcasename,
-                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token8address != 0) and (
-                                token9address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1 \
-                                and activatetoken9 == 1 and tradewithETHtoken9 == 1 and tradewithERCtoken8 == 1 and tradewithERCtoken9 == 1:
-                            if (
-                                    token8totoken9 > tokentokennumerator and gelukt == "buy " + token8smallcasename) or (
-                                    token8totoken9 > tokentokennumerator and gelukt2 == "buy " + token8smallcasename):
-                                print("Trading " + str(token8smallcasename) + ' ($' + str(
-                                    pricetoken8usd) + ') for ' + str(token9smallcasename) + " ($" + str(
-                                    pricetoken9usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token9address, selltokenaddress=token8address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token9smallcasename,
-                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token8address != 0) and (
-                                token10address != 0) and activatetoken8 == 1 and tradewithETHtoken8 == 1 \
-                                and activatetoken10 == 1 and tradewithETHtoken10 == 1 and tradewithERCtoken8 == 1 and tradewithERCtoken10 == 1:
-                            if (
-                                    token8totoken10 > tokentokennumerator and gelukt == "buy " + token8smallcasename) or (
-                                    token8totoken10 > tokentokennumerator and gelukt2 == "buy " + token8smallcasename):
-                                print("Trading " + str(token8smallcasename) + ' ($' + str(
-                                    pricetoken8usd) + ') for ' + str(token10smallcasename) + " ($" + str(
-                                    pricetoken10usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token10address, selltokenaddress=token8address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token10smallcasename,
-                                                 sellsmallcasesymbol=token8smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                    except Exception as e:
-                        o = 0
-                        exception_type, exception_object, exception_traceback = sys.exc_info()
-                        if configfile.debugmode == '1':
-                            print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                        gelukt = "mislukt"
-                if token9address != 0:
-                    try:  # token9 to others
-                        if (token9address != 0) and (
-                                token2address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1 \
-                                and activatetoken2 == 1 and tradewithETHtoken2 == 1 and tradewithERCtoken9 == 1 and tradewithERCtoken2 == 1:
-                            if (
-                                    token9totoken2 > tokentokennumerator and gelukt == "buy " + token9smallcasename) or (
-                                    token9totoken2 > tokentokennumerator and gelukt2 == "buy " + token9smallcasename):
-                                print("Trading " + str(token9smallcasename) + ' ($' + str(
-                                    pricetoken9usd) + ') for ' + str(token2smallcasename) + " ($" + str(
-                                    pricetoken2usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token2address, selltokenaddress=token9address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token2smallcasename,
-                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token9address != 0) and (
-                                token3address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1 \
-                                and activatetoken3 == 1 and tradewithETHtoken3 == 1 and tradewithERCtoken9 == 1 and tradewithERCtoken3 == 1:
-                            if (
-                                    token9totoken3 > tokentokennumerator and gelukt == "buy " + token9smallcasename) or (
-                                    token9totoken3 > tokentokennumerator and gelukt2 == "buy " + token9smallcasename):
-                                print("Trading " + str(token9smallcasename) + ' ($' + str(
-                                    pricetoken9usd) + ') for ' + str(token3smallcasename) + " ($" + str(
-                                    pricetoken3usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token3address, selltokenaddress=token9address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token3smallcasename,
-                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token9address != 0) and (
-                                token4address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1 \
-                                and activatetoken4 == 1 and tradewithETHtoken4 == 1 and tradewithERCtoken9 == 1 and tradewithERCtoken4 == 1:
-                            if (
-                                    token9totoken4 > tokentokennumerator and gelukt == "buy " + token9smallcasename) or (
-                                    token9totoken4 > tokentokennumerator and gelukt2 == "buy " + token9smallcasename):
-                                print("Trading " + str(token9smallcasename) + ' ($' + str(
-                                    pricetoken9usd) + ') for ' + str(token4smallcasename) + " ($" + str(
-                                    pricetoken4usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token4address, selltokenaddress=token9address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token4smallcasename,
-                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token9address != 0) and (
-                                token5address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1 \
-                                and activatetoken5 == 1 and tradewithETHtoken5 == 1 and tradewithERCtoken9 == 1 and tradewithERCtoken5 == 1:
-                            if (
-                                    token9totoken5 > tokentokennumerator and gelukt == "buy " + token9smallcasename) or (
-                                    token9totoken5 > tokentokennumerator and gelukt2 == "buy " + token9smallcasename):
-                                print("Trading " + str(token9smallcasename) + ' ($' + str(
-                                    pricetoken9usd) + ') for ' + str(token5smallcasename) + " ($" + str(
-                                    pricetoken5usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token5address, selltokenaddress=token9address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token5smallcasename,
-                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token9address != 0) and (
-                                token6address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1 \
-                                and activatetoken6 == 1 and tradewithETHtoken6 == 1 and tradewithERCtoken9 == 1 and tradewithERCtoken6 == 1:
-                            if (
-                                    token9totoken6 > tokentokennumerator and gelukt == "buy " + token9smallcasename) or (
-                                    token9totoken6 > tokentokennumerator and gelukt2 == "buy " + token9smallcasename):
-                                print("Trading " + str(token9smallcasename) + ' ($' + str(
-                                    pricetoken9usd) + ') for ' + str(token6smallcasename) + " ($" + str(
-                                    pricetoken6usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token6address, selltokenaddress=token9address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token6smallcasename,
-                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token9address != 0) and (
-                                token7address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1 \
-                                and activatetoken7 == 1 and tradewithETHtoken7 == 1 and tradewithERCtoken9 == 1 and tradewithERCtoken7 == 1:
-                            if (
-                                    token9totoken7 > tokentokennumerator and gelukt == "buy " + token9smallcasename) or (
-                                    token9totoken7 > tokentokennumerator and gelukt2 == "buy " + token9smallcasename):
-                                print("Trading " + str(token9smallcasename) + ' ($' + str(
-                                    pricetoken9usd) + ') for ' + str(token7smallcasename) + " ($" + str(
-                                    pricetoken7usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token7address, selltokenaddress=token9address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token7smallcasename,
-                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token9address != 0) and (
-                                token8address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1 \
-                                and activatetoken8 == 1 and tradewithETHtoken8 == 1 and tradewithERCtoken9 == 1 and tradewithERCtoken8 == 1:
-                            if (
-                                    token9totoken8 > tokentokennumerator and gelukt == "buy " + token9smallcasename) or (
-                                    token9totoken8 > tokentokennumerator and gelukt2 == "buy " + token9smallcasename):
-                                print("Trading " + str(token9smallcasename) + ' ($' + str(
-                                    pricetoken9usd) + ') for ' + str(token8smallcasename) + " ($" + str(
-                                    pricetoken8usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token8address, selltokenaddress=token9address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token8smallcasename,
-                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token9address != 0) and (
-                                token1address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1 \
-                                and activatetoken1 == 1 and tradewithETHtoken1 == 1 and tradewithERCtoken9 == 1 and tradewithERCtoken1 == 1:
-                            if (
-                                    token9totoken1 > tokentokennumerator and gelukt == "buy " + token9smallcasename) or (
-                                    token9totoken1 > tokentokennumerator and gelukt2 == "buy " + token9smallcasename):
-                                print("Trading " + str(token9smallcasename) + ' ($' + str(
-                                    pricetoken9usd) + ') for ' + str(token1smallcasename) + " ($" + str(
-                                    pricetoken1usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token1address, selltokenaddress=token9address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token1smallcasename,
-                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token9address != 0) and (
-                                token10address != 0) and activatetoken9 == 1 and tradewithETHtoken9 == 1 \
-                                and activatetoken10 == 1 and tradewithETHtoken10 == 1 and tradewithERCtoken9 == 1 and tradewithERCtoken10 == 1:
-                            if (
-                                    token9totoken10 > tokentokennumerator and gelukt == "buy " + token9smallcasename) or (
-                                    token9totoken10 > tokentokennumerator and gelukt2 == "buy " + token9smallcasename):
-                                print("Trading " + str(token9smallcasename) + ' ($' + str(
-                                    pricetoken9usd) + ') for ' + str(token10smallcasename) + " ($" + str(
-                                    pricetoken10usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token10address, selltokenaddress=token9address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token10smallcasename,
-                                                 sellsmallcasesymbol=token9smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                    except Exception as e:
-                        o = 0
-                        exception_type, exception_object, exception_traceback = sys.exc_info()
-                        if configfile.debugmode == '1':
-                            print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                        gelukt = "mislukt"
-                if token10address != 0:
-                    try:  # token10 to others
-                        if (token10address != 0) and (
-                                token2address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1 \
-                                and activatetoken2 == 1 and tradewithETHtoken2 == 1 and tradewithERCtoken10 == 1 and tradewithERCtoken2 == 1:
-                            if (
-                                    token10totoken2 > tokentokennumerator and gelukt == "buy " + token10smallcasename) or (
-                                    token10totoken2 > tokentokennumerator and gelukt2 == "buy " + token10smallcasename):
-                                print("Trading " + str(token10smallcasename) + ' ($' + str(
-                                    pricetoken10usd) + ') for ' + str(token2smallcasename) + " ($" + str(
-                                    pricetoken2usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token2address, selltokenaddress=token10address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token2smallcasename,
-                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token10address != 0) and (
-                                token3address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1 \
-                                and activatetoken3 == 1 and tradewithETHtoken3 == 1 and tradewithERCtoken10 == 1 and tradewithERCtoken3 == 1:
-                            if (
-                                    token10totoken3 > tokentokennumerator and gelukt == "buy " + token10smallcasename) or (
-                                    token10totoken3 > tokentokennumerator and gelukt2 == "buy " + token10smallcasename):
-                                print("Trading " + str(token10smallcasename) + ' ($' + str(
-                                    pricetoken10usd) + ') for ' + str(token3smallcasename) + " ($" + str(
-                                    pricetoken3usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token3address, selltokenaddress=token10address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token3smallcasename,
-                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token10address != 0) and (
-                                token4address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1 \
-                                and activatetoken4 == 1 and tradewithETHtoken4 == 1 and tradewithERCtoken10 == 1 and tradewithERCtoken4 == 1:
-                            if (
-                                    token10totoken4 > tokentokennumerator and gelukt == "buy " + token10smallcasename) or (
-                                    token10totoken4 > tokentokennumerator and gelukt2 == "buy " + token10smallcasename):
-                                print("Trading " + str(token10smallcasename) + ' ($' + str(
-                                    pricetoken10usd) + ') for ' + str(token4smallcasename) + " ($" + str(
-                                    pricetoken4usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token4address, selltokenaddress=token10address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token4smallcasename,
-                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token10address != 0) and (
-                                token5address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1 \
-                                and activatetoken5 == 1 and tradewithETHtoken5 == 1 and tradewithERCtoken10 == 1 and tradewithERCtoken5 == 1:
-                            if (
-                                    token10totoken5 > tokentokennumerator and gelukt == "buy " + token10smallcasename) or (
-                                    token10totoken5 > tokentokennumerator and gelukt2 == "buy " + token10smallcasename):
-                                print("Trading " + str(token10smallcasename) + ' ($' + str(
-                                    pricetoken10usd) + ') for ' + str(token5smallcasename) + " ($" + str(
-                                    pricetoken5usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token5address, selltokenaddress=token10address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token5smallcasename,
-                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token10address != 0) and (
-                                token6address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1 \
-                                and activatetoken6 == 1 and tradewithETHtoken6 == 1 and tradewithERCtoken10 == 1 and tradewithERCtoken6 == 1:
-                            if (
-                                    token10totoken6 > tokentokennumerator and gelukt == "buy " + token10smallcasename) or (
-                                    token10totoken6 > tokentokennumerator and gelukt2 == "buy " + token10smallcasename):
-                                print("Trading " + str(token10smallcasename) + ' ($' + str(
-                                    pricetoken10usd) + ') for ' + str(token6smallcasename) + " ($" + str(
-                                    pricetoken6usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token6address, selltokenaddress=token10address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token6smallcasename,
-                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token10address != 0) and (
-                                token7address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1 \
-                                and activatetoken7 == 1 and tradewithETHtoken7 == 1 and tradewithERCtoken10 == 1 and tradewithERCtoken7 == 1:
-                            if (
-                                    token10totoken7 > tokentokennumerator and gelukt == "buy " + token10smallcasename) or (
-                                    token10totoken7 > tokentokennumerator and gelukt2 == "buy " + token10smallcasename):
-                                print("Trading " + str(token10smallcasename) + ' ($' + str(
-                                    pricetoken10usd) + ') for ' + str(token7smallcasename) + " ($" + str(
-                                    pricetoken7usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token7address, selltokenaddress=token10address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token7smallcasename,
-                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token10address != 0) and (
-                                token8address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1 \
-                                and activatetoken8 == 1 and tradewithETHtoken8 == 1 and tradewithERCtoken10 == 1 and tradewithERCtoken8 == 1:
-                            if (
-                                    token10totoken8 > tokentokennumerator and gelukt == "buy " + token10smallcasename) or (
-                                    token10totoken8 > tokentokennumerator and gelukt2 == "buy " + token10smallcasename):
-                                print("Trading " + str(token10smallcasename) + ' ($' + str(
-                                    pricetoken10usd) + ') for ' + str(token8smallcasename) + " ($" + str(
-                                    pricetoken8usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token8address, selltokenaddress=token10address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token8smallcasename,
-                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token10address != 0) and (
-                                token1address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1 \
-                                and activatetoken1 == 1 and tradewithETHtoken1 == 1 and tradewithERCtoken10 == 1 and tradewithERCtoken1 == 1:
-                            if (
-                                    token10totoken1 > tokentokennumerator and gelukt == "buy " + token10smallcasename) or (
-                                    token10totoken1 > tokentokennumerator and gelukt2 == "buy " + token10smallcasename):
-                                print("Trading " + str(token10smallcasename) + ' ($' + str(
-                                    pricetoken10usd) + ') for ' + str(token1smallcasename) + " ($" + str(
-                                    pricetoken1usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token1address, selltokenaddress=token10address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token1smallcasename,
-                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                        if (token10address != 0) and (
-                                token9address != 0) and activatetoken10 == 1 and tradewithETHtoken10 == 1 \
-                                and activatetoken9 == 1 and tradewithETHtoken9 == 1 and tradewithERCtoken10 == 1 and tradewithERCtoken9 == 1:
-                            if (
-                                    token10totoken9 > tokentokennumerator and gelukt == "buy " + token10smallcasename) or (
-                                    token10totoken9 > tokentokennumerator and gelukt2 == "buy " + token10smallcasename):
-                                print("Trading " + str(token10smallcasename) + ' ($' + str(
-                                    pricetoken10usd) + ') for ' + str(token9smallcasename) + " ($" + str(
-                                    pricetoken9usd) + ")")
-
-                                kaka = makeTrade(buytokenaddress=token9address, selltokenaddress=token10address,
-                                                 my_address=my_address,
-                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
-                                                 buysmallcasesymbol=token9smallcasename,
-                                                 sellsmallcasesymbol=token10smallcasename, ethtokeep=ethtokeep,
-                                                 speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
-                                gelukt = kaka['gelukt']
-                                if gelukt != 'mislukt':
-                                    QtTest.QTest.qWait(timesleepaftertrade*1000)
-                                keer = 9999
-                    except Exception as e:
-                        o = 0
-                        exception_type, exception_object, exception_traceback = sys.exc_info()
-                        if configfile.debugmode == '1':
-                            print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                        gelukt = "mislukt"
-            except Exception as e:
-                exception_type, exception_object, exception_traceback = sys.exc_info()
-                if configfile.debugmode == '1':
-                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                gelukt = "mislukt"
-            if 'keer' not in locals():
-                keer = keer2
-            return {'gelukt': gelukt, 'keer': keer, 'fasttoken1': fasttoken1, 'fasttoken2': fasttoken2,
-                    'fasttoken3': fasttoken3, 'fasttoken4': fasttoken4, 'fasttoken5': fasttoken5,
-                    'fasttoken6': fasttoken6, 'fasttoken7': fasttoken7, 'fasttoken8': fasttoken8,
-                    'fasttoken9': fasttoken9, 'fasttoken10': fasttoken10}
-
-        def checkbalance(infura_url, my_address, token1address, token2address, token3address, token4address,
-                         token5address,
-                         token6address, token7address, token8address, token9address, token10address, maincoinoption,
-                         token1decimals, token2decimals, token3decimals, token4decimals, token5decimals, token6decimals,
-                         token7decimals, token8decimals, token9decimals, token10decimals,dollarbalancemaintoken, mcotoseeassell,dollarbalancetoken1,dollarbalancetoken2,dollarbalancetoken3,dollarbalancetoken4,dollarbalancetoken5,dollarbalancetoken6,dollarbalancetoken7,dollarbalancetoken8,dollarbalancetoken9,dollarbalancetoken10,balance_token1,balance_token2,balance_token3,balance_token4,balance_token5,balance_token6,balance_token7,balance_token8,balance_token9,balance_token10):
-            ethereum_address = my_address
+        while self.__abort != True:
+            thread_name = QThread.currentThread().objectName()
+            thread_id = int(QThread.currentThreadId())  # cast to int() is necessary
+            self.sig_msg.emit('Running worker #{} from thread "{}" (#{})'.format(self.__id, thread_name, thread_id))
+
+
+            if 'step' not in locals():
+                step=1
+            else:
+                step=1
+            self.sig_step.emit(self.__id, 'step ' + str(step))
+            QCoreApplication.processEvents()
+            if self.__abort==True:
+                # note that "step" value will not necessarily be same for every thread
+                self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+
+            importlib.reload(configfile)
+            w33 = Web3()
             cg = CoinGeckoAPI()
+            maxgwei=int(configfile.maxgwei)
+            if configfile.maxgweinumber == '':
+                maxgweinumber=0
+            else:
+                maxgweinumber = int(configfile.maxgweinumber)
+            diffdeposit=float(configfile.diffdeposit)
+            diffdepositaddress = str(configfile.diffdepositaddress)
+            speed = str(configfile.speed)
+            max_slippage = float(configfile.max_slippage)
+            incaseofbuyinghowmuch = int(configfile.incaseofbuyinghowmuch)
+            ethtokeep = int(configfile.ethtokeep)
+            timesleepaftertrade = int(configfile.secondscheckingprice_2)
+            timesleep = int(configfile.secondscheckingprice)
+            infura_url = str(configfile.infuraurl)
+            infuraurl = infura_url
+            tokentokennumerator = float(configfile.tokentokennumerator)
+            mcotoseeassell=float(configfile.mcotoseeassell)
+            debugmode = int(configfile.debugmode)
 
-            def api(ethaddress):
-                QtTest.QTest.qWait(200)
+
+            ##for token_number,eth_address,high,low,activate,stoploss_value,stoploss_activate,trade_with_ERC,trade_with_ETH,fast_token in all_token_information:
+            all_token_information= [(1,str(configfile.token1ethaddress),float(configfile.token1high),float(configfile.token1low),
+                                     float(configfile.activatetoken1),float(configfile.token1stoploss),float(configfile.stoplosstoken1)
+                                     ,float(configfile.tradewithERCtoken1),float(configfile.tradewithETHtoken1),'0'),
+                                    (2,str(configfile.token2ethaddress),float(configfile.token2high),float(configfile.token2low),
+                                     float(configfile.activatetoken2),float(configfile.token2stoploss),float(configfile.stoplosstoken2)
+                                     ,float(configfile.tradewithERCtoken2),float(configfile.tradewithETHtoken2),'0'),
+                                    (3,str(configfile.token3ethaddress),float(configfile.token3high),float(configfile.token3low),
+                                     float(configfile.activatetoken3),float(configfile.token3stoploss),float(configfile.stoplosstoken3)
+                                     ,float(configfile.tradewithERCtoken3),float(configfile.tradewithETHtoken3),'0'),
+                                    (4,str(configfile.token4ethaddress),float(configfile.token4high),float(configfile.token4low),
+                                     float(configfile.activatetoken4),float(configfile.token4stoploss),float(configfile.stoplosstoken4)
+                                     ,float(configfile.tradewithERCtoken4),float(configfile.tradewithETHtoken4),'0'),
+                                    (5,str(configfile.token5ethaddress),float(configfile.token5high),float(configfile.token5low),
+                                     float(configfile.activatetoken5),float(configfile.token5stoploss),float(configfile.stoplosstoken5)
+                                     ,float(configfile.tradewithERCtoken5),float(configfile.tradewithETHtoken5),'0'),
+                                    (6,str(configfile.token6ethaddress),float(configfile.token6high),float(configfile.token6low),
+                                     float(configfile.activatetoken6),float(configfile.token6stoploss),float(configfile.stoplosstoken6)
+                                     ,float(configfile.tradewithERCtoken6),float(configfile.tradewithETHtoken6),'0'),
+                                    (7,str(configfile.token7ethaddress),float(configfile.token7high),float(configfile.token7low),
+                                     float(configfile.activatetoken7),float(configfile.token7stoploss),float(configfile.stoplosstoken7)
+                                     ,float(configfile.tradewithERCtoken7),float(configfile.tradewithETHtoken7),'0'),
+                                    (8,str(configfile.token8ethaddress),float(configfile.token8high),float(configfile.token8low),
+                                     float(configfile.activatetoken8),float(configfile.token8stoploss),float(configfile.stoplosstoken8)
+                                     ,float(configfile.tradewithERCtoken8),float(configfile.tradewithETHtoken8),'0'),
+                                    (9,str(configfile.token9ethaddress),float(configfile.token9high),float(configfile.token9low),
+                                     float(configfile.activatetoken9),float(configfile.token9stoploss),float(configfile.stoplosstoken9)
+                                     ,float(configfile.tradewithERCtoken9),float(configfile.tradewithETHtoken9),'0'),
+                                    (10,str(configfile.token10ethaddress),float(configfile.token10high),float(configfile.token10low),
+                                     float(configfile.activatetoken10),float(configfile.token10stoploss),float(configfile.stoplosstoken10)
+                                     ,float(configfile.tradewithERCtoken10),float(configfile.tradewithETHtoken10),'0')]
+
+            #add token smallcasename
+
+            for token_number,eth_address,high,low,activate,stoploss_value,stoploss_activate,trade_with_ERC,trade_with_ETH,fast_token in all_token_information:
+                    if eth_address != '0':
+                        a= str(cg.get_coin_info_from_contract_address_by_id(contract_address=eth_address, id='ethereum')['symbol'])
+                        all_token_information[token_number-1]=all_token_information[token_number-1]+(a,)
+                    else:
+                        a='0'
+                        all_token_information[token_number-1]=all_token_information[token_number-1]+(a,)
+            #its now: for token_number,eth_address,high,low,activate,stoploss_value,stoploss_activate,trade_with_ERC,trade_with_ETH,fast_token,small_case_name in all_token_information:
+
+            for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC, trade_with_ETH, fast_token, small_case_name in all_token_information:
+                if (high<low) or (stoploss_value > high):
+                    print(
+                        'Stop the script, a tokenlow is higher than its tokenhigh or a stoploss it higher than the tokenhigh')
+                    count = 0
+                    QCoreApplication.processEvents()
+                    while self.__abort != True:
+                        QCoreApplication.processEvents()
+                        pass
+
+            def apidecimals(ethaddress):
                 res = requests.get(
                     'https://api.ethplorer.io/getTokenInfo/' + ethaddress + '?apiKey=EK-5nuDS-iZCPJhW-SYGLU')
                 data = int((res.json())["decimals"])
                 return data
 
-            ethbalance = pyetherbalance.PyEtherBalance(infura_url)
-            try:
-                token1smallcasename = \
-                    cg.get_coin_info_from_contract_address_by_id(contract_address=token1address, id='ethereum')[
-                        'symbol']
-                token2smallcasename = \
-                    cg.get_coin_info_from_contract_address_by_id(contract_address=token2address, id='ethereum')[
-                        'symbol']
-                token3smallcasename = \
-                    cg.get_coin_info_from_contract_address_by_id(contract_address=token3address, id='ethereum')[
-                        'symbol']
-                token4smallcasename = \
-                    cg.get_coin_info_from_contract_address_by_id(contract_address=token4address, id='ethereum')[
-                        'symbol']
-                token5smallcasename = \
-                    cg.get_coin_info_from_contract_address_by_id(contract_address=token5address, id='ethereum')[
-                        'symbol']
-                token6smallcasename = \
-                    cg.get_coin_info_from_contract_address_by_id(contract_address=token6address, id='ethereum')[
-                        'symbol']
-                token7smallcasename = \
-                    cg.get_coin_info_from_contract_address_by_id(contract_address=token7address, id='ethereum')[
-                        'symbol']
-                token8smallcasename = \
-                    cg.get_coin_info_from_contract_address_by_id(contract_address=token8address, id='ethereum')[
-                        'symbol']
-                token9smallcasename = \
-                    cg.get_coin_info_from_contract_address_by_id(contract_address=token9address, id='ethereum')[
-                        'symbol']
-                token10smallcasename = \
-                    cg.get_coin_info_from_contract_address_by_id(contract_address=token10address, id='ethereum')[
-                        'symbol']
-            except:
-                o = 0
-
-
-            try:
-                if (dollarbalancemaintoken > mcotoseeassell):
-                    gelukt = "sell"
-                if 10==10:
-                    if dollarbalancetoken1 > mcotoseeassell:
-                        gelukt = "buy " + token1smallcasename
-                    if dollarbalancetoken1 < mcotoseeassell and str(token2address) != '0':
-                        if dollarbalancetoken2 > mcotoseeassell:
-                            gelukt = "buy " + token2smallcasename
-                        if dollarbalancetoken2 < mcotoseeassell and str(token3address) != '0':
-                            if dollarbalancetoken3 > mcotoseeassell:
-                                gelukt = "buy " + token3smallcasename
-                            if dollarbalancetoken3 < mcotoseeassell and str(token4address) != '0':
-                                if dollarbalancetoken4 > mcotoseeassell:
-                                    gelukt = "buy " + token4smallcasename
-                                if dollarbalancetoken4 < mcotoseeassell and str(token5address) != '0':
-                                    if dollarbalancetoken5 > mcotoseeassell:
-                                        gelukt = "buy " + token5smallcasename
-                                    if dollarbalancetoken5 < mcotoseeassell and str(token6address) != '0':
-                                        if dollarbalancetoken6 > mcotoseeassell:
-                                            gelukt = "buy " + token6smallcasename
-                                        if dollarbalancetoken6 < mcotoseeassell and str(token7address) != '0':
-                                            if dollarbalancetoken7 > mcotoseeassell:
-                                                gelukt = "buy " + token7smallcasename
-                                            if dollarbalancetoken7 < mcotoseeassell and str(token8address) != '0':
-                                                if dollarbalancetoken8 > mcotoseeassell:
-                                                    gelukt = "buy " + token8smallcasename
-                                                if dollarbalancetoken8 < mcotoseeassell and str(token9address) != '0':
-                                                    if dollarbalancetoken9 > mcotoseeassell:
-                                                        gelukt = "buy " + token9smallcasename
-                                                    if dollarbalancetoken9 < mcotoseeassell and str(token10address) != '0':
-                                                        if dollarbalancetoken10 > mcotoseeassell:
-                                                            gelukt = "buy " + token10smallcasename
-                keer = 0
-                if 'gelukt' not in locals():
-                    gelukt = 'nothing'
-            except Exception as e:
-                exception_type, exception_object, exception_traceback = sys.exc_info()
-                if configfile.debugmode == '1':
-                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                QtTest.QTest.qWait(5000)
-                if (dollarbalancemaintoken > mcotoseeassell):
-                    gelukt = "sell"
-                if 1 == 1:
-                    if dollarbalancetoken1 > mcotoseeassell:
-                        gelukt = "buy " + token1smallcasename
-                    if dollarbalancetoken1 < mcotoseeassell and str(token2address) != '0':
-                        if dollarbalancetoken2 > mcotoseeassell:
-                            gelukt = "buy " + token2smallcasename
-                        if dollarbalancetoken2 < mcotoseeassell and str(token3address) != '0':
-                            if dollarbalancetoken3 > mcotoseeassell:
-                                gelukt = "buy " + token3smallcasename
-                            if dollarbalancetoken3 < mcotoseeassell and str(token4address) != '0':
-                                if dollarbalancetoken4 > mcotoseeassell:
-                                    gelukt = "buy " + token4smallcasename
-                                if dollarbalancetoken4 < mcotoseeassell and str(token5address) != '0':
-                                    if dollarbalancetoken5 > mcotoseeassell:
-                                        gelukt = "buy " + token5smallcasename
-                                    if dollarbalancetoken5 < mcotoseeassell and str(token6address) != '0':
-                                        if dollarbalancetoken6 > mcotoseeassell:
-                                            gelukt = "buy " + token6smallcasename
-                                        if dollarbalancetoken6 < mcotoseeassell and str(token7address) != '0':
-                                            if dollarbalancetoken7 > mcotoseeassell:
-                                                gelukt = "buy " + token7smallcasename
-                                            if dollarbalancetoken7 < mcotoseeassell and str(token8address) != '0':
-                                                if dollarbalancetoken8 > mcotoseeassell:
-                                                    gelukt = "buy " + token8smallcasename
-                                                if dollarbalancetoken8 < mcotoseeassell and str(token9address) != '0':
-                                                    if dollarbalancetoken9 > mcotoseeassell:
-                                                        gelukt = "buy " + token9smallcasename
-                                                    if dollarbalancetoken9 < mcotoseeassell and str(
-                                                            token10address) != '0':
-                                                        if dollarbalancetoken10 > mcotoseeassell:
-                                                            gelukt = "buy " + token10smallcasename
-                keer = 0
-                if 'gelukt' not in locals():
-                    gelukt = 'nothing'
-
-            try:
-                if (dollarbalancemaintoken > mcotoseeassell and gelukt != "sell"):
-                    gelukt2 = "sell"
-                if (dollarbalancemaintoken > mcotoseeassell and gelukt == "sell"):
-                    gelukt2 = "nothing"
-                if dollarbalancemaintoken > mcotoseeassell and (gelukt2=="nothing" or "gelukt2" not in locals()):
-                    if dollarbalancetoken1 > mcotoseeassell and gelukt != ("buy " + str(token1smallcasename)):
-                        gelukt2 = "buy " + token1smallcasename
-                    if dollarbalancetoken1 < mcotoseeassell and str(token2address) != '0' or (
-                            dollarbalancetoken1 > mcotoseeassell and gelukt == ("buy " + str(token1smallcasename)) and str(
-                        token2address) != '0'):
-                        if dollarbalancetoken2 > mcotoseeassell and (gelukt) != ("buy " + str(token2smallcasename)):
-                            gelukt2 = "buy " + token2smallcasename
-                        if dollarbalancetoken2 < mcotoseeassell and str(token3address) != '0' or (
-                                dollarbalancetoken2 > mcotoseeassell and gelukt == ("buy " + str(token2smallcasename)) and str(
-                            token3address) != '0'):
-                            if dollarbalancetoken3 > mcotoseeassell and (gelukt) != ("buy " + str(token3smallcasename)):
-                                gelukt2 = "buy " + token3smallcasename
-                            if dollarbalancetoken3 < mcotoseeassell and str(token4address) != '0' or (
-                                    dollarbalancetoken3 > mcotoseeassell and gelukt == ("buy " + str(token3smallcasename)) and str(
-                                token4address) != '0'):
-                                if dollarbalancetoken4 > mcotoseeassell and (gelukt) != ("buy " + str(token4smallcasename)):
-                                    gelukt2 = "buy " + token4smallcasename
-                                if dollarbalancetoken4 < mcotoseeassell and str(token5address) != '0' or (
-                                        dollarbalancetoken4 > mcotoseeassell and gelukt == ("buy " + str(token4smallcasename)) and str(
-                                    token5address) != '0'):
-                                    if dollarbalancetoken5 > mcotoseeassell and (gelukt) != ("buy " + str(token5smallcasename)):
-                                        gelukt2 = "buy " + token5smallcasename
-                                    if dollarbalancetoken5 < mcotoseeassell and str(token6address) != '0' or (
-                                            dollarbalancetoken5 > mcotoseeassell and gelukt == (
-                                            "buy " + str(token5smallcasename)) and str(token6address) != '0'):
-                                        if dollarbalancetoken6 > mcotoseeassell and (gelukt) != ("buy " + str(token5smallcasename)):
-                                            gelukt2 = "buy " + token6smallcasename
-                                        if dollarbalancetoken6 < mcotoseeassell and str(token7address) != '0' or (
-                                                dollarbalancetoken6 > mcotoseeassell and gelukt == (
-                                                "buy " + str(token6smallcasename)) and str(token7address) != '0'):
-                                            if dollarbalancetoken7 > mcotoseeassell and (gelukt) != (
-                                                    "buy " + str(token6smallcasename)):
-                                                gelukt2 = "buy " + token7smallcasename
-                                            if dollarbalancetoken7 < mcotoseeassell and str(token8address) != '0' or (
-                                                    dollarbalancetoken7 > mcotoseeassell and gelukt == (
-                                                    "buy " + str(token7smallcasename)) and str(token8address) != '0'):
-                                                if dollarbalancetoken8 > mcotoseeassell and (gelukt) != (
-                                                        "buy " + str(token8smallcasename)):
-                                                    gelukt2 = "buy " + token8smallcasename
-                                                if dollarbalancetoken8 < mcotoseeassell and str(token9address) != '0' or (
-                                                        dollarbalancetoken8 > mcotoseeassell and gelukt == (
-                                                        "buy " + str(token8smallcasename)) and str(
-                                                    token9address) != '0'):
-                                                    if dollarbalancetoken9 > mcotoseeassell and (gelukt) != (
-                                                            "buy " + str(token9smallcasename)):
-                                                        gelukt2 = "buy " + token9smallcasename
-                                                    if dollarbalancetoken9 < mcotoseeassell and str(token10address) != '0' and (
-                                                            gelukt) != (
-                                                            "buy " + str(token10smallcasename)) or (
-                                                            dollarbalancetoken9 > mcotoseeassell and gelukt == (
-                                                            "buy " + str(token9smallcasename)) and str(
-                                                        token10address) != '0'):
-                                                        if dollarbalancetoken10 > mcotoseeassell:
-                                                            gelukt2 = "buy " + token10smallcasename
-                if 'gelukt2' not in locals():
-                    gelukt2 = 'nothing'
-
-            except Exception as e:
-                exception_type, exception_object, exception_traceback = sys.exc_info()
-                if configfile.debugmode == '1':
-                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                QtTest.QTest.qWait(3000)
-                if (dollarbalancemaintoken > mcotoseeassell and gelukt != "sell"):
-                    gelukt2 = "sell"
-                if (dollarbalancemaintoken > mcotoseeassell and gelukt == "sell"):
-                    gelukt2 = "nothing"
-                if dollarbalancemaintoken > mcotoseeassell and (gelukt2 == "nothing" or "gelukt2" not in locals()):
-                    if dollarbalancetoken1 > mcotoseeassell and gelukt != ("buy " + str(token1smallcasename)):
-                        gelukt2 = "buy " + token1smallcasename
-                    if dollarbalancetoken1 < mcotoseeassell and str(token2address) != '0' or (
-                            dollarbalancetoken1 > mcotoseeassell and gelukt == (
-                            "buy " + str(token1smallcasename)) and str(
-                        token2address) != '0'):
-                        if dollarbalancetoken2 > mcotoseeassell and (gelukt) != ("buy " + str(token2smallcasename)):
-                            gelukt2 = "buy " + token2smallcasename
-                        if dollarbalancetoken2 < mcotoseeassell and str(token3address) != '0' or (
-                                dollarbalancetoken2 > mcotoseeassell and gelukt == (
-                                "buy " + str(token2smallcasename)) and str(
-                            token3address) != '0'):
-                            if dollarbalancetoken3 > mcotoseeassell and (gelukt) != ("buy " + str(token3smallcasename)):
-                                gelukt2 = "buy " + token3smallcasename
-                            if dollarbalancetoken3 < mcotoseeassell and str(token4address) != '0' or (
-                                    dollarbalancetoken3 > mcotoseeassell and gelukt == (
-                                    "buy " + str(token3smallcasename)) and str(
-                                token4address) != '0'):
-                                if dollarbalancetoken4 > mcotoseeassell and (gelukt) != (
-                                        "buy " + str(token4smallcasename)):
-                                    gelukt2 = "buy " + token4smallcasename
-                                if dollarbalancetoken4 < mcotoseeassell and str(token5address) != '0' or (
-                                        dollarbalancetoken4 > mcotoseeassell and gelukt == (
-                                        "buy " + str(token4smallcasename)) and str(
-                                    token5address) != '0'):
-                                    if dollarbalancetoken5 > mcotoseeassell and (gelukt) != (
-                                            "buy " + str(token5smallcasename)):
-                                        gelukt2 = "buy " + token5smallcasename
-                                    if dollarbalancetoken5 < mcotoseeassell and str(token6address) != '0' or (
-                                            dollarbalancetoken5 > mcotoseeassell and gelukt == (
-                                            "buy " + str(token5smallcasename)) and str(token6address) != '0'):
-                                        if dollarbalancetoken6 > mcotoseeassell and (gelukt) != (
-                                                "buy " + str(token5smallcasename)):
-                                            gelukt2 = "buy " + token6smallcasename
-                                        if dollarbalancetoken6 < mcotoseeassell and str(token7address) != '0' or (
-                                                dollarbalancetoken6 > mcotoseeassell and gelukt == (
-                                                "buy " + str(token6smallcasename)) and str(token7address) != '0'):
-                                            if dollarbalancetoken7 > mcotoseeassell and (gelukt) != (
-                                                    "buy " + str(token6smallcasename)):
-                                                gelukt2 = "buy " + token7smallcasename
-                                            if dollarbalancetoken7 < mcotoseeassell and str(token8address) != '0' or (
-                                                    dollarbalancetoken7 > mcotoseeassell and gelukt == (
-                                                    "buy " + str(token7smallcasename)) and str(token8address) != '0'):
-                                                if dollarbalancetoken8 > mcotoseeassell and (gelukt) != (
-                                                        "buy " + str(token8smallcasename)):
-                                                    gelukt2 = "buy " + token8smallcasename
-                                                if dollarbalancetoken8 < mcotoseeassell and str(
-                                                        token9address) != '0' or (
-                                                        dollarbalancetoken8 > mcotoseeassell and gelukt == (
-                                                        "buy " + str(token8smallcasename)) and str(
-                                                    token9address) != '0'):
-                                                    if dollarbalancetoken9 > mcotoseeassell and (gelukt) != (
-                                                            "buy " + str(token9smallcasename)):
-                                                        gelukt2 = "buy " + token9smallcasename
-                                                    if dollarbalancetoken9 < mcotoseeassell and str(
-                                                            token10address) != '0' and (
-                                                            gelukt) != (
-                                                            "buy " + str(token10smallcasename)) or (
-                                                            dollarbalancetoken9 > mcotoseeassell and gelukt == (
-                                                            "buy " + str(token9smallcasename)) and str(
-                                                        token10address) != '0'):
-                                                        if dollarbalancetoken10 > mcotoseeassell:
-                                                            gelukt2 = "buy " + token10smallcasename
-                if 'gelukt2' not in locals():
-                    gelukt2 = 'nothing'
-            try:
-                gelukt3 = gelukt2
-            except:
-                gelukt2 = '0'
-            return {'keer': keer, 'gelukt': gelukt, 'gelukt2': gelukt2,'maintokenbalance': maintokenbalance}
-
-
-        def gettotaltokenbalance(token1address, token1smallcasename, token2address, token2smallcasename, token3address,
-                     token3smallcasename,
-                     token4address, token4smallcasename, token5address, token5smallcasename, token6address,
-                     token6smallcasename,
-                     token7address, token7smallcasename, token8address, token8smallcasename, token9address,
-                     token9smallcasename,
-                     token10address,ethaddress,token1decimals, token2decimals, token3decimals, token4decimals, token5decimals, token6decimals,
-                      token7decimals, token8decimals, token9decimals, token10decimals,maindecimals,my_address):
-            print('(re)Preparing bot...')
-            ethbalance = pyetherbalance.PyEtherBalance(infura_url)
-            priceeth = int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
-            threeeth=10000000000
-            ethereum_address=my_address
-            try: #balances
-                if ethaddress == "0x0000000000000000000000000000000000000000":
-                    balance_eth = ethbalance.get_eth_balance(my_address)['balance']
-                    dollarbalancemaintoken=priceeth*balance_eth
+            for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC, trade_with_ETH, fast_token, small_case_name in all_token_information:
+                if eth_address != '0':
+                    a=apidecimals(eth_address)
+                    all_token_information[token_number - 1] = all_token_information[token_number - 1] + (a,)
                 else:
-                    details = {'symbol': 'potter', 'address': ethaddress, 'decimals': maindecimals,
-                               'name': 'potter'}
-                    erc20tokens = ethbalance.add_token('potter', details)
-                    balance_eth = ethbalance.get_token_balance('potter', ethereum_address)['balance']
-                    maintokeneth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(ethaddress),
-                                                                          1000000000000)
-                    if maindecimals != 18:
-                        mainusd = (priceeth / (maintokeneth)) / (
-                                10 ** (18 - (maindecimals)))
+                    a = 18
+                    all_token_information[token_number - 1] = all_token_information[token_number - 1] + (a,)
+            # its now: for token_number,eth_address,high,low,activate,stoploss_value,stoploss_activate,trade_with_ERC,trade_with_ETH,fast_token,small_case_name,decimals in all_token_information:
+
+
+            my_address = str(configfile.my_address)
+            my_pk = str(configfile.my_pk)
+            pk = my_pk
+            if configfile.maincoinoption == 'Ethereum':
+                ethaddress = "0x0000000000000000000000000000000000000000"
+            if configfile.maincoinoption == 'DAI':
+                ethaddress = "0x6b175474e89094c44da98b954eedeac495271d0f"
+            if configfile.maincoinoption == 'USDT':
+                ethaddress = "0xdac17f958d2ee523a2206206994597c13d831ec7"
+            if configfile.maincoinoption == 'USDC':
+                ethaddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+            if configfile.maincoinoption == 'wBTC':
+                ethaddress = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+            maindecimals = apidecimals(ethaddress)
+            maincoinname= configfile.maincoinoption
+            maincoinoption = ethaddress
+            append = QtCore.pyqtSignal(str)
+
+            if 'step' not in locals():
+                step=1
+            else:
+                step=1
+            self.sig_step.emit(self.__id, 'step ' + str(step))
+            QCoreApplication.processEvents()
+            if self.__abort==True:
+                # note that "step" value will not necessarily be same for every thread
+                self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+            totaldollars=1
+
+            def gettotaltokenbalance(all_token_information,infura_url,ethaddress,maindecimals,my_address):
+                print('(re)Preparing bot...')
+                QCoreApplication.processEvents()
+                if 'step' not in locals():
+                    step = 1
+                else:
+                    step = 1
+                self.sig_step.emit(self.__id, 'step ' + str(step))
+                QCoreApplication.processEvents()
+                if self.__abort == True:
+                    # note that "step" value will not necessarily be same for every thread
+                    self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+                ethbalance = pyetherbalance.PyEtherBalance(infura_url)
+                priceeth = int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
+                threeeth=10000000000
+                ethereum_address=my_address
+                try: #balances
+                    if ethaddress == "0x0000000000000000000000000000000000000000":
+                        balance_eth = ethbalance.get_eth_balance(my_address)['balance']
+                        dollarbalancemaintoken=priceeth*balance_eth
                     else:
-                        mainusd = (priceeth / (maintokeneth))
-                    dollarbalancemaintoken=mainusd*balance_eth
-
-
-                balance_token1=0
-                if token1address != '0' or '':
-                    token = token1smallcasename.upper
-                    details = {'symbol': token, 'address': token1address, 'decimals': token1decimals,
-                               'name': token}
-                    erc20tokens = ethbalance.add_token(token, details)
-                    balance_token1 = ethbalance.get_token_balance(token, ethereum_address)['balance']
-                balance_token2 = 0
-                if token2address != '0' or '':
-                    token = token2smallcasename.upper
-                    details = {'symbol': token, 'address': token2address, 'decimals': token2decimals,
-                               'name': token}
-                    erc20tokens = ethbalance.add_token(token, details)
-                    balance_token2 = ethbalance.get_token_balance(token, ethereum_address)['balance']
-                balance_token3 = 0
-                if token3address != '0' or '':
-                    token = token3smallcasename.upper
-                    details = {'symbol': token, 'address': token3address, 'decimals': token3decimals,
-                               'name': token}
-                    erc20tokens = ethbalance.add_token(token, details)
-                    balance_token3 = ethbalance.get_token_balance(token, ethereum_address)['balance']
-                balance_token4 = 0
-                if token4address != '0' or '':
-                    token = token4smallcasename.upper
-                    details = {'symbol': token, 'address': token4address, 'decimals': token4decimals,
-                               'name': token}
-                    erc20tokens = ethbalance.add_token(token, details)
-                    balance_token4 = ethbalance.get_token_balance(token, ethereum_address)['balance']
-                balance_token5 = 0
-                if token5address != '0' or '':
-                    token = token5smallcasename.upper
-                    details = {'symbol': token, 'address': token5address, 'decimals': token5decimals,
-                               'name': token}
-                    erc20tokens = ethbalance.add_token(token, details)
-                    balance_token5 = ethbalance.get_token_balance(token, ethereum_address)['balance']
-                balance_token6 = 0
-                if token6address != '0' or '':
-                    token = token6smallcasename.upper
-                    details = {'symbol': token, 'address': token6address, 'decimals': token6decimals,
-                               'name': token}
-                    erc20tokens = ethbalance.add_token(token, details)
-                    balance_token6 = ethbalance.get_token_balance(token, ethereum_address)['balance']
-                balance_token7 = 0
-                if token7address != '0' or '':
-                    token = token7smallcasename.upper
-                    details = {'symbol': token, 'address': token7address, 'decimals': token7decimals,
-                               'name': token}
-                    erc20tokens = ethbalance.add_token(token, details)
-                    balance_token7 = ethbalance.get_token_balance(token, ethereum_address)['balance']
-                balance_token8 = 0
-                if token8address != '0' or '':
-                    token = token8smallcasename.upper
-                    details = {'symbol': token, 'address': token8address, 'decimals': token8decimals,
-                               'name': token}
-                    erc20tokens = ethbalance.add_token(token, details)
-                    balance_token8 = ethbalance.get_token_balance(token, ethereum_address)['balance']
-                balance_token9 = 0
-                if token9address != '0' or '':
-                    token = token9smallcasename.upper
-                    details = {'symbol': token, 'address': token9address, 'decimals': token9decimals,
-                               'name': token}
-                    erc20tokens = ethbalance.add_token(token, details)
-                    balance_token9 = ethbalance.get_token_balance(token, ethereum_address)['balance']
-                balance_token10 = 0
-                if token10address != '0' or '':
-                    token = token10smallcasename.upper
-                    details = {'symbol': token, 'address': token10address, 'decimals': token10decimals,
-                               'name': token}
-                    erc20tokens = ethbalance.add_token(token, details)
-                    balance_token10 = ethbalance.get_token_balance(token, ethereum_address)['balance']
-            except Exception as e:
-                exception_type, exception_object, exception_traceback = sys.exc_info()
-                if configfile.debugmode == '1':
-                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-            try: #prices
-                pricetoken1usd = 0
-                pricetoken2usd = 0
-                pricetoken3usd = 0
-                pricetoken4usd = 0
-                pricetoken5usd = 0
-                pricetoken6usd = 0
-                pricetoken7usd = 0
-                pricetoken8usd = 0
-                pricetoken9usd = 0
-                pricetoken10usd = 0
-                
-                if str(token1address) != '0' or '':
-                        token1eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token1address),
+                        details = {'symbol': 'potter', 'address': ethaddress, 'decimals': maindecimals,
+                                   'name': 'potter'}
+                        erc20tokens = ethbalance.add_token('potter', details)
+                        balance_eth = ethbalance.get_token_balance('potter', ethereum_address)['balance']
+                        maintokeneth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(ethaddress),
                                                                               1000000000000)
-                        if token1decimals != 18:
-                            pricetoken1usd = (priceeth / (token1eth)) / (
-                                    10 ** (18 - (token1decimals)))
+
+                        if maindecimals != 18:
+                            mainusd = (priceeth / (maintokeneth))
                         else:
-                            pricetoken1usd = (priceeth / (token1eth))
-                if str(token3address) != '0' or '':
-                    token3eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token3address),
-                                                                          1000000000000)
-                    if token3decimals != 18:
-                        pricetoken3usd = (priceeth / (token3eth)) / (
-                                10 ** (18 - (token3decimals)))
+                            mainusd = (priceeth / (maintokeneth))
+                        dollarbalancemaintoken=mainusd*balance_eth
+                    if len(all_token_information[0]) > 14:
+                        for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC, trade_with_ETH, fast_token, small_case_name, decimals, balance, price, dollar_balance in all_token_information:
+                            if eth_address != '0' or '':
+                                erc20tokens = ethbalance.add_token(small_case_name, {'symbol': small_case_name, 'address': eth_address, 'decimals': decimals,
+                                           'name': small_case_name})
+                                a = ethbalance.get_token_balance(small_case_name, ethereum_address)['balance']
+                                all_token_information[token_number - 1]= all_token_information[token_number - 1][:12]+(a,)+all_token_information[token_number - 1][2:]
+                            else:
+                                a=0
+                                all_token_information[token_number - 1] = all_token_information[token_number - 1][:12]+(a,)+all_token_information[token_number - 1][2:]
                     else:
-                        pricetoken3usd = (priceeth / (token3eth))
-                if str(token4address) != '0' or '':
-                    token4eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token4address),
-                                                                          1000000000000)
-                    if token4decimals != 18:
-                        pricetoken4usd = (priceeth / (token4eth)) / (
-                                10 ** (18 - (token4decimals)))
+                        for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC, trade_with_ETH, fast_token, small_case_name, decimals in all_token_information:
+                            if eth_address != '0' or '':
+                                erc20tokens = ethbalance.add_token(small_case_name, {'symbol': small_case_name, 'address': eth_address, 'decimals': decimals,
+                                           'name': small_case_name})
+                                a = ethbalance.get_token_balance(small_case_name, ethereum_address)['balance']
+                                all_token_information[token_number - 1] = all_token_information[token_number - 1] + (a,)
+                            else:
+                                a=0
+                                all_token_information[token_number - 1] = all_token_information[token_number - 1] + (a,)
+
+                    # its now: for token_number,eth_address,high,low,activate,stoploss_value,stoploss_activate,trade_with_ERC,trade_with_ETH,fast_token,small_case_name,decimals,balance in all_token_information:
+
+                except Exception as e:
+                    exception_type, exception_object, exception_traceback = sys.exc_info()
+                    if configfile.debugmode == '1':
+                        print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
+                QCoreApplication.processEvents()
+                if 'step' not in locals():
+                    step = 1
+                else:
+                    step = 1
+                self.sig_step.emit(self.__id, 'step ' + str(step))
+                QCoreApplication.processEvents()
+                if self.__abort == True:
+                    # note that "step" value will not necessarily be same for every thread
+                    self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+                try: #prices
+                    if len(all_token_information[0]) > 14:
+                        for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC, trade_with_ETH, fast_token, small_case_name, decimals, balance, price, dollar_balance in all_token_information:
+                            if str(eth_address) != '0' or '':
+                                token1eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(eth_address),
+                                                                                      1000000000000)
+                                if decimals != 18:
+                                    pricetoken1usd = (priceeth / (token1eth)) / (
+                                            10 ** (18 - (decimals)))
+                                else:
+                                    pricetoken1usd = (priceeth / (token1eth))
+                                a = pricetoken1usd
+                                all_token_information[token_number - 1] = all_token_information[token_number - 1][:13]+(a,)+all_token_information[1:]
+                            else:
+                                a = 0
+                                all_token_information[token_number - 1]= all_token_information[token_number - 1][:13]+(a,)+all_token_information[1:]
                     else:
-                        pricetoken4usd = (priceeth / (token4eth))
-                if str(token5address) != '0' or '':
-                    token5eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token5address),
-                                                                          1000000000000)
-                    if token5decimals != 18:
-                        pricetoken5usd = (priceeth / (token5eth)) / (
-                                10 ** (18 - (token5decimals)))
-                    else:
-                        pricetoken5usd = (priceeth / (token5eth))
-                if str(token6address) != '0' or '':
-                    token6eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token6address),
-                                                                          1000000000000)
-                    if token6decimals != 18:
-                        pricetoken6usd = (priceeth / (token6eth)) / (
-                                10 ** (18 - (token6decimals)))
-                    else:
-                        pricetoken6usd = (priceeth / (token6eth))
-                if str(token7address) != '0' or '':
-                    token7eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token7address),
-                                                                          1000000000000)
-                    if token7decimals != 18:
-                        pricetoken7usd = (priceeth / (token7eth)) / (
-                                10 ** (18 - (token7decimals)))
-                    else:
-                        pricetoken7usd = (priceeth / (token7eth))
-                if str(token8address) != '0' or '':
-                    token8eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token8address),
-                                                                          1000000000000)
-                    if token8decimals != 18:
-                        pricetoken8usd = (priceeth / (token8eth)) / (
-                                10 ** (18 - (token8decimals)))
-                    else:
-                        pricetoken8usd = (priceeth / (token8eth))
-                if str(token9address) != '0' or '':
-                    token9eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token9address),
-                                                                          1000000000000)
-                    if token9decimals != 18:
-                        pricetoken9usd = (priceeth / (token9eth)) / (
-                                10 ** (18 - (token9decimals)))
-                    else:
-                        pricetoken9usd = (priceeth / (token9eth))
-                if str(token10address) != '0' or '':
-                    token10eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token10address),
-                                                                          1000000000000)
-                    if token10decimals != 18:
-                        pricetoken10usd = (priceeth / (token10eth)) / (
-                                10 ** (18 - (token10decimals)))
-                    else:
-                        pricetoken10usd = (priceeth / (token10eth))
-                if str(token2address) != '0' or '':
-                    token2eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token2address),
-                                                                          1000000000000)
-                    if token2decimals != 18:
-                        pricetoken2usd = (priceeth / (token2eth)) / (
-                                10 ** (18 - (token2decimals)))
-                    else:
-                        pricetoken2usd = (priceeth / (token2eth))
-            except Exception as e:
-                exception_type, exception_object, exception_traceback = sys.exc_info()
-                if configfile.debugmode == '1':
-                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-            try: #dollarbalances
-                dollarbalancetoken1= pricetoken1usd*balance_token1*100
-                dollarbalancetoken2 = pricetoken2usd * balance_token2*threeeth*100
-                dollarbalancetoken3 = pricetoken3usd * balance_token3*threeeth*100
-                dollarbalancetoken4 = pricetoken4usd * balance_token4*threeeth*100
-                dollarbalancetoken5 = pricetoken5usd * balance_token5*threeeth*100
-                dollarbalancetoken6 = pricetoken6usd * balance_token6*threeeth*100
-                dollarbalancetoken7= pricetoken7usd*balance_token7*threeeth*100
-                dollarbalancetoken8 = pricetoken8usd * balance_token8*threeeth*100
-                dollarbalancetoken9 = pricetoken9usd * balance_token9*threeeth*100
-                dollarbalancetoken10 = pricetoken10usd * balance_token10*threeeth*100
-                totalbalancedollarscript = int(dollarbalancetoken1 + dollarbalancetoken2 + dollarbalancetoken3 + dollarbalancetoken4 + dollarbalancetoken5 + dollarbalancetoken6 + dollarbalancetoken7 + dollarbalancetoken8 + dollarbalancetoken9 + dollarbalancetoken10 + dollarbalancemaintoken)
-            except Exception as e:
-                exception_type, exception_object, exception_traceback = sys.exc_info()
-                if configfile.debugmode == '1':
-                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-            maintokenbalance=balance_eth
-            return {'totalbalancedollarscript': totalbalancedollarscript, 'dollarbalancemaintoken': dollarbalancemaintoken,'dollarbalancetoken1': dollarbalancetoken1, 'dollarbalancetoken2': dollarbalancetoken2, 'dollarbalancetoken3': dollarbalancetoken3, 'dollarbalancetoken4': dollarbalancetoken4, 'dollarbalancetoken5': dollarbalancetoken5,'dollarbalancetoken6': dollarbalancetoken6, 'dollarbalancetoken7': dollarbalancetoken7,'dollarbalancetoken8': dollarbalancetoken8,'dollarbalancetoken9': dollarbalancetoken9, 'dollarbalancetoken10': dollarbalancetoken10,'balance_token1':balance_token1,'balance_token2':balance_token2,'balance_token3':balance_token3,'balance_token4':balance_token4,'balance_token5':balance_token5,'balance_token6':balance_token6,'balance_token7':balance_token7,'balance_token8':balance_token8,'balance_token9':balance_token9,'balance_token10':balance_token10,'maintokenbalance':maintokenbalance}
+                        for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC, trade_with_ETH, fast_token, small_case_name, decimals, balance in all_token_information:
+                            if str(eth_address) != '0' or '':
+                                    token1eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(eth_address),
+                                                                                          1000000000000)
+                                    if decimals != 18:
+                                        pricetoken1usd = (priceeth / (token1eth)) / (
+                                                10 ** (18 - (decimals)))
+                                    else:
+                                        pricetoken1usd = (priceeth / (token1eth))
+                                    a=pricetoken1usd
+                                    all_token_information[token_number - 1] = all_token_information[token_number - 1] + (a,)
+                            else:
+                                a=0
+                                all_token_information[token_number - 1] = all_token_information[token_number - 1] + (a,)
+                    # its now: for token_number,eth_address,high,low,activate,stoploss_value,stoploss_activate,trade_with_ERC,trade_with_ETH,fast_token,small_case_name,decimals,balance,price in all_token_information:
+                except Exception as e:
+                    exception_type, exception_object, exception_traceback = sys.exc_info()
+                    if configfile.debugmode == '1':
+                        print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
+                totalbalancedollarscript=0
+                if len(all_token_information[0]) >14:
+                    for token_number,eth_address,high,low,activate,stoploss_value,stoploss_activate,trade_with_ERC,trade_with_ETH,fast_token,small_case_name,decimals,balance,price,dollar_balance in all_token_information:
+                        if balance != 0:
+                            a= price*balance*100
+                            all_token_information[token_number - 1]= all_token_information[token_number - 1][:14]+(a,)
+                        else:
+                            a = 0
+                            all_token_information[token_number - 1] = all_token_information[token_number - 1][:14]+(a,)
+
+                        totalbalancedollarscript+=a
+                        if token_number==10:
+                            totalbalancedollarscript +=dollarbalancemaintoken
+                else:
+                    for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC, trade_with_ETH, fast_token, small_case_name, decimals, balance, price in all_token_information:
+                        if balance != 0:
+                            a = price * balance * 100
+                            all_token_information[token_number - 1] = all_token_information[token_number - 1] + (a,)
+                        else:
+                            a = 0
+                            all_token_information[token_number - 1] = all_token_information[token_number - 1] + (a,)
+
+                        totalbalancedollarscript += a
+                        if token_number == 10:
+                            totalbalancedollarscript += dollarbalancemaintoken
 
 
+                # its now: for token_number,eth_address,high,low,activate,stoploss_value,stoploss_activate,trade_with_ERC,
+                # trade_with_ETH,fast_token,small_case_name,decimals,balance,price, dollar_balance in all_token_information:
 
-            
-            
+                maintokenbalance=balance_eth
+                return {'all_token_information':all_token_information, 'totalbalancedollarscript': totalbalancedollarscript, 'dollarbalancemaintoken': dollarbalancemaintoken,'maintokenbalance':maintokenbalance}
 
-            
-
-        def getprice(token1address, token1smallcasename, token2address, token2smallcasename, token3address,
-                     token3smallcasename,
-                     token4address, token4smallcasename, token5address, token5smallcasename, token6address,
-                     token6smallcasename,
-                     token7address, token7smallcasename, token8address, token8smallcasename, token9address,
-                     token9smallcasename,
-                     token10address, token10smallcasename, token1high, token1low, token2high, token2low, token3high,
-                     token3low,
-                     token4high, token4low, token5high, token5low, token6high, token6low, token7high, token7low,
-                     token8high,
-                     token8low, token9high, token9low, token10high, token10low, incaseofbuyinghowmuch,
-                     uniswap_wrapper, timesleep, gelukt, token1decimals, token2decimals, token3decimals, token4decimals,
-                     token5decimals, token6decimals, token7decimals, token8decimals, token9decimals, token10decimals,
-                     activatetoken1, activatetoken2, activatetoken3, activatetoken4, activatetoken5, activatetoken6,
-                     activatetoken7, activatetoken8, activatetoken9, activatetoken10, balance_token1,
-                     balance_token2, balance_token3, balance_token4,
-                     balance_token5, balance_token6, balance_token7,
-                     balance_token8, balance_token9, balance_token10,
-                     maintokenbalance, ethaddress, maindecimals,totalbalancedollarscript):
-            QtTest.QTest.qWait(timesleep*1000)
-            QtTest.QTest.qWait(166)
-            if ethaddress == "0x0000000000000000000000000000000000000000" and maintokenbalance > 0.01:
-                threeeth = int(maintokenbalance*1000000000000000000)
-            if ethaddress == "0x0000000000000000000000000000000000000000" and maintokenbalance < 0.01:
-                threeeth = 1000000000000
-            if ethaddress != "0x0000000000000000000000000000000000000000":
-                if ethaddress == "0x6b175474e89094c44da98b954eedeac495271d0f":
-                    jajaja = int(cg.get_price(ids='dai', vs_currencies='usd')['dai']['usd'])
-                    priceeth =int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
-                    ethtest = (jajaja / priceeth)*maintokenbalance
-                    if ethtest < 0.01:
-                        threeeth = 1000000000000
-                    else:
-                        threeeth=int((ethtest)*1000000000000000000)
-                if ethaddress == "0xdac17f958d2ee523a2206206994597c13d831ec7":
-                    jajaja = int(cg.get_price(ids='tether', vs_currencies='usd')['tether']['usd'])
-                    priceeth =int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
-                    ethtest = (jajaja / priceeth)*maintokenbalance
-                    if ethtest < 0.01:
-                        threeeth = 1000000000000
-                    else:
-                        threeeth=int((ethtest)*1000000000000000000)
-                if ethaddress == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48":
-                    jajaja = int(cg.get_price(ids='usd-coin', vs_currencies='usd')['usd-coin']['usd'])
-                    priceeth =int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
-                    ethtest = (jajaja / priceeth)*maintokenbalance
-                    if ethtest < 0.01:
-                        threeeth = 1000000000000
-                    else:
-                        threeeth=int((ethtest)*1000000000000000000)
-                if ethaddress == "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599":
-                    jajaja = int(cg.get_price(ids='wrapped-bitcoin', vs_currencies='usd')['wrapped-bitcoin']['usd'])
-                    priceeth =int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
-                    ethtest = (jajaja / priceeth)*maintokenbalance
-                    if ethtest < 0.01:
-                        threeeth = 1000000000000
-                    else:
-                        threeeth=int((ethtest)*1000000000000000000)
-
-            if 'buy' in gelukt:
-                priceright = 'buy'
-                threeeth= int((totalbalancedollarscript/int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd']))*1000000000000000000)
+            QCoreApplication.processEvents()
+            if 'step' not in locals():
+                step=1
             else:
-                priceright = 'sell'
-            if priceright == 'sell':
-                token1eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token1address),
-                                                                      threeeth)
-                token1eth2 = token1eth / threeeth
-                priceeth = cg.get_price(ids='ethereum', vs_currencies='usd')
-            else:
-                token1eth = uniswap_wrapper.get_token_eth_output_price(w33.toChecksumAddress(token1address),
-                                                                       threeeth)
-                token1eth2 = (token1eth / threeeth)
-                priceeth = cg.get_price(ids='ethereum', vs_currencies='usd')
-            if ethaddress == "0x0000000000000000000000000000000000000000":
-                dollarbalancemaintoken = maintokenbalance * (priceeth['ethereum']['usd'])
-            else:
-                token11eth = uniswap_wrapper.get_token_eth_output_price(w33.toChecksumAddress(ethaddress),
-                                                                        threeeth)
-                token11eth2 = token11eth / threeeth
+                step=1
+            self.sig_step.emit(self.__id, 'step ' + str(step))
+            QCoreApplication.processEvents()
+            if self.__abort==True:
+                # note that "step" value will not necessarily be same for every thread
+                self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+            def checkbalance(all_token_information,infura_url, my_address, maincoinoption,dollarbalancemaintoken, mcotoseeassell):
+                ethereum_address = my_address
+                cg = CoinGeckoAPI()
 
-                if maindecimals != 18:
-                    dollarbalancemaintoken = maintokenbalance * ((priceeth['ethereum']['usd'] / (token11eth2)) / (
-                            10 ** (18 - (maindecimals))))
+                ethbalance = pyetherbalance.PyEtherBalance(infura_url)
+
+                for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC,trade_with_ETH,fast_token,small_case_name,decimals,balance,price, dollar_balance in all_token_information:
+                    if (dollarbalancemaintoken > mcotoseeassell):
+                        gelukt = "sell"
+                    else:
+                        if dollar_balance > mcotoseeassell:
+                            gelukt = "buy " + small_case_name
+                    keer = 0
+                    if 'gelukt' not in locals():
+                        gelukt = 'nothing'
+                QCoreApplication.processEvents()
+                if 'step' not in locals():
+                    step = 1
                 else:
-                    dollarbalancemaintoken = maintokenbalance * (priceeth['ethereum']['usd'] / (token11eth2))
-
-            try:
-                pricetoken1usd = 0
-                pricetoken2usd = 0
-                pricetoken3usd = 0
-                pricetoken4usd = 0
-                pricetoken5usd = 0
-                pricetoken6usd = 0
-                pricetoken7usd = 0
-                pricetoken8usd = 0
-                pricetoken9usd = 0
-                pricetoken10usd = 0
-                dollarbalancetoken1 = 0
-                dollarbalancetoken2 = 0
-                dollarbalancetoken3 = 0
-                dollarbalancetoken4 = 0
-                dollarbalancetoken5 = 0
-                dollarbalancetoken6 = 0
-                dollarbalancetoken7 = 0
-                dollarbalancetoken8 = 0
-                dollarbalancetoken9 = 0
-                dollarbalancetoken10 = 0
-                dollarbalancemaintoken = 0
-
-
-
-            except:
-                o = 0
-            try:
-                if token1decimals != 18:
-                    pricetoken1usd = (priceeth['ethereum']['usd'] / (token1eth2)) / (10 ** (18 - (token1decimals)))
-                    dollarbalancetoken1 = pricetoken1usd * balance_token1
-                else:
-                    pricetoken1usd = (priceeth['ethereum']['usd'] / (token1eth2))
-                dollarbalancetoken1 = pricetoken1usd * balance_token1
-                if str(token2address) != '0':
-                    if priceright == 'sell':
-                        token2eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token2address),
-                                                                              threeeth)
-                        token2eth2 = (token2eth) / threeeth
-                        if token2decimals != 18:
-                            pricetoken2usd = (priceeth['ethereum']['usd'] / (token2eth2)) / (
-                                    10 ** (18 - (token2decimals)))
-                            dollarbalancetoken2 = pricetoken2usd * balance_token2
-                        else:
-                            pricetoken2usd = (priceeth['ethereum']['usd'] / (token2eth2))
-
+                    step = 1
+                self.sig_step.emit(self.__id, 'step ' + str(step))
+                QCoreApplication.processEvents()
+                if self.__abort == True:
+                    # note that "step" value will not necessarily be same for every thread
+                    self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+                for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC, trade_with_ETH, fast_token, small_case_name, decimals, balance, price, dollar_balance in all_token_information:
+                    if (dollarbalancemaintoken > mcotoseeassell and gelukt != "sell"):
+                        gelukt2 = "sell"
                     else:
-                        token2eth = uniswap_wrapper.get_token_eth_output_price(w33.toChecksumAddress(token2address),
-                                                                               threeeth)
-                        token2eth2 = (token2eth) / threeeth
-                    dollarbalancetoken2 = pricetoken2usd * balance_token2
-                    if token2decimals != 18:
-                        pricetoken2usd = (priceeth['ethereum']['usd'] / (token2eth2)) / (
-                                10 ** (18 - (token2decimals)))
-                        dollarbalancetoken2 = pricetoken2usd * balance_token2
-                    else:
-                        pricetoken2usd = (priceeth['ethereum']['usd'] / (token2eth2))
-                    dollarbalancetoken2 = pricetoken2usd * balance_token2
-                if str(token3address) != '0':
-                    if priceright == 'sell':
-                        token3eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(token3address),
-                                                                              threeeth)
-                        token3eth2 = token3eth / threeeth
-                        if token3decimals != 18:
-                            pricetoken3usd = (priceeth['ethereum']['usd'] / (token3eth2)) / (
-                                    10 ** (18 - (token3decimals)))
-                            dollarbalancetoken3 = pricetoken3usd * balance_token3
-                        else:
-                            pricetoken3usd = (priceeth['ethereum']['usd'] / (token3eth2))
-                    else:
-                        token3eth = uniswap_wrapper.get_token_eth_output_price(w33.toChecksumAddress(token3address),
-                                                                               threeeth)
-                        token3eth2 = token3eth / threeeth
-                        if token3decimals != 18:
-                            pricetoken3usd = (priceeth['ethereum']['usd'] / (token3eth2)) / (
-                                    10 ** (18 - (token3decimals)))
-                        else:
-                            pricetoken3usd = (priceeth['ethereum']['usd'] / (token3eth2))
-                    dollarbalancetoken3 = pricetoken3usd * balance_token3
-                    if str(token4address) != '0':
-                        if priceright == 'sell':
-                            token4eth = uniswap_wrapper.get_eth_token_input_price(
-                                w33.toChecksumAddress(token4address),
-                                threeeth)
-                            token4eth2 = token4eth / threeeth
-                            if token4decimals != 18:
-                                pricetoken4usd = (priceeth['ethereum']['usd'] / (token4eth2)) / (
-                                        10 ** (18 - (token4decimals)))
-                            else:
-                                pricetoken4usd = (priceeth['ethereum']['usd'] / (token4eth2))
-                        else:
-                            token4eth = uniswap_wrapper.get_token_eth_output_price(
-                                w33.toChecksumAddress(token4address),
-                                threeeth)
-                            token4eth2 = token4eth / threeeth
-                            if token4decimals != 18:
-                                pricetoken4usd = (priceeth['ethereum']['usd'] / (token4eth2)) / (
-                                        10 ** (18 - (token4decimals)))
-                            else:
-                                pricetoken4usd = (priceeth['ethereum']['usd'] / (token4eth2))
-                        dollarbalancetoken4 = pricetoken4usd * balance_token4
-                        if str(token5address) != '0':
-                            if priceright == 'sell':
-                                token5eth = uniswap_wrapper.get_eth_token_input_price(
-                                    w33.toChecksumAddress(token5address),
-                                    threeeth)
-                                token5eth2 = token5eth / threeeth
-                                if token5decimals != 18:
-                                    pricetoken5usd = (priceeth['ethereum']['usd'] / (token5eth2)) / (
-                                            10 ** (18 - (token5decimals)))
-                                else:
-                                    pricetoken5usd = (priceeth['ethereum']['usd'] / (token5eth2))
-                            else:
-                                token5eth = uniswap_wrapper.get_token_eth_output_price(
-                                    w33.toChecksumAddress(token5address),
-                                    threeeth)
-                                token5eth2 = token5eth / threeeth
-                                if token5decimals != 18:
-                                    pricetoken5usd = (priceeth['ethereum']['usd'] / (token5eth2)) / (
-                                            10 ** (18 - (token5decimals)))
-                                else:
-                                    pricetoken5usd = (priceeth['ethereum']['usd'] / (token5eth2))
-                            dollarbalancetoken5 = pricetoken5usd * balance_token5
-                            if str(token6address) != '0':
-                                if priceright == 'sell':
-                                    token6eth = uniswap_wrapper.get_eth_token_input_price(
-                                        w33.toChecksumAddress(token6address),
-                                        threeeth)
-                                    token6eth2 = token6eth / threeeth
-                                    if token6decimals != 18:
-                                        pricetoken6usd = (priceeth['ethereum']['usd'] / (token6eth2)) / (
-                                                10 ** (18 - (token6decimals)))
-                                    else:
-                                        pricetoken6usd = (priceeth['ethereum']['usd'] / (token6eth2))
-                                else:
-                                    token6eth = uniswap_wrapper.get_token_eth_output_price(
-                                        w33.toChecksumAddress(token6address),
-                                        threeeth)
-                                    token6eth2 = token6eth / threeeth
-                                    if token6decimals != 18:
-                                        pricetoken6usd = (priceeth['ethereum']['usd'] / (token6eth2)) / (
-                                                10 ** (18 - (token6decimals)))
-                                    else:
-                                        pricetoken6usd = (priceeth['ethereum']['usd'] / (token6eth2))
-                                dollarbalancetoken6 = pricetoken6usd * balance_token6
-                                if str(token7address) != '0':
-                                    if priceright == 'sell':
-                                        token7eth = uniswap_wrapper.get_eth_token_input_price(
-                                            w33.toChecksumAddress(token7address),
-                                            threeeth)
-                                        token7eth2 = token7eth / threeeth
-                                        if token7decimals != 18:
-                                            pricetoken7usd = (priceeth['ethereum']['usd'] / (token7eth2)) / (
-                                                    10 ** (18 - (token7decimals)))
-                                        else:
-                                            pricetoken7usd = (priceeth['ethereum']['usd'] / (token7eth2))
-                                    else:
-                                        token7eth = uniswap_wrapper.get_token_eth_output_price(
-                                            w33.toChecksumAddress(token7address),
-                                            threeeth)
-                                        token7eth2 = token7eth / threeeth
-                                        if token7decimals != 18:
-                                            pricetoken7usd = (priceeth['ethereum']['usd'] / (token7eth2)) / (
-                                                    10 ** (18 - (token7decimals)))
-                                        else:
-                                            pricetoken7usd = (priceeth['ethereum']['usd'] / (token7eth2))
-                                    dollarbalancetoken7 = pricetoken7usd * balance_token7
-                                    if str(token8address) != '0':
-                                        if priceright == 'sell':
-                                            token8eth = uniswap_wrapper.get_eth_token_input_price(
-                                                w33.toChecksumAddress(token8address),
-                                                threeeth)
-                                            token8eth2 = token8eth / threeeth
-                                            if token8decimals != 18:
-                                                pricetoken8usd = (priceeth['ethereum']['usd'] / (
-                                                    token8eth2)) / (
-                                                                         10 ** (18 - (token8decimals)))
-                                            else:
-                                                pricetoken8usd = (priceeth['ethereum']['usd'] / (token8eth2))
-                                        else:
-                                            token8eth = uniswap_wrapper.get_token_eth_output_price(
-                                                w33.toChecksumAddress(token8address),
-                                                threeeth)
-                                            token8eth2 = token8eth / threeeth
-                                            if token8decimals != 18:
-                                                pricetoken8usd = (priceeth['ethereum']['usd'] / (
-                                                    token8eth2)) / (
-                                                                         10 ** (18 - (token8decimals)))
-                                            else:
-                                                pricetoken8usd = (priceeth['ethereum']['usd'] / (token8eth2))
-                                        dollarbalancetoken8 = pricetoken8usd * balance_token8
-                                        if str(token9address) != '0':
-                                            if priceright == 'sell':
-                                                token9eth = uniswap_wrapper.get_eth_token_input_price(
-                                                    w33.toChecksumAddress(token9address),
-                                                    threeeth)
-                                                token9eth2 = token9eth / threeeth
-                                                if token9decimals != 18:
-                                                    pricetoken9usd = (priceeth['ethereum']['usd'] / (
-                                                        token9eth2)) / (
-                                                                             10 ** (18 - (token9decimals)))
-                                                else:
-                                                    pricetoken9usd = (
-                                                            priceeth['ethereum']['usd'] / (token9eth2))
-                                            else:
-                                                token9eth = uniswap_wrapper.get_token_eth_output_price(
-                                                    w33.toChecksumAddress(token9address),
-                                                    threeeth)
-                                                token9eth2 = token9eth / threeeth
-                                                if token9decimals != 18:
-                                                    pricetoken9usd = (priceeth['ethereum']['usd'] / (
-                                                        token9eth2)) / (
-                                                                             10 ** (18 - (token9decimals)))
-                                                else:
-                                                    pricetoken9usd = (
-                                                            priceeth['ethereum']['usd'] / (token9eth2))
-                                            dollarbalancetoken9 = pricetoken9usd * balance_token9
-                                            if str(token10address) != '0':
-                                                if priceright == 'sell':
-                                                    token10eth = uniswap_wrapper.get_eth_token_input_price(
-                                                        w33.toChecksumAddress(token10address),
-                                                        threeeth)
-                                                    token10eth2 = token10eth / threeeth
-                                                    if token10decimals != 18:
-                                                        pricetoken10usd = (priceeth['ethereum']['usd'] / (
-                                                            token10eth2)) / (
-                                                                                  10 ** (18 - (token10decimals)))
-                                                    else:
-                                                        pricetoken10usd = (
-                                                                priceeth['ethereum']['usd'] / (token10eth2))
-                                                else:
-                                                    token10eth = uniswap_wrapper.get_token_eth_output_price(
-                                                        w33.toChecksumAddress(token10address),
-                                                        threeeth)
-                                                    token10eth2 = token10eth / threeeth
-                                                    if token10decimals != 18:
-                                                        pricetoken10usd = (priceeth['ethereum']['usd'] / (
-                                                            token10eth2)) / (
-                                                                                  10 ** (18 - (token10decimals)))
-                                                        dollarbalancetoken10 = pricetoken10usd * balance_token10
-                                                    else:
-                                                        pricetoken10usd = (
-                                                                priceeth['ethereum']['usd'] / (token10eth2))
-                                                        dollarbalancetoken10 = pricetoken10usd * balance_token10
-            except Exception as e:
-                exception_type, exception_object, exception_traceback = sys.exc_info()
-                if configfile.debugmode == '1':
-                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-            if str(token1address) != '0':
-                weergave1 = ('   [' + token1smallcasename + '  ' + str("{:.6f}".format(pricetoken1usd) + ']'))
-            try:
-                if str(token2address) != '0' and activatetoken2 == 1:
-                    weergave1 = weergave1 + (
-                            '    [' + token2smallcasename + '  ' + str("{:.6f}".format(pricetoken2usd)) + ']')
-                if str(token3address) != '0' and activatetoken3 == 1:
-                    weergave1 = weergave1 + (
-                            '    [' + token3smallcasename + '  ' + str("{:.6f}".format(pricetoken3usd)) + ']')
-                if str(token4address) != '0' and activatetoken4 == 1:
-                    weergave1 = weergave1 + (
-                            '    [' + token4smallcasename + '  ' + str("{:.6f}".format(pricetoken4usd)) + ']')
-                if str(token5address) != '0' and activatetoken5 == 1:
-                    weergave1 = weergave1 + (
-                            '    [' + token5smallcasename + '  ' + str("{:.6f}".format(pricetoken5usd)) + ']')
-                if str(token6address) != '0' and activatetoken6 == 1:
-                    weergave1 = weergave1 + (
-                            '    [' + token6smallcasename + '  ' + str("{:.6f}".format(pricetoken6usd)) + ']')
-                if str(token7address) != '0' and activatetoken7 == 1:
-                    weergave1 = weergave1 + (
-                            '    [' + token7smallcasename + '  ' + str("{:.6f}".format(pricetoken7usd)) + ']')
-                if str(token8address) != '0' and activatetoken8 == 1:
-                    weergave1 = weergave1 + (
-                            '    [' + token8smallcasename + '  ' + str("{:.6f}".format(pricetoken8usd)) + ']')
-                if str(token9address) != '0' and activatetoken9 == 1:
-                    weergave1 = weergave1 + (
-                            '    [' + token9smallcasename + '  ' + str("{:.6f}".format(pricetoken9usd)) + ']')
-                if str(token10address) != '0' and activatetoken10 == 1:
-                    weergave1 = weergave1 + (
-                            '    [' + token10smallcasename + '  ' + str("{:.6f}".format(pricetoken10usd)) + ']')
-            except Exception as e:
-                exception_type, exception_object, exception_traceback = sys.exc_info()
-                if configfile.debugmode == '1':
-                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-            try:
-                weergave = weergave1
-                token1totoken2 = 0
-                token1totoken3 = 0
-                token1totoken4 = 0
-                token1totoken5 = 0
-                token1totoken6 = 0
-                token1totoken7 = 0
-                token1totoken8 = 0
-                token1totoken9 = 0
-                token1totoken10 = 0
-                token2totoken1 = 0
-                token2totoken3 = 0
-                token2totoken4 = 0
-                token2totoken5 = 0
-                token2totoken6 = 0
-                token2totoken7 = 0
-                token2totoken8 = 0
-                token2totoken9 = 0
-                token2totoken10 = 0
-                token3totoken2 = 0
-                token3totoken1 = 0
-                token3totoken4 = 0
-                token3totoken5 = 0
-                token3totoken6 = 0
-                token3totoken7 = 0
-                token3totoken8 = 0
-                token3totoken9 = 0
-                token3totoken10 = 0
-                token4totoken2 = 0
-                token4totoken3 = 0
-                token4totoken1 = 0
-                token4totoken5 = 0
-                token4totoken6 = 0
-                token4totoken7 = 0
-                token4totoken8 = 0
-                token4totoken9 = 0
-                token4totoken10 = 0
-                token5totoken2 = 0
-                token5totoken3 = 0
-                token5totoken4 = 0
-                token5totoken1 = 0
-                token5totoken6 = 0
-                token5totoken7 = 0
-                token5totoken8 = 0
-                token5totoken9 = 0
-                token5totoken10 = 0
-                token6totoken2 = 0
-                token6totoken3 = 0
-                token6totoken4 = 0
-                token6totoken5 = 0
-                token6totoken1 = 0
-                token6totoken7 = 0
-                token6totoken8 = 0
-                token6totoken9 = 0
-                token6totoken10 = 0
-                token7totoken2 = 0
-                token7totoken3 = 0
-                token7totoken4 = 0
-                token7totoken5 = 0
-                token7totoken6 = 0
-                token7totoken1 = 0
-                token7totoken8 = 0
-                token7totoken9 = 0
-                token7totoken10 = 0
-                token8totoken2 = 0
-                token8totoken3 = 0
-                token8totoken4 = 0
-                token8totoken5 = 0
-                token8totoken6 = 0
-                token8totoken7 = 0
-                token8totoken1 = 0
-                token8totoken9 = 0
-                token8totoken10 = 0
-                token9totoken2 = 0
-                token9totoken3 = 0
-                token9totoken4 = 0
-                token9totoken5 = 0
-                token9totoken6 = 0
-                token9totoken7 = 0
-                token9totoken8 = 0
-                token9totoken1 = 0
-                token9totoken10 = 0
-                token10totoken2 = 0
-                token10totoken3 = 0
-                token10totoken4 = 0
-                token10totoken5 = 0
-                token10totoken6 = 0
-                token10totoken7 = 0
-                token10totoken8 = 0
-                token10totoken9 = 0
-                token10totoken1 = 0
-            except:
-                exc_type, exc_obj, exc_tb = sys.exc_info()
-                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                print(exc_type, fname, exc_tb.tb_lineno)
-            if str(token2address) != '0':
-                if pricetoken2usd > ((token2high + token2low) / 2) and pricetoken1usd < (
-                        (token1high + token1low) / 2):
-                    token2totoken1 = ((pricetoken2usd - token2low) / (token2high - token2low)) / (
-                            (pricetoken1usd - token1low) / (token1high - token1low))
-                else:
-                    token2totoken1 = 0.1
-
-                if pricetoken1usd > ((token1high + token1low) / 2) and pricetoken2usd < (
-                        (token2high + token2low) / 2):
-                    token1totoken2 = ((pricetoken1usd - token1low) / (token1high - token1low)) / (
-                            (pricetoken2usd - token2low) / (token2high - token2low))
-                else:
-                    token1totoken2 = 0.1
-                if str(token3address) != '0':
-                    if pricetoken2usd > ((token2high + token2low) / 2) and pricetoken3usd < (
-                            (token3high + token3low) / 2):
-                        token2totoken3 = ((pricetoken2usd - token2low) / (token2high - token2low)) / (
-                                (pricetoken3usd - token3low) / (token3high - token3low))
-                    else:
-                        token2totoken3 = 0.1
-                    if pricetoken1usd > ((token1high + token1low) / 2) and pricetoken3usd < (
-                            (token3high + token3low) / 2):
-                        token1totoken3 = ((pricetoken1usd - token1low) / (token1high - token1low)) / (
-                                (pricetoken3usd - token3low) / (token3high - token3low))
-                    else:
-                        token1totoken3 = 0.1
-                    if pricetoken3usd > ((token3high + token3low) / 2) and pricetoken2usd < (
-                            (token2high + token2low) / 2):
-                        token3totoken2 = ((pricetoken3usd - token3low) / (token3high - token3low)) / (
-                                (pricetoken2usd - token2low) / (token2high - token2low))
-                    else:
-                        token3totoken2 = 0.1
-                    if pricetoken3usd > ((token3high + token3low) / 2) and pricetoken1usd < (
-                            (token1high + token1low) / 2):
-                        token3totoken1 = ((pricetoken3usd - token3low) / (token3high - token3low)) / (
-                                (pricetoken1usd - token1low) / (token1high - token1low))
-                    else:
-                        token3totoken1 = 0.1
-                    if str(token4address) != '0':
-                        if pricetoken2usd > ((token2high + token2low) / 2) and pricetoken4usd < (
-                                (token4high + token4low) / 2):
-                            token2totoken4 = ((pricetoken2usd - token2low) / (token2high - token2low)) / (
-                                    (pricetoken4usd - token4low) / (token4high - token4low))
-                        else:
-                            token2totoken4 = 0.1
-                        if pricetoken1usd > ((token1high + token1low) / 2) and pricetoken4usd < (
-                                (token4high + token4low) / 2):
-                            token1totoken4 = ((pricetoken1usd - token1low) / (token1high - token1low)) / (
-                                    (pricetoken4usd - token4low) / (token4high - token4low))
-                        else:
-                            token1totoken4 = 0.1
-                        if pricetoken4usd > ((token4high + token4low) / 2) and pricetoken2usd < (
-                                (token2high + token2low) / 2):
-                            token4totoken2 = ((pricetoken4usd - token4low) / (token4high - token4low)) / (
-                                    (pricetoken2usd - token2low) / (token2high - token2low))
-                        else:
-                            token4totoken2 = 0.1
-                        if pricetoken4usd > ((token4high + token4low) / 2) and pricetoken1usd < (
-                                (token1high + token1low) / 2):
-                            token4totoken1 = ((pricetoken4usd - token4low) / (token4high - token4low)) / (
-                                    (pricetoken1usd - token1low) / (token1high - token1low))
-                        else:
-                            token4totoken1 = 0.1
-                        if pricetoken4usd > ((token4high + token4low) / 2) and pricetoken3usd < (
-                                (token3high + token3low) / 2):
-                            token4totoken3 = ((pricetoken4usd - token4low) / (token4high - token4low)) / (
-                                    (pricetoken3usd - token3low) / (token3high - token3low))
-                        else:
-                            token4totoken3 = 0.1
-                        if pricetoken3usd > ((token3high + token3low) / 2) and pricetoken4usd < (
-                                (token4high + token4low) / 2):
-                            token3totoken4 = ((pricetoken3usd - token3low) / (token3high - token3low)) / (
-                                    (pricetoken4usd - token4low) / (token4high - token4low))
-                        else:
-                            token3totoken4 = 0.1
-                        if str(token5address) != '0':
-                            if pricetoken2usd > ((token2high + token2low) / 2) and pricetoken5usd < (
-                                    (token5high + token5low) / 2):
-                                token2totoken5 = ((pricetoken2usd - token2low) / (token2high - token2low)) / (
-                                        (pricetoken5usd - token5low) / (token5high - token5low))
-                            else:
-                                token2totoken5 = 0.1
-                            if pricetoken1usd > ((token1high + token1low) / 2) and pricetoken5usd < (
-                                    (token5high + token5low) / 2):
-                                token1totoken5 = ((pricetoken1usd - token1low) / (token1high - token1low)) / (
-                                        (pricetoken5usd - token5low) / (token5high - token5low))
-                            else:
-                                token1totoken5 = 0.1
-                            if pricetoken5usd > ((token5high + token5low) / 2) and pricetoken2usd < (
-                                    (token2high + token2low) / 2):
-                                token5totoken2 = ((pricetoken5usd - token5low) / (token5high - token5low)) / (
-                                        (pricetoken2usd - token2low) / (token2high - token2low))
-                            else:
-                                token5totoken2 = 0.1
-                            if pricetoken5usd > ((token5high + token5low) / 2) and pricetoken1usd < (
-                                    (token1high + token1low) / 2):
-                                token5totoken1 = ((pricetoken5usd - token5low) / (token5high - token5low)) / (
-                                        (pricetoken1usd - token1low) / (token1high - token1low))
-                            else:
-                                token5totoken1 = 0.1
-                            if pricetoken5usd > ((token5high + token5low) / 2) and pricetoken3usd < (
-                                    (token3high + token3low) / 2):
-                                token5totoken3 = ((pricetoken5usd - token5low) / (token5high - token5low)) / (
-                                        (pricetoken3usd - token3low) / (token3high - token3low))
-                            else:
-                                token5totoken3 = 0.1
-                            if pricetoken3usd > ((token3high + token3low) / 2) and pricetoken5usd < (
-                                    (token5high + token5low) / 2):
-                                token3totoken5 = ((pricetoken3usd - token3low) / (token3high - token3low)) / (
-                                        (pricetoken5usd - token5low) / (token5high - token5low))
-                            else:
-                                token3totoken5 = 0.1
-                            if pricetoken5usd > ((token5high + token5low) / 2) and pricetoken4usd < (
-                                    (token4high + token4low) / 2):
-                                token5totoken4 = ((pricetoken5usd - token5low) / (token5high - token5low)) / (
-                                        (pricetoken4usd - token4low) / (token4high - token4low))
-                            else:
-                                token5totoken4 = 0.1
-                            if pricetoken4usd > ((token4high + token4low) / 2) and pricetoken5usd < (
-                                    (token5high + token5low) / 2):
-                                token4totoken5 = ((pricetoken4usd - token4low) / (token4high - token4low)) / (
-                                        (pricetoken5usd - token5low) / (token5high - token5low))
-                            else:
-                                token4totoken5 = 0.1
-                            if str(token6address) != '0':
-                                if pricetoken2usd > ((token2high + token2low) / 2) and pricetoken6usd < (
-                                        (token6high + token6low) / 2):
-                                    token2totoken6 = ((pricetoken2usd - token2low) / (token2high - token2low)) / (
-                                            (pricetoken6usd - token6low) / (token6high - token6low))
-                                else:
-                                    token2totoken6 = 0.1
-                                if pricetoken1usd > ((token1high + token1low) / 2) and pricetoken6usd < (
-                                        (token6high + token6low) / 2):
-                                    token1totoken6 = ((pricetoken1usd - token1low) / (token1high - token1low)) / (
-                                            (pricetoken6usd - token6low) / (token6high - token6low))
-                                else:
-                                    token1totoken6 = 0.1
-                                if pricetoken6usd > ((token6high + token6low) / 2) and pricetoken2usd < (
-                                        (token2high + token2low) / 2):
-                                    token6totoken2 = ((pricetoken6usd - token6low) / (token6high - token6low)) / (
-                                            (pricetoken2usd - token2low) / (token2high - token2low))
-                                else:
-                                    token6totoken2 = 0.1
-                                if pricetoken6usd > ((token6high + token6low) / 2) and pricetoken1usd < (
-                                        (token1high + token1low) / 2):
-                                    token6totoken1 = ((pricetoken6usd - token6low) / (token6high - token6low)) / (
-                                            (pricetoken1usd - token1low) / (token1high - token1low))
-                                else:
-                                    token6totoken1 = 0.1
-                                if pricetoken6usd > ((token6high + token6low) / 2) and pricetoken3usd < (
-                                        (token3high + token3low) / 2):
-                                    token6totoken3 = ((pricetoken6usd - token6low) / (token6high - token6low)) / (
-                                            (pricetoken3usd - token3low) / (token3high - token3low))
-                                else:
-                                    token6totoken3 = 0.1
-                                if pricetoken3usd > ((token3high + token3low) / 2) and pricetoken6usd < (
-                                        (token6high + token6low) / 2):
-                                    token3totoken6 = ((pricetoken3usd - token3low) / (token3high - token3low)) / (
-                                            (pricetoken6usd - token6low) / (token6high - token6low))
-                                else:
-                                    token3totoken6 = 0.1
-                                if pricetoken6usd > ((token6high + token6low) / 2) and pricetoken4usd < (
-                                        (token4high + token4low) / 2):
-                                    token6totoken4 = ((pricetoken6usd - token6low) / (token6high - token6low)) / (
-                                            (pricetoken4usd - token4low) / (token4high - token4low))
-                                else:
-                                    token6totoken4 = 0.1
-                                if pricetoken4usd > ((token4high + token4low) / 2) and pricetoken6usd < (
-                                        (token6high + token6low) / 2):
-                                    token4totoken6 = ((pricetoken4usd - token4low) / (token4high - token4low)) / (
-                                            (pricetoken6usd - token6low) / (token6high - token6low))
-                                else:
-                                    token4totoken6 = 0.1
-                                if pricetoken6usd > ((token6high + token6low) / 2) and pricetoken5usd < (
-                                        (token5high + token5low) / 2):
-                                    token6totoken5 = ((pricetoken6usd - token6low) / (token6high - token6low)) / (
-                                            (pricetoken5usd - token5low) / (token5high - token5low))
-                                else:
-                                    token6totoken5 = 0.1
-                                if pricetoken5usd > ((token5high + token5low) / 2) and pricetoken6usd < (
-                                        (token6high + token6low) / 2):
-                                    token5totoken6 = ((pricetoken5usd - token5low) / (token5high - token5low)) / (
-                                            (pricetoken6usd - token6low) / (token6high - token6low))
-                                else:
-                                    token5totoken6 = 0.1
-                                if str(token7address) != '0':
-                                    if pricetoken2usd > ((token2high + token2low) / 2) and pricetoken7usd < (
-                                            (token7high + token7low) / 2):
-                                        token2totoken7 = ((pricetoken2usd - token2low) / (
-                                                token2high - token2low)) / (
-                                                                 (pricetoken7usd - token7low) / (
-                                                                 token7high - token7low))
-                                    else:
-                                        token2totoken7 = 0.1
-                                    if pricetoken1usd > ((token1high + token1low) / 2) and pricetoken7usd < (
-                                            (token7high + token7low) / 2):
-                                        token1totoken7 = ((pricetoken1usd - token1low) / (
-                                                token1high - token1low)) / (
-                                                                 (pricetoken7usd - token7low) / (
-                                                                 token7high - token7low))
-                                    else:
-                                        token1totoken7 = 0.1
-                                    if pricetoken7usd > ((token7high + token7low) / 2) and pricetoken2usd < (
-                                            (token2high + token2low) / 2):
-                                        token7totoken2 = ((pricetoken7usd - token7low) / (
-                                                token7high - token7low)) / (
-                                                                 (pricetoken2usd - token2low) / (
-                                                                 token2high - token2low))
-                                    else:
-                                        token7totoken2 = 0.1
-                                    if pricetoken7usd > ((token7high + token7low) / 2) and pricetoken1usd < (
-                                            (token1high + token1low) / 2):
-                                        token7totoken1 = ((pricetoken7usd - token7low) / (
-                                                token7high - token7low)) / (
-                                                                 (pricetoken1usd - token1low) / (
-                                                                 token1high - token1low))
-                                    else:
-                                        token7totoken1 = 0.1
-                                    if pricetoken7usd > ((token7high + token7low) / 2) and pricetoken3usd < (
-                                            (token3high + token3low) / 2):
-                                        token7totoken3 = ((pricetoken7usd - token7low) / (
-                                                token7high - token7low)) / (
-                                                                 (pricetoken3usd - token3low) / (
-                                                                 token3high - token3low))
-                                    else:
-                                        token7totoken3 = 0.1
-                                    if pricetoken3usd > ((token3high + token3low) / 2) and pricetoken7usd < (
-                                            (token7high + token7low) / 2):
-                                        token3totoken7 = ((pricetoken3usd - token3low) / (
-                                                token3high - token3low)) / (
-                                                                 (pricetoken7usd - token7low) / (
-                                                                 token7high - token7low))
-                                    else:
-                                        token3totoken7 = 0.1
-                                    if pricetoken7usd > ((token7high + token7low) / 2) and pricetoken4usd < (
-                                            (token4high + token4low) / 2):
-                                        token7totoken4 = ((pricetoken7usd - token7low) / (
-                                                token7high - token7low)) / (
-                                                                 (pricetoken4usd - token4low) / (
-                                                                 token4high - token4low))
-                                    else:
-                                        token7totoken4 = 0.1
-                                    if pricetoken4usd > ((token4high + token4low) / 2) and pricetoken7usd < (
-                                            (token7high + token7low) / 2):
-                                        token4totoken7 = ((pricetoken4usd - token4low) / (
-                                                token4high - token4low)) / (
-                                                                 (pricetoken7usd - token7low) / (
-                                                                 token7high - token7low))
-                                    else:
-                                        token4totoken7 = 0.1
-                                    if pricetoken7usd > ((token7high + token7low) / 2) and pricetoken5usd < (
-                                            (token5high + token5low) / 2):
-                                        token7totoken5 = ((pricetoken7usd - token7low) / (
-                                                token7high - token7low)) / (
-                                                                 (pricetoken5usd - token5low) / (
-                                                                 token5high - token5low))
-                                    else:
-                                        token7totoken5 = 0.1
-                                    if pricetoken5usd > ((token5high + token5low) / 2) and pricetoken7usd < (
-                                            (token7high + token7low) / 2):
-                                        token5totoken7 = ((pricetoken5usd - token5low) / (
-                                                token5high - token5low)) / (
-                                                                 (pricetoken7usd - token7low) / (
-                                                                 token7high - token7low))
-                                    else:
-                                        token5totoken7 = 0.1
-                                    if pricetoken7usd > ((token7high + token7low) / 2) and pricetoken6usd < (
-                                            (token6high + token6low) / 2):
-                                        token7totoken6 = ((pricetoken7usd - token7low) / (
-                                                token7high - token7low)) / (
-                                                                 (pricetoken6usd - token6low) / (
-                                                                 token6high - token6low))
-                                    else:
-                                        token7totoken6 = 0.1
-                                    if pricetoken6usd > ((token6high + token6low) / 2) and pricetoken7usd < (
-                                            (token7high + token7low) / 2):
-                                        token6totoken7 = ((pricetoken6usd - token6low) / (
-                                                token6high - token6low)) / (
-                                                                 (pricetoken7usd - token7low) / (
-                                                                 token7high - token7low))
-                                    else:
-                                        token6totoken7 = 0.1
-                                    if str(token8address) != '0':
-                                        if pricetoken2usd > ((token2high + token2low) / 2) and pricetoken8usd < (
-                                                (token8high + token8low) / 2):
-                                            token2totoken8 = ((pricetoken2usd - token2low) / (
-                                                    token2high - token2low)) / (
-                                                                     (pricetoken8usd - token8low) / (
-                                                                     token8high - token8low))
-                                        else:
-                                            token2totoken8 = 0.1
-                                        if pricetoken1usd > ((token1high + token1low) / 2) and pricetoken8usd < (
-                                                (token8high + token8low) / 2):
-                                            token1totoken8 = ((pricetoken1usd - token1low) / (
-                                                    token1high - token1low)) / (
-                                                                     (pricetoken8usd - token8low) / (
-                                                                     token8high - token8low))
-                                        else:
-                                            token1totoken8 = 0.1
-                                        if pricetoken8usd > ((token8high + token8low) / 2) and pricetoken2usd < (
-                                                (token2high + token2low) / 2):
-                                            token8totoken2 = ((pricetoken8usd - token8low) / (
-                                                    token8high - token8low)) / (
-                                                                     (pricetoken2usd - token2low) / (
-                                                                     token2high - token2low))
-                                        else:
-                                            token8totoken2 = 0.1
-                                        if pricetoken8usd > ((token8high + token8low) / 2) and pricetoken1usd < (
-                                                (token1high + token1low) / 2):
-                                            token8totoken1 = ((pricetoken8usd - token8low) / (
-                                                    token8high - token8low)) / (
-                                                                     (pricetoken1usd - token1low) / (
-                                                                     token1high - token1low))
-                                        else:
-                                            token8totoken1 = 0.1
-                                        if pricetoken8usd > ((token8high + token8low) / 2) and pricetoken3usd < (
-                                                (token3high + token3low) / 2):
-                                            token8totoken3 = ((pricetoken8usd - token8low) / (
-                                                    token8high - token8low)) / (
-                                                                     (pricetoken3usd - token3low) / (
-                                                                     token3high - token3low))
-                                        else:
-                                            token8totoken3 = 0.1
-                                        if pricetoken3usd > ((token3high + token3low) / 2) and pricetoken8usd < (
-                                                (token8high + token8low) / 2):
-                                            token3totoken8 = ((pricetoken3usd - token3low) / (
-                                                    token3high - token3low)) / (
-                                                                     (pricetoken8usd - token8low) / (
-                                                                     token8high - token8low))
-                                        else:
-                                            token3totoken8 = 0.1
-                                        if pricetoken8usd > ((token8high + token8low) / 2) and pricetoken4usd < (
-                                                (token4high + token4low) / 2):
-                                            token8totoken4 = ((pricetoken8usd - token8low) / (
-                                                    token8high - token8low)) / (
-                                                                     (pricetoken4usd - token4low) / (
-                                                                     token4high - token4low))
-                                        else:
-                                            token8totoken4 = 0.1
-                                        if pricetoken4usd > ((token4high + token4low) / 2) and pricetoken8usd < (
-                                                (token8high + token8low) / 2):
-                                            token4totoken8 = ((pricetoken4usd - token4low) / (
-                                                    token4high - token4low)) / (
-                                                                     (pricetoken8usd - token8low) / (
-                                                                     token8high - token8low))
-                                        else:
-                                            token4totoken8 = 0.1
-                                        if pricetoken8usd > ((token8high + token8low) / 2) and pricetoken5usd < (
-                                                (token5high + token5low) / 2):
-                                            token8totoken5 = ((pricetoken8usd - token8low) / (
-                                                    token8high - token8low)) / (
-                                                                     (pricetoken5usd - token5low) / (
-                                                                     token5high - token5low))
-                                        else:
-                                            token8totoken5 = 0.1
-                                        if pricetoken5usd > ((token5high + token5low) / 2) and pricetoken8usd < (
-                                                (token8high + token8low) / 2):
-                                            token5totoken8 = ((pricetoken5usd - token5low) / (
-                                                    token5high - token5low)) / (
-                                                                     (pricetoken8usd - token8low) / (
-                                                                     token8high - token8low))
-                                        else:
-                                            token5totoken8 = 0.1
-                                        if pricetoken8usd > ((token8high + token8low) / 2) and pricetoken6usd < (
-                                                (token6high + token6low) / 2):
-                                            token8totoken6 = ((pricetoken8usd - token8low) / (
-                                                    token8high - token8low)) / (
-                                                                     (pricetoken6usd - token6low) / (
-                                                                     token6high - token6low))
-                                        else:
-                                            token8totoken6 = 0.1
-                                        if pricetoken6usd > ((token6high + token6low) / 2) and pricetoken8usd < (
-                                                (token8high + token8low) / 2):
-                                            token6totoken8 = ((pricetoken6usd - token6low) / (
-                                                    token6high - token6low)) / (
-                                                                     (pricetoken8usd - token8low) / (
-                                                                     token8high - token8low))
-                                        else:
-                                            token6totoken8 = 0.1
-                                        if pricetoken8usd > ((token8high + token8low) / 2) and pricetoken7usd < (
-                                                (token7high + token7low) / 2):
-                                            token8totoken7 = ((pricetoken8usd - token8low) / (
-                                                    token8high - token8low)) / (
-                                                                     (pricetoken7usd - token7low) / (
-                                                                     token7high - token7low))
-                                        else:
-                                            token8totoken7 = 0.1
-                                        if pricetoken7usd > ((token7high + token7low) / 2) and pricetoken8usd < (
-                                                (token8high + token8low) / 2):
-                                            token7totoken8 = ((pricetoken7usd - token7low) / (
-                                                    token7high - token7low)) / (
-                                                                     (pricetoken8usd - token8low) / (
-                                                                     token8high - token8low))
-                                        else:
-                                            token7totoken8 = 0.1
-                                        if str(token9address) != '0':
-                                            if pricetoken2usd > (
-                                                    (token2high + token2low) / 2) and pricetoken9usd < (
-                                                    (token9high + token9low) / 2):
-                                                token2totoken9 = ((pricetoken2usd - token2low) / (
-                                                        token2high - token2low)) / (
-                                                                         (pricetoken9usd - token9low) / (
-                                                                         token9high - token9low))
-                                            else:
-                                                token2totoken9 = 0.1
-                                            if pricetoken1usd > (
-                                                    (token1high + token1low) / 2) and pricetoken9usd < (
-                                                    (token9high + token9low) / 2):
-                                                token1totoken9 = ((pricetoken1usd - token1low) / (
-                                                        token1high - token1low)) / (
-                                                                         (pricetoken9usd - token9low) / (
-                                                                         token9high - token9low))
-                                            else:
-                                                token1totoken9 = 0.1
-                                            if pricetoken9usd > (
-                                                    (token9high + token9low) / 2) and pricetoken2usd < (
-                                                    (token2high + token2low) / 2):
-                                                token9totoken2 = ((pricetoken9usd - token9low) / (
-                                                        token9high - token9low)) / (
-                                                                         (pricetoken2usd - token2low) / (
-                                                                         token2high - token2low))
-                                            else:
-                                                token9totoken2 = 0.1
-                                            if pricetoken9usd > (
-                                                    (token9high + token9low) / 2) and pricetoken1usd < (
-                                                    (token1high + token1low) / 2):
-                                                token9totoken1 = ((pricetoken9usd - token9low) / (
-                                                        token9high - token9low)) / (
-                                                                         (pricetoken1usd - token1low) / (
-                                                                         token1high - token1low))
-                                            else:
-                                                token9totoken1 = 0.1
-                                            if pricetoken9usd > (
-                                                    (token9high + token9low) / 2) and pricetoken3usd < (
-                                                    (token3high + token3low) / 2):
-                                                token9totoken3 = ((pricetoken9usd - token9low) / (
-                                                        token9high - token9low)) / (
-                                                                         (pricetoken3usd - token3low) / (
-                                                                         token3high - token3low))
-                                            else:
-                                                token9totoken3 = 0.1
-                                            if pricetoken3usd > (
-                                                    (token3high + token3low) / 2) and pricetoken9usd < (
-                                                    (token9high + token9low) / 2):
-                                                token3totoken9 = ((pricetoken3usd - token3low) / (
-                                                        token3high - token3low)) / (
-                                                                         (pricetoken9usd - token9low) / (
-                                                                         token9high - token9low))
-                                            else:
-                                                token3totoken9 = 0.1
-                                            if pricetoken9usd > (
-                                                    (token9high + token9low) / 2) and pricetoken4usd < (
-                                                    (token4high + token4low) / 2):
-                                                token9totoken4 = ((pricetoken9usd - token9low) / (
-                                                        token9high - token9low)) / (
-                                                                         (pricetoken4usd - token4low) / (
-                                                                         token4high - token4low))
-                                            else:
-                                                token9totoken4 = 0.1
-                                            if pricetoken4usd > (
-                                                    (token4high + token4low) / 2) and pricetoken9usd < (
-                                                    (token9high + token9low) / 2):
-                                                token4totoken9 = ((pricetoken4usd - token4low) / (
-                                                        token4high - token4low)) / (
-                                                                         (pricetoken9usd - token9low) / (
-                                                                         token9high - token9low))
-                                            else:
-                                                token4totoken9 = 0.1
-                                            if pricetoken9usd > (
-                                                    (token9high + token9low) / 2) and pricetoken5usd < (
-                                                    (token5high + token5low) / 2):
-                                                token9totoken5 = ((pricetoken9usd - token9low) / (
-                                                        token9high - token9low)) / (
-                                                                         (pricetoken5usd - token5low) / (
-                                                                         token5high - token5low))
-                                            else:
-                                                token9totoken5 = 0.1
-                                            if pricetoken5usd > (
-                                                    (token5high + token5low) / 2) and pricetoken9usd < (
-                                                    (token9high + token9low) / 2):
-                                                token5totoken9 = ((pricetoken5usd - token5low) / (
-                                                        token5high - token5low)) / (
-                                                                         (pricetoken9usd - token9low) / (
-                                                                         token9high - token9low))
-                                            else:
-                                                token5totoken9 = 0.1
-                                            if pricetoken9usd > (
-                                                    (token9high + token9low) / 2) and pricetoken6usd < (
-                                                    (token6high + token6low) / 2):
-                                                token9totoken6 = ((pricetoken9usd - token9low) / (
-                                                        token9high - token9low)) / (
-                                                                         (pricetoken6usd - token6low) / (
-                                                                         token6high - token6low))
-                                            else:
-                                                token9totoken6 = 0.1
-                                            if pricetoken6usd > (
-                                                    (token6high + token6low) / 2) and pricetoken9usd < (
-                                                    (token9high + token9low) / 2):
-                                                token6totoken9 = ((pricetoken6usd - token6low) / (
-                                                        token6high - token6low)) / (
-                                                                         (pricetoken9usd - token9low) / (
-                                                                         token9high - token9low))
-                                            else:
-                                                token6totoken9 = 0.1
-                                            if pricetoken9usd > (
-                                                    (token9high + token9low) / 2) and pricetoken7usd < (
-                                                    (token7high + token7low) / 2):
-                                                token9totoken7 = ((pricetoken9usd - token9low) / (
-                                                        token9high - token9low)) / (
-                                                                         (pricetoken7usd - token7low) / (
-                                                                         token7high - token7low))
-                                            else:
-                                                token9totoken7 = 0.1
-                                            if pricetoken7usd > (
-                                                    (token7high + token7low) / 2) and pricetoken9usd < (
-                                                    (token9high + token9low) / 2):
-                                                token7totoken9 = ((pricetoken7usd - token7low) / (
-                                                        token7high - token7low)) / (
-                                                                         (pricetoken9usd - token9low) / (
-                                                                         token9high - token9low))
-                                            else:
-                                                token7totoken9 = 0.1
-                                            if pricetoken9usd > (
-                                                    (token9high + token9low) / 2) and pricetoken8usd < (
-                                                    (token8high + token8low) / 2):
-                                                token9totoken8 = ((pricetoken9usd - token9low) / (
-                                                        token9high - token9low)) / (
-                                                                         (pricetoken8usd - token8low) / (
-                                                                         token8high - token8low))
-                                            else:
-                                                token9totoken8 = 0.1
-                                            if pricetoken8usd > (
-                                                    (token8high + token8low) / 2) and pricetoken9usd < (
-                                                    (token9high + token9low) / 2):
-                                                token8totoken9 = ((pricetoken8usd - token8low) / (
-                                                        token8high - token8low)) / (
-                                                                         (pricetoken9usd - token9low) / (
-                                                                         token9high - token9low))
-                                            else:
-                                                token8totoken9 = 0.1
-                                            if str(token10address) != '0':
-                                                if pricetoken2usd > (
-                                                        (token2high + token2low) / 2) and pricetoken10usd < (
-                                                        (token10high + token10low) / 2):
-                                                    token2totoken10 = ((pricetoken2usd - token2low) / (
-                                                            token2high - token2low)) / (
-                                                                              (pricetoken10usd - token10low) / (
-                                                                              token10high - token10low))
-                                                else:
-                                                    token2totoken10 = 0.1
-                                                if pricetoken1usd > (
-                                                        (token1high + token1low) / 2) and pricetoken10usd < (
-                                                        (token10high + token10low) / 2):
-                                                    token1totoken10 = ((pricetoken1usd - token1low) / (
-                                                            token1high - token1low)) / (
-                                                                              (pricetoken10usd - token10low) / (
-                                                                              token10high - token10low))
-                                                else:
-                                                    token1totoken10 = 0.1
-                                                if pricetoken10usd > (
-                                                        (token10high + token10low) / 2) and pricetoken2usd < (
-                                                        (token2high + token2low) / 2):
-                                                    token10totoken2 = ((pricetoken10usd - token10low) / (
-                                                            token10high - token10low)) / (
-                                                                              (pricetoken2usd - token2low) / (
-                                                                              token2high - token2low))
-                                                else:
-                                                    token10totoken2 = 0.1
-                                                if pricetoken10usd > (
-                                                        (token10high + token10low) / 2) and pricetoken1usd < (
-                                                        (token1high + token1low) / 2):
-                                                    token10totoken1 = ((pricetoken10usd - token10low) / (
-                                                            token10high - token10low)) / (
-                                                                              (pricetoken1usd - token1low) / (
-                                                                              token1high - token1low))
-                                                else:
-                                                    token10totoken1 = 0.1
-                                                if pricetoken10usd > (
-                                                        (token10high + token10low) / 2) and pricetoken3usd < (
-                                                        (token3high + token3low) / 2):
-                                                    token10totoken3 = ((pricetoken10usd - token10low) / (
-                                                            token10high - token10low)) / (
-                                                                              (pricetoken3usd - token3low) / (
-                                                                              token3high - token3low))
-                                                else:
-                                                    token10totoken3 = 0.1
-                                                if pricetoken3usd > (
-                                                        (token3high + token3low) / 2) and pricetoken10usd < (
-                                                        (token10high + token10low) / 2):
-                                                    token3totoken10 = ((pricetoken3usd - token3low) / (
-                                                            token3high - token3low)) / (
-                                                                              (pricetoken10usd - token10low) / (
-                                                                              token10high - token10low))
-                                                else:
-                                                    token3totoken10 = 0.1
-                                                if pricetoken10usd > (
-                                                        (token10high + token10low) / 2) and pricetoken4usd < (
-                                                        (token4high + token4low) / 2):
-                                                    token10totoken4 = ((pricetoken10usd - token10low) / (
-                                                            token10high - token10low)) / (
-                                                                              (pricetoken4usd - token4low) / (
-                                                                              token4high - token4low))
-                                                else:
-                                                    token10totoken4 = 0.1
-                                                if pricetoken4usd > (
-                                                        (token4high + token4low) / 2) and pricetoken10usd < (
-                                                        (token10high + token10low) / 2):
-                                                    token4totoken10 = ((pricetoken4usd - token4low) / (
-                                                            token4high - token4low)) / (
-                                                                              (pricetoken10usd - token10low) / (
-                                                                              token10high - token10low))
-                                                else:
-                                                    token4totoken10 = 0.1
-                                                if pricetoken10usd > (
-                                                        (token10high + token10low) / 2) and pricetoken5usd < (
-                                                        (token5high + token5low) / 2):
-                                                    token10totoken5 = ((pricetoken10usd - token10low) / (
-                                                            token10high - token10low)) / (
-                                                                              (pricetoken5usd - token5low) / (
-                                                                              token5high - token5low))
-                                                else:
-                                                    token10totoken5 = 0.1
-                                                if pricetoken5usd > (
-                                                        (token5high + token5low) / 2) and pricetoken10usd < (
-                                                        (token10high + token10low) / 2):
-                                                    token5totoken10 = ((pricetoken5usd - token5low) / (
-                                                            token5high - token5low)) / (
-                                                                              (pricetoken10usd - token10low) / (
-                                                                              token10high - token10low))
-                                                else:
-                                                    token5totoken10 = 0.1
-                                                if pricetoken10usd > (
-                                                        (token10high + token10low) / 2) and pricetoken6usd < (
-                                                        (token6high + token6low) / 2):
-                                                    token10totoken6 = ((pricetoken10usd - token10low) / (
-                                                            token10high - token10low)) / (
-                                                                              (pricetoken6usd - token6low) / (
-                                                                              token6high - token6low))
-                                                else:
-                                                    token10totoken6 = 0.1
-                                                if pricetoken6usd > (
-                                                        (token6high + token6low) / 2) and pricetoken10usd < (
-                                                        (token10high + token10low) / 2):
-                                                    token6totoken10 = ((pricetoken6usd - token6low) / (
-                                                            token6high - token6low)) / (
-                                                                              (pricetoken10usd - token10low) / (
-                                                                              token10high - token10low))
-                                                else:
-                                                    token6totoken10 = 0.1
-                                                if pricetoken10usd > (
-                                                        (token10high + token10low) / 2) and pricetoken7usd < (
-                                                        (token7high + token7low) / 2):
-                                                    token10totoken7 = ((pricetoken10usd - token10low) / (
-                                                            token10high - token10low)) / (
-                                                                              (pricetoken7usd - token7low) / (
-                                                                              token7high - token7low))
-                                                else:
-                                                    token10totoken7 = 0.1
-                                                if pricetoken7usd > (
-                                                        (token7high + token7low) / 2) and pricetoken10usd < (
-                                                        (token10high + token10low) / 2):
-                                                    token7totoken10 = ((pricetoken7usd - token7low) / (
-                                                            token7high - token7low)) / (
-                                                                              (pricetoken10usd - token10low) / (
-                                                                              token10high - token10low))
-                                                else:
-                                                    token7totoken10 = 0.1
-                                                if pricetoken10usd > (
-                                                        (token10high + token10low) / 2) and pricetoken8usd < (
-                                                        (token8high + token8low) / 2):
-                                                    token10totoken8 = ((pricetoken10usd - token10low) / (
-                                                            token10high - token10low)) / (
-                                                                              (pricetoken8usd - token8low) / (
-                                                                              token8high - token8low))
-                                                else:
-                                                    token10totoken8 = 0.1
-                                                if pricetoken8usd > (
-                                                        (token8high + token8low) / 2) and pricetoken10usd < (
-                                                        (token10high + token10low) / 2):
-                                                    token8totoken10 = ((pricetoken8usd - token8low) / (
-                                                            token8high - token8low)) / (
-                                                                              (pricetoken10usd - token10low) / (
-                                                                              token10high - token10low))
-                                                else:
-                                                    token8totoken10 = 0.1
-                                                if pricetoken10usd > (
-                                                        (token10high + token10low) / 2) and pricetoken9usd < (
-                                                        (token9high + token9low) / 2):
-                                                    token10totoken9 = ((pricetoken10usd - token10low) / (
-                                                            token10high - token10low)) / (
-                                                                              (pricetoken9usd - token9low) / (
-                                                                              token9high - token9low))
-                                                else:
-                                                    token10totoken9 = 0.1
-                                                if pricetoken9usd > (
-                                                        (token9high + token9low) / 2) and pricetoken10usd < (
-                                                        (token10high + token10low) / 2):
-                                                    token9totoken10 = ((pricetoken9usd - token9low) / (
-                                                            token9high - token9low)) / (
-                                                                              (pricetoken10usd - token10low) / (
-                                                                              token10high - token10low))
-                                                else:
-                                                    token9totoken10 = 0.1
-            return {'priceeth': priceeth, 'pricetoken1usd': pricetoken1usd, 'pricetoken2usd': pricetoken2usd,
-                        'token1totoken2': token1totoken2, 'token2totoken1': token2totoken1,
-                        'pricetoken3usd': pricetoken3usd,
-                        'pricetoken4usd': pricetoken4usd, 'pricetoken5usd': pricetoken5usd,
-                        'pricetoken6usd': pricetoken6usd,
-                        'pricetoken7usd': pricetoken7usd, 'pricetoken8usd': pricetoken8usd,
-                        'pricetoken9usd': pricetoken9usd,
-                        'pricetoken10usd': pricetoken10usd, 'token1totoken7': token1totoken7,
-                        'token1totoken8': token1totoken8,
-                        'token1totoken9': token1totoken9, 'token1totoken3': token1totoken3,
-                        'token1totoken4': token1totoken4,
-                        'token1totoken5': token1totoken5, 'token1totoken6': token1totoken6,
-                        'token1totoken10': token1totoken10,
-                        'token2totoken3': token2totoken3, 'token2totoken4': token2totoken4,
-                        'token2totoken5': token2totoken5,
-                        'token2totoken6': token2totoken6, 'token2totoken7': token2totoken7,
-                        'token2totoken8': token2totoken8,
-                        'token2totoken9': token2totoken9, 'token2totoken10': token2totoken10,
-                        'token3totoken1': token3totoken1,
-                        'token3totoken2': token3totoken2, 'token3totoken4': token3totoken4,
-                        'token3totoken5': token3totoken5,
-                        'token3totoken6': token3totoken6, 'token3totoken7': token3totoken7,
-                        'token3totoken8': token3totoken8,
-                        'token3totoken9': token3totoken9, 'token3totoken10': token3totoken10,
-                        'token4totoken1': token4totoken1,
-                        'token4totoken2': token4totoken2, 'token4totoken3': token4totoken3,
-                        'token4totoken5': token4totoken5,
-                        'token4totoken6': token4totoken6, 'token4totoken7': token4totoken7,
-                        'token4totoken8': token4totoken8,
-                        'token4totoken9': token4totoken9, 'token4totoken10': token4totoken10,
-                        'token5totoken1': token5totoken1,
-                        'token5totoken2': token5totoken2, 'token5totoken4': token5totoken4,
-                        'token5totoken3': token5totoken3,
-                        'token5totoken6': token5totoken6, 'token5totoken7': token5totoken7,
-                        'token5totoken8': token5totoken8,
-                        'token5totoken9': token5totoken9, 'token5totoken10': token5totoken10,
-                        'token6totoken1': token6totoken1,
-                        'token6totoken2': token6totoken2, 'token6totoken4': token6totoken4,
-                        'token6totoken5': token6totoken5,
-                        'token6totoken3': token6totoken3, 'token6totoken7': token6totoken7,
-                        'token6totoken8': token6totoken8,
-                        'token6totoken9': token6totoken9, 'token6totoken10': token6totoken10,
-                        'token7totoken1': token7totoken1,
-                        'token7totoken2': token7totoken2, 'token7totoken4': token7totoken4,
-                        'token7totoken5': token7totoken5,
-                        'token7totoken6': token7totoken6, 'token7totoken3': token7totoken3,
-                        'token7totoken8': token7totoken8,
-                        'token7totoken9': token7totoken9, 'token7totoken10': token7totoken10,
-                        'token8totoken1': token8totoken1,
-                        'token8totoken2': token8totoken2, 'token8totoken4': token8totoken4,
-                        'token8totoken5': token8totoken5,
-                        'token8totoken6': token8totoken6, 'token8totoken7': token8totoken7,
-                        'token8totoken3': token8totoken3,
-                        'token8totoken9': token8totoken9, 'token8totoken10': token8totoken10,
-                        'token9totoken1': token9totoken1,
-                        'token9totoken2': token9totoken2, 'token9totoken4': token9totoken4,
-                        'token9totoken5': token9totoken5,
-                        'token9totoken6': token9totoken6, 'token9totoken7': token9totoken7,
-                        'token9totoken8': token9totoken8,
-                        'token9totoken3': token9totoken3, 'token9totoken10': token9totoken10,
-                        'token10totoken1': token10totoken1,
-                        'token10totoken2': token10totoken2, 'token10totoken4': token10totoken4,
-                        'token10totoken5': token10totoken5,
-                        'token10totoken6': token10totoken6, 'token10totoken7': token10totoken7,
-                        'token10totoken8': token10totoken8,
-                        'token10totoken9': token10totoken9, 'token10totoken3': token10totoken3, 'weergave': weergave,
-                        'dollarbalancetoken1': dollarbalancetoken1, 'dollarbalancetoken2': dollarbalancetoken2, 'dollarbalancetoken3': dollarbalancetoken3, 'dollarbalancetoken4': dollarbalancetoken4, 'dollarbalancetoken5': dollarbalancetoken5,'dollarbalancetoken6': dollarbalancetoken6, 'dollarbalancetoken7': dollarbalancetoken7,'dollarbalancetoken8': dollarbalancetoken8,'dollarbalancetoken9': dollarbalancetoken9, 'dollarbalancetoken10': dollarbalancetoken10,'dollarbalancemaintoken': dollarbalancemaintoken}
-
-        if 'step' not in globals():
-            step=1
-        else:
-            step=step+1
-        self.sig_step.emit(self.__id, 'step ' + str(step))
-        QCoreApplication.processEvents()
-        if self.__abort==True:
-            # note that "step" value will not necessarily be same for every thread
-            self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
-        #def marketordersell():
-            #def marketorderbuy():
-
-                #def preapproval():
-
-                #def recharge():
-
-
-        # paytokenholding
-        if 0 == 1:
-            details2 = {'symbol': paytokensmallname, 'address': paytokenaddress,
-                        'decimals': paytokendecimals,
-                        'name': paytokenname}
-            erc20tokens2 = ethbalance.add_token(token2, details2)
-            ethamount2 = ethbalance.get_token_balance(paytokenname, my_address)['balance']
-            if ethamount2 < paytokenamount:
-                print("You are not holding the required token, the application will now stop")
-                exit()
-                subprocess.call(["taskkill", "/F", "/IM", "bot.exe"])
-                QtTest.QTest.qWait(4294960*1000)
-        if 'step' not in globals():
-            step=1
-        else:
-            step=step+1
-        self.sig_step.emit(self.__id, 'step ' + str(step))
-        QCoreApplication.processEvents()
-
-        if self.__abort==True:
-            # note that "step" value will not necessarily be same for every thread
-            self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
-        while self.__abort != True:
-            w3 = Web3(Web3.HTTPProvider(infura_url))
-            w33 = Web3()
-            address = my_address
-            private_key = my_pk
-            uniswap_wrapper = Uniswap(address, private_key, web3=w3, version=2)
-            ethereum_address = address
-            pieuw = gettotaltokenbalance(token1address, token1smallcasename, token2address,
-                                         token2smallcasename, token3address,
-                                         token3smallcasename,
-                                         token4address, token4smallcasename, token5address,
-                                         token5smallcasename, token6address,
-                                         token6smallcasename,
-                                         token7address, token7smallcasename, token8address,
-                                         token8smallcasename, token9address,
-                                         token9smallcasename,
-                                         token10address, ethaddress, token1decimals,
-                                         token2decimals, token3decimals, token4decimals,
-                                         token5decimals, token6decimals,
-                                         token7decimals, token8decimals, token9decimals,
-                                         token10decimals, maindecimals, my_address)
-            totalbalancedollarscript = pieuw['totalbalancedollarscript']
-            dollarbalancemaintoken = pieuw['dollarbalancemaintoken']
-            dollarbalancetoken1= pieuw['dollarbalancetoken1']
-            dollarbalancetoken2 = pieuw['dollarbalancetoken2']
-            dollarbalancetoken3 = pieuw['dollarbalancetoken3']
-            dollarbalancetoken4 = pieuw['dollarbalancetoken4']
-            dollarbalancetoken5 = pieuw['dollarbalancetoken5']
-            dollarbalancetoken6 = pieuw['dollarbalancetoken6']
-            dollarbalancetoken7 = pieuw['dollarbalancetoken7']
-            dollarbalancetoken8 = pieuw['dollarbalancetoken8']
-            dollarbalancetoken9 = pieuw['dollarbalancetoken9']
-            dollarbalancetoken10 = pieuw['dollarbalancetoken10']
-            balance_token1 = pieuw['balance_token1']
-            balance_token2 = pieuw['balance_token2']
-            balance_token3 = pieuw['balance_token3']
-            balance_token4 = pieuw['balance_token4']
-            balance_token5 = pieuw['balance_token5']
-            balance_token6 = pieuw['balance_token6']
-            balance_token7 = pieuw['balance_token7']
-            balance_token8 = pieuw['balance_token8']
-            balance_token9 = pieuw['balance_token9']
-            balance_token10 = pieuw['balance_token10']
-            maintokenbalance = pieuw['maintokenbalance']
-            try:
-                w33 = Web3()
+                        if dollar_balance > mcotoseeassell and gelukt != 'buy '+small_case_name:
+                            gelukt2 = "buy " + small_case_name
+                    keer = 0
+                    if 'gelukt2' not in locals():
+                        gelukt2 = 'nothing'
                 try:
-                    def api(speed):
-                        res = requests.get(
-                            'https://data-api.defipulse.com/api/v1/egs/api/ethgasAPI.json?api-key=f2ff6e6755c2123799676dbe8ed3af94574000b4c9b56d1f159510ec91b0')
-                        data = (res.json()[speed]) / 10
-                        return data
+                    gelukt3 = gelukt2
+                except:
+                    gelukt2 = '0'
+                return {'keer': keer, 'gelukt': gelukt, 'gelukt2': gelukt2,'all_token_information': all_token_information}
 
-                    gwei = api(speed)
-                    print('Gwei for ' + str(speed) + ' trading at the moment: ' + str(gwei))
+            def getprice(all_token_information,incaseofbuyinghowmuch,uniswap_wrapper, timesleep, gelukt, maintokenbalance, ethaddress, maindecimals,totalbalancedollarscript):
+                try:
+                    QCoreApplication.processEvents()
+                    count = 0
+                    while self.__abort != True or count < timesleep:
+                        count += 1
+                        QtTest.QTest.qWait(1000)
+                        QCoreApplication.processEvents()
+                        if 'step' not in locals():
+                            step = 1
+                        else:
+                            step = 1
+                        self.sig_step.emit(self.__id, 'step ' + str(step))
+                        QCoreApplication.processEvents()
+                        if self.__abort == True:
+                            # note that "step" value will not necessarily be same for every thread
+                            self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+                    QtTest.QTest.qWait(166)
+                    if ethaddress == "0x0000000000000000000000000000000000000000" and maintokenbalance > 0.001:
+                        priceeth = int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
+                        threeeth = int(maintokenbalance*1000000000000000000)
+                    if ethaddress == "0x0000000000000000000000000000000000000000" and maintokenbalance < 0.001:
+                        threeeth = 1000000000000
+                        priceeth = int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
+                    if ethaddress != "0x0000000000000000000000000000000000000000":
+                        if ethaddress == "0x6b175474e89094c44da98b954eedeac495271d0f":
+                            jajaja = int(cg.get_price(ids='dai', vs_currencies='usd')['dai']['usd'])
+                            priceeth =int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
+                            ethtest = (jajaja / priceeth)*maintokenbalance
+                            if ethtest < 0.01:
+                                threeeth = 1000000000000
+                            else:
+                                threeeth=int((ethtest)*1000000000000000000)
+                        if ethaddress == "0xdac17f958d2ee523a2206206994597c13d831ec7":
+                            jajaja = int(cg.get_price(ids='tether', vs_currencies='usd')['tether']['usd'])
+                            priceeth =int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
+                            ethtest = (jajaja / priceeth)*maintokenbalance
+                            if ethtest < 0.01:
+                                threeeth = 1000000000000
+                            else:
+                                threeeth=int((ethtest)*1000000000000000000)
+                        if ethaddress == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48":
+                            jajaja = int(cg.get_price(ids='usd-coin', vs_currencies='usd')['usd-coin']['usd'])
+                            priceeth =int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
+                            ethtest = (jajaja / priceeth)*maintokenbalance
+                            if ethtest < 0.01:
+                                threeeth = 1000000000000
+                            else:
+                                threeeth=int((ethtest)*1000000000000000000)
+                        if ethaddress == "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599":
+                            jajaja = int(cg.get_price(ids='wrapped-bitcoin', vs_currencies='usd')['wrapped-bitcoin']['usd'])
+                            priceeth =int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
+                            ethtest = (jajaja / priceeth)*maintokenbalance
+                            if ethtest < 0.01:
+                                threeeth = 1000000000000
+                            else:
+                                threeeth=int((ethtest)*1000000000000000000)
+                    QCoreApplication.processEvents()
+                    if 'step' not in locals():
+                        step = 1
+                    else:
+                        step = 1
+                    self.sig_step.emit(self.__id, 'step ' + str(step))
+                    QCoreApplication.processEvents()
+                    if self.__abort == True:
+                        # note that "step" value will not necessarily be same for every thread
+                        self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+                    if 'buy' in gelukt:
+                        priceright = 'buy'
+                        threeeth= int((totalbalancedollarscript/int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd']))*1000000000000000000)
+                    else:
+                        priceright = 'sell'
+                    if ethaddress == "0x0000000000000000000000000000000000000000":
+                        dollarbalancemaintoken = maintokenbalance * (priceeth)
+                    else:
+                        token11eth = uniswap_wrapper.get_token_eth_output_price(w33.toChecksumAddress(ethaddress),
+                                                                                threeeth)
+                        token11eth2 = token11eth / threeeth
 
+                        if maindecimals != 18:
+                            dollarbalancemaintoken = float(maintokenbalance) * ((priceeth / (token11eth2)) / (
+                                    10 ** (18 - (maindecimals))))
+                        else:
+                            dollarbalancemaintoken = maintokenbalance * (priceeth / (token11eth2))
+                    priceeth = int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
+                    QCoreApplication.processEvents()
+                    if 'step' not in locals():
+                        step = 1
+                    else:
+                        step = 1
+                    self.sig_step.emit(self.__id, 'step ' + str(step))
+                    QCoreApplication.processEvents()
+                    if self.__abort == True:
+                        # note that "step" value will not necessarily be same for every thread
+                        self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+                    for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC,\
+                        trade_with_ETH,fast_token,small_case_name,decimals,balance,price, dollar_balance in all_token_information:
+                        if eth_address != '0':
+                            if priceright == 'sell':
+                                token1eth = uniswap_wrapper.get_eth_token_input_price(w33.toChecksumAddress(eth_address),
+                                                                                      threeeth)
+                                token1eth2 = token1eth / threeeth
+                                if decimals != 18:
+                                    pricetoken1usd = (priceeth / (token1eth2)) / (10 ** (18 - (decimals)))
+                                    dollarbalancetoken1 = pricetoken1usd * balance
+
+                                    all_token_information[token_number - 1] = all_token_information[token_number - 1][:13] + (pricetoken1usd,dollarbalancetoken1)
+                                else:
+                                    pricetoken1usd = (priceeth / (token1eth2))
+                                    dollarbalancetoken1 = pricetoken1usd * balance
+                                    all_token_information[token_number - 1] = all_token_information[token_number - 1][:13] + (pricetoken1usd, dollarbalancetoken1)
+                            else:
+                                token1eth = uniswap_wrapper.get_token_eth_output_price(w33.toChecksumAddress(eth_address),
+                                                                                       threeeth)
+                                token1eth2 = (token1eth / threeeth)
+                                if decimals != 18:
+                                    pricetoken1usd = (priceeth / (token1eth2)) / (10 ** (18 - (decimals)))
+                                    dollarbalancetoken1 = pricetoken1usd * balance
+                                    all_token_information[token_number - 1] = all_token_information[token_number - 1][:13] + (pricetoken1usd, dollarbalancetoken1)
+                                else:
+                                    pricetoken1usd = (priceeth / (token1eth2))
+                                    dollarbalancetoken1 = pricetoken1usd * balance
+                                    all_token_information[token_number - 1] = all_token_information[token_number - 1][:13] + (pricetoken1usd, dollarbalancetoken1)
+                        else:
+                            pricetoken1usd = 0
+                            dollarbalancetoken1 = 0
+                            all_token_information[token_number - 1] = all_token_information[token_number - 1][:13] + (pricetoken1usd, dollarbalancetoken1)
+
+                    weergave=''
+
+                    for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC,\
+                        trade_with_ETH,fast_token,small_case_name,decimals,balance,price, dollar_balance in all_token_information:
+                        if eth_address != '0' and activate==1:
+                            weergave+= ('   [' + small_case_name + '  ' + str("{:.6f}".format(price)) + ']')
+                    QCoreApplication.processEvents()
+                    if 'step' not in locals():
+                        step = 1
+                    else:
+                        step = 1
+                    self.sig_step.emit(self.__id, 'step ' + str(step))
+                    QCoreApplication.processEvents()
+                    if self.__abort == True:
+                        # note that "step" value will not necessarily be same for every thread
+                        self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+                    return {'all_token_information': all_token_information,'priceeth': priceeth, 'weergave': weergave,'dollarbalancemaintoken': dollarbalancemaintoken}
                 except Exception as e:
                     o = 0
                     exception_type, exception_object, exception_traceback = sys.exc_info()
                     if configfile.debugmode == '1':
                         print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                    #w33.eth.setGasPriceStrategy(fast_gas_price_strategy)
-                w33.middleware_onion.add(middleware.time_based_cache_middleware)
-                w33.middleware_onion.add(middleware.latest_block_based_cache_middleware)
-                w33.middleware_onion.add(middleware.simple_cache_middleware)
-                w3 = Web3(Web3.HTTPProvider(infura_url))
 
-                if token1ethaddress == '0':
-                    print(
-                        'Please stop the application and add at least token1, otherwise the application will do nothing. Don\'t worry, adding a token and activating it will only price check, and not trade :)')
+            def letstrade(all_token_information,keer, my_address, pk, max_slippage,
+                          infura_url, gelukt,
+                          tokentokennumerator,
+                          weergave, notyet, priceeth, speed,maxgwei,maxgweinumber,diffdeposit,diffdepositaddress,maindecimals,timesleepaftertrade):
+                QCoreApplication.processEvents()
+                if 'step' not in locals():
+                    step = 1
+                else:
+                    step = 1
+                self.sig_step.emit(self.__id, 'step ' + str(step))
+                QCoreApplication.processEvents()
+                if self.__abort == True:
+                    # note that "step" value will not necessarily be same for every thread
+                    self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+                for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC,\
+                    trade_with_ETH,fast_token,small_case_name,decimals,balance,price, dollar_balance in all_token_information:
+                    QCoreApplication.processEvents()
+                    for token_number2, eth_address2, high2, low2, activate2, stoploss_value2, stoploss_activate2, trade_with_ERC2, \
+                        trade_with_ETH2, fast_token2, small_case_name2, decimals2, balance2, price2, dollar_balance2 in all_token_information:
+                        if eth_address != eth_address2:
+                            if eth_address != 0 and eth_address2 !=0:
+                                if price > ((high + low) / 2) and price2 < (
+                                        (high2 + low2) / 2):
+                                    locals()['token%stotoken%s' % (str(token_number),str(token_number2))] = ((price - low) / (high - low)) / (
+                                        (price2 - low2) / (high2 - low2))
+                                else:
+                                    locals()['token%stotoken%s' % (str(token_number), str(token_number2))] = 0.1
+                            else:
+                                locals()['token%stotoken%s' % (str(token_number), str(token_number2))] = 0.1
+
+                def makeTrade(buytokenaddress, selltokenaddress, my_address, pk, max_slippage, infura_url,
+                              buysmallcasesymbol, sellsmallcasesymbol, ethtokeep, speed,maxgwei,maxgweinumber,diffdeposit,diffdepositaddress,ethaddress):
+                    def api2(ethaddress):
+                        res = requests.get(
+                            'https://api.ethplorer.io/getTokenInfo/' + ethaddress + '?apiKey=EK-5nuDS-iZCPJhW-SYGLU')
+                        data = int((res.json())["decimals"])
+                        return data
+                    selldecimals = int(api2(selltokenaddress))
+                    try:
+                        def api(speed):
+                            res = requests.get(
+                                'https://data-api.defipulse.com/api/v1/egs/api/ethgasAPI.json?api-key=f2ff6e6755c2123799676dbe8ed3af94574000b4c9b56d1f159510ec91b0')
+                            data = int(res.json()[speed] / 10)
+                            return data
+
+                        gwei2 = api(speed)
+                        print('Gwei for ' + str(speed) + ' trading at the moment: ' + str(gwei2))
+                        gwei=types.Wei(Web3.toWei(gwei2, "gwei"))
+
+                    except Exception as e:
+                        o = 0
+                        exception_type, exception_object, exception_traceback = sys.exc_info()
+                        if configfile.debugmode == '1':
+                            print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
+                        w33.eth.setGasPriceStrategy(fast_gas_price_strategy)
+                    if (maxgwei==0) or (maxgwei==1 and gwei2 <= maxgweinumber):
+
+                        try:
+                            uniconnect = Uniswap(my_address, pk, web3=Web3(
+                                w33.HTTPProvider(infura_url)),
+                                                 version=2, max_slippage=max_slippage)
+                            eth = Web3.toChecksumAddress(selltokenaddress)
+                            token = w33.toChecksumAddress(buytokenaddress)
+                            selldecimals = int(api2(selltokenaddress))
+                        except Exception as e:
+                            exception_type, exception_object, exception_traceback = sys.exc_info()
+                            if configfile.debugmode == '1':
+                                print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
+                        try:
+                            if sellsmallcasesymbol == "eth":
+                                ethbalance = pyetherbalance.PyEtherBalance(infura_url)
+                                balance_eth = ethbalance.get_eth_balance(my_address)
+                                priceeth = int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
+                                ethamount2 = (float(balance_eth['balance'])) - (
+                                        ethtokeep / (float(priceeth)))
+                            else:
+                                ethbalance = pyetherbalance.PyEtherBalance(infura_url)
+                                balance_eth = ethbalance.get_eth_balance(my_address)['balance']
+                                token2 = sellsmallcasesymbol.upper
+                                details2 = {'symbol': sellsmallcasesymbol.upper, 'address': selltokenaddress,
+                                            'decimals': selldecimals,
+                                            'name': sellsmallcasesymbol.upper}
+                                erc20tokens2 = ethbalance.add_token(token2, details2)
+                                ethamount2 = ethbalance.get_token_balance(token2, ethereum_address)['balance']
+                            tradeamount = ethamount2 * 10 ** selldecimals
+                            ethamount = tradeamount
+                            eth = Web3.toChecksumAddress(selltokenaddress)
+                            token = w33.toChecksumAddress(buytokenaddress)
+                            contractaddress = token
+                        except Exception as e:
+                            o = 0
+                            exception_type, exception_object, exception_traceback = sys.exc_info()
+                            if configfile.debugmode == '1':
+                                print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
+                        tradeamount = (ethamount2 * 10 ** selldecimals)
+                        ethamount = ethamount2
+                        contractaddress = token
+                        if int(diffdeposit) == 0:
+                            uniconnect.make_trade(eth, token, int(tradeamount),gwei,my_address,pk,my_address)
+                        if int(diffdeposit) == 1:
+                            uniconnect.make_trade(eth, token, int(tradeamount), gwei, my_address, pk,diffdepositaddress)
+
+                        if buytokenaddress == ethaddress:
+                            gelukt = 'sell'
+                        if buytokenaddress != ethaddress:
+                            gelukt = 'buy ' + buysmallcasesymbol
+                        return {'gelukt': gelukt}
+                    else:
+                        print('Current gwei of gasstrategy is higher than max-gwei')
+                        gelukt='mislukt'
+                        return {'gelukt': gelukt}
+
+                QCoreApplication.processEvents()
+                if 'step' not in locals():
+                    step = 1
+                else:
+                    step = 1
+                self.sig_step.emit(self.__id, 'step ' + str(step))
+                QCoreApplication.processEvents()
+                if self.__abort == True:
+                    # note that "step" value will not necessarily be same for every thread
+                    self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+
+                try:
+                    for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC, trade_with_ETH, fast_token, small_case_name, decimals, balance, price, dollar_balance in all_token_information:  # stop loss
+                        if (price < stoploss_value and stoploss_activate == 1 and activate == 1 and trade_with_ETH == 1 and gelukt == "buy " + small_case_name) or (
+                                price < stoploss_value and activate == 1 and trade_with_ETH == 1 and gelukt2 == "buy " + small_case_name and stoploss_activate == 1):
+                            print("Selling " + str(small_case_name) + ' for Maincoin-option (current price in USD: ' + str(
+                                price) + ')')
+                            buysmallcasesymbol = 'eth'
+                            kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=eth_address,
+                                             my_address=my_address,
+                                             pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
+                                             buysmallcasesymbol=buysmallcasesymbol,
+                                             sellsmallcasesymbol=small_case_name, ethtokeep=ethtokeep, speed=speed,maxgwei=maxgwei,maxgweinumber=maxgweinumber,diffdeposit=diffdeposit,diffdepositaddress=diffdepositaddress,ethaddress=ethaddress)
+                            gelukt = kaka['gelukt']
+                            if gelukt != 'mislukt':
+                                count = 0
+                                while self.__abort != True or count < timesleepaftertrade:
+                                    count += 1
+                                    QtTest.QTest.qWait(1000)
+                                    QCoreApplication.processEvents()
+                            keer = 9999
+                            all_token_information[token_number - 1] = all_token_information[token_number - 1][:9]+fasttoken1+all_token_information[token_number - 1][5:]
+                        if (
+                                eth_address != 0) and activate == 1 and trade_with_ETH == 1:  # sell alt and buy ETH trades
+                            if (price > high and gelukt == "buy " + small_case_name) or (
+                                    price > high and gelukt2 == "buy " + small_case_name) or (
+                                    activate == 1 and gelukt == 'buy ' + small_case_name and fast_token == 1):
+                                print("Selling " + str(
+                                    small_case_name) + ' for Maincoin-option (current price in USD: ' + str(
+                                    price) + ')')
+                                buysmallcasesymbol = 'eth'
+                                kaka = makeTrade(buytokenaddress=ethaddress, selltokenaddress=eth_address,
+                                                 my_address=my_address,
+                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
+                                                 buysmallcasesymbol=buysmallcasesymbol,
+                                                 sellsmallcasesymbol=small_case_name, ethtokeep=ethtokeep, speed=speed,
+                                                 maxgwei=maxgwei, maxgweinumber=maxgweinumber, diffdeposit=diffdeposit,
+                                                 diffdepositaddress=diffdepositaddress, ethaddress=ethaddress)
+                                gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    count = 0
+                                    while self.__abort != True or count < timesleepaftertrade:
+                                        count += 1
+                                        QtTest.QTest.qWait(1000)
+                                        QCoreApplication.processEvents()
+                                        if 'step' not in locals():
+                                            step = 1
+                                        else:
+                                            step = 1
+                                        self.sig_step.emit(self.__id, 'step ' + str(step))
+                                        QCoreApplication.processEvents()
+                                        if self.__abort == True:
+                                            # note that "step" value will not necessarily be same for every thread
+                                            self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+                                keer = 9999
+                                fasttoken1 = 0
+                                all_token_information[token_number - 1] = all_token_information[token_number - 1][:9]+fasttoken1+all_token_information[token_number - 1][5:]
+                        if (eth_address != 0) and activate == 1 and trade_with_ETH == 1:  # sell ETH and buy ALT
+                            if (price < low and gelukt == "sell") or (
+                                    price < low and gelukt2 == "sell"):
+                                print(
+                                    "Buying " + str(small_case_name) + ' (Current price: ' + str(
+                                        float(price)) + ')')
+
+                                sellsmallcasesymbol = 'eth'
+                                kaka = makeTrade(buytokenaddress=eth_address, selltokenaddress=ethaddress,
+                                                 my_address=my_address,
+                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
+                                                 buysmallcasesymbol=small_case_name,
+                                                 sellsmallcasesymbol=sellsmallcasesymbol, ethtokeep=ethtokeep, speed=speed,
+                                                 maxgwei=maxgwei, maxgweinumber=maxgweinumber, diffdeposit=diffdeposit,
+                                                 diffdepositaddress=diffdepositaddress, ethaddress=ethaddress)
+                                gelukt = kaka['gelukt']
+                                if gelukt != 'mislukt':
+                                    count = 0
+                                    while self.__abort != True or count < timesleepaftertrade:
+                                        count += 1
+                                        QtTest.QTest.qWait(1000)
+                                        QCoreApplication.processEvents()
+                                        if 'step' not in locals():
+                                            step = 1
+                                        else:
+                                            step = 1
+                                        self.sig_step.emit(self.__id, 'step ' + str(step))
+                                        QCoreApplication.processEvents()
+                                        if self.__abort == True:
+                                            # note that "step" value will not necessarily be same for every thread
+                                            self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+                                keer = 9999
+                        QCoreApplication.processEvents()
+                        for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC, \
+                                trade_with_ETH, fast_token, small_case_name, decimals, balance, price, dollar_balance in all_token_information:
+                                QCoreApplication.processEvents()
+                                for token_number2, eth_address2, high2, low2, activate2, stoploss_value2, stoploss_activate2, trade_with_ERC2, \
+                                    trade_with_ETH2, fast_token2, small_case_name2, decimals2, balance2, price2, dollar_balance2 in all_token_information:
+                                    if eth_address2 != eth_address:
+                                        if (eth_address != 0) and (
+                                                eth_address2 != 0) and activate == 1 and trade_with_ETH == 1 \
+                                                and activate2 == 1 and trade_with_ETH2 == 1 and trade_with_ERC == 1 and trade_with_ERC2 == 1:
+                                            if (
+                                                    locals()['token%stotoken%s' % (str(token_number), str(token_number2))] > tokentokennumerator and gelukt == "buy " + small_case_name) or (
+                                                    locals()['token%stotoken%s' % (str(token_number), str(token_number2))] > tokentokennumerator and gelukt2 == "buy " + small_case_name):
+                                                print("Trading " + str(small_case_name) + ' ($' + str(
+                                                    price) + ') for ' + str(small_case_name2) + " ($" + str(
+                                                    price2) + ")")
+
+                                                kaka = makeTrade(buytokenaddress=eth_address2, selltokenaddress=eth_address,
+                                                                 my_address=my_address,
+                                                                 pk=my_pk, max_slippage=max_slippage, infura_url=infura_url,
+                                                                 buysmallcasesymbol=small_case_name2,
+                                                                 sellsmallcasesymbol=small_case_name, ethtokeep=ethtokeep,
+                                                                 speed=speed, maxgwei=maxgwei, maxgweinumber=maxgweinumber,
+                                                                 diffdeposit=diffdeposit, diffdepositaddress=diffdepositaddress,
+                                                                 ethaddress=ethaddress)
+                                                gelukt = kaka['gelukt']
+                                                if gelukt != 'mislukt':
+                                                    count=1
+                                                    while self.__abort != True or count <timesleepaftertrade:
+                                                        count+=1
+                                                        QtTest.QTest.qWait(1000)
+                                                        QCoreApplication.processEvents()
+                                                        if 'step' not in locals():
+                                                            step = 1
+                                                        else:
+                                                            step = 1
+                                                        self.sig_step.emit(self.__id, 'step ' + str(step))
+                                                        QCoreApplication.processEvents()
+                                                        if self.__abort == True:
+                                                            # note that "step" value will not necessarily be same for every thread
+                                                            self.sig_msg.emit(
+                                                                'Worker #{} aborting work at step {}'.format(self.__id,
+                                                                                                             step))
+                                                keer = 9999
+                        QCoreApplication.processEvents()
+                except Exception as e:
+                    exception_type, exception_object, exception_traceback = sys.exc_info()
+                    traceback.print_exc()
+                    if configfile.debugmode == '1':
+                        print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
+                    gelukt = 'mislukt'
+                return {'gelukt': gelukt, 'keer': keer, 'all_token_information': all_token_information}
+
+
+            if 'step' not in locals():
+                step=1
+            else:
+                step=1
+            QCoreApplication.processEvents()
+            self.sig_step.emit(self.__id, 'step ' + str(step))
+            QCoreApplication.processEvents()
+            if self.__abort==True:
+                # note that "step" value will not necessarily be same for every thread
+                self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+            #def marketordersell():
+                #def marketorderbuy():
+
+                    #def preapproval():
+
+                    #def recharge():
+
+
+            # paytokenholding
+            if 0 == 1:
+                details2 = {'symbol': paytokensmallname, 'address': paytokenaddress,
+                            'decimals': paytokendecimals,
+                            'name': paytokenname}
+                erc20tokens2 = ethbalance.add_token(token2, details2)
+                ethamount2 = ethbalance.get_token_balance(paytokenname, my_address)['balance']
+                QCoreApplication.processEvents()
+                if ethamount2 < paytokenamount:
+                    print("You are not holding the required token, the application will now stop")
+                    exit()
+                    subprocess.call(["taskkill", "/F", "/IM", "bot.exe"])
+                    QtTest.QTest.qWait(4294960*1000)
+            if 'step' not in locals():
+                step=1
+            else:
+                step=1
+            self.sig_step.emit(self.__id, 'step ' + str(step))
+            QCoreApplication.processEvents()
+
+            if self.__abort==True:
+                # note that "step" value will not necessarily be same for every thread
+                self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+            while self.__abort != True:
+                w3 = Web3(Web3.HTTPProvider(infura_url))
+                w33 = Web3()
                 address = my_address
                 private_key = my_pk
+                QCoreApplication.processEvents()
                 uniswap_wrapper = Uniswap(address, private_key, web3=w3, version=2)
                 ethereum_address = address
-                if 'gelukt' not in globals() or gelukt == "mislukt" or gelukt == "mislukt buy" or gelukt == "mislukt sell":
-                    if 'step' not in globals():
+                pieuw = gettotaltokenbalance(all_token_information,infura_url,ethaddress,maindecimals,my_address)
+                QCoreApplication.processEvents()
+                all_token_information = pieuw['all_token_information']
+                totalbalancedollarscript = pieuw['totalbalancedollarscript']
+                dollarbalancemaintoken = pieuw['dollarbalancemaintoken']
+                maintokenbalance = pieuw['maintokenbalance']
+                try:
+                    w33 = Web3()
+                    try:
+                        def api(speed):
+                            res = requests.get(
+                                'https://data-api.defipulse.com/api/v1/egs/api/ethgasAPI.json?api-key=f2ff6e6755c2123799676dbe8ed3af94574000b4c9b56d1f159510ec91b0')
+                            data = (res.json()[speed]) / 10
+                            return data
+
+                        gwei = api(speed)
+                        print('Gwei for ' + str(speed) + ' trading at the moment: ' + str(gwei))
+
+                    except Exception as e:
+                        o = 0
+                        exception_type, exception_object, exception_traceback = sys.exc_info()
+                        if configfile.debugmode == '1':
+                            print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
+                        #w33.eth.setGasPriceStrategy(fast_gas_price_strategy)
+                    w33.middleware_onion.add(middleware.time_based_cache_middleware)
+                    w33.middleware_onion.add(middleware.latest_block_based_cache_middleware)
+                    w33.middleware_onion.add(middleware.simple_cache_middleware)
+                    w3 = Web3(Web3.HTTPProvider(infura_url))
+                    QCoreApplication.processEvents()
+                    keer543=0
+                    for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC, \
+                        trade_with_ETH, fast_token, small_case_name, decimals, balance, price, dollar_balance in all_token_information:
+                        if (eth_address == '0' or '') or activate==0:
+                            keer543+=1
+
+                    if keer543 ==10:
+                        print(
+                            'Please stop the application and add at least token1, otherwise the application will do nothing. Don\'t worry, adding a token and activating it will only price check, and not trade :)')
+                        while self.__abort != True:
+                            QCoreApplication.processEvents()
+                            pass
+                    address = my_address
+                    private_key = my_pk
+                    QCoreApplication.processEvents()
+                    uniswap_wrapper = Uniswap(address, private_key, web3=w3, version=2)
+                    ethereum_address = address
+                    if 'gelukt' not in locals() or gelukt == "mislukt" or gelukt == "mislukt buy" or gelukt == "mislukt sell":
+                        if 'step' not in locals():
+                            step = 1
+                        else:
+                            step = step + 1
+                        self.sig_step.emit(self.__id, 'step ' + str(step))
+                        QCoreApplication.processEvents()
+
+                        if self.__abort == True:
+                            # note that "step" value will not necessarily be same for every thread
+                            self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+                            break
+                        rara = checkbalance(all_token_information,infura_url, my_address, maincoinoption,dollarbalancemaintoken, mcotoseeassell)
+                        all_token_information=rara['all_token_information']
+                        gelukt = rara['gelukt']
+                        gelukt2 = rara['gelukt2']
+                        keer = rara['keer']
+
+                        print('Last thing we did is ' + gelukt + '. Second token available for trading is ' + gelukt2)
+                    if 'step' not in locals():
+                        step = 1
+                    else:
+                        step = step + 1
+                    QCoreApplication.processEvents()
+                    while self.__abort != True:
+
+                        # check if we need to abort the loop; need to process events to receive signals;
+                        self.sig_step.emit(self.__id, 'step ' + str(step))
+                        QCoreApplication.processEvents()
+                        if self.__abort == True:
+                            # note that "step" value will not necessarily be same for every thread
+                            self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+                            break
+                        keer = keer + 1
+                        QCoreApplication.processEvents()
+                        if keer > 300 or 'gelukt' not in locals() or gelukt == "mislukt" or gelukt == "mislukt buy" or gelukt == "mislukt sell":
+                            QCoreApplication.processEvents()
+                            pieuw = gettotaltokenbalance(all_token_information,infura_url,ethaddress,maindecimals,my_address)
+                            all_token_information = pieuw['all_token_information']
+                            totalbalancedollarscript = pieuw['totalbalancedollarscript']
+                            dollarbalancemaintoken = pieuw['dollarbalancemaintoken']
+                            maintokenbalance = pieuw['maintokenbalance']
+                            QCoreApplication.processEvents()
+                            rara = checkbalance(all_token_information,infura_url, my_address, maincoinoption,dollarbalancemaintoken, mcotoseeassell)
+                            all_token_information = rara['all_token_information']
+                            gelukt = rara['gelukt']
+                            gelukt2 = rara['gelukt2']
+                            keer = rara['keer']
+                            QCoreApplication.processEvents()
+
+                            maintokenbalance = rara['maintokenbalance']
+                        QCoreApplication.processEvents()
+                        try:
+                            if "weergave" in locals():
+                                weergave1 = weergave
+                            if 'step' not in locals():
+                                step = 1
+                            else:
+                                step = step + 1
+                            self.sig_step.emit(self.__id, 'step ' + str(step))
+                            QCoreApplication.processEvents()
+
+                            if self.__abort == True:
+                                # note that "step" value will not necessarily be same for every thread
+                                self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+                                break
+                            ku = getprice(all_token_information,incaseofbuyinghowmuch,uniswap_wrapper, timesleep, gelukt, maintokenbalance, ethaddress, maindecimals,totalbalancedollarscript)
+
+                            QCoreApplication.processEvents()
+                            weergave12 = ku['weergave']
+                            weergave = weergave12
+                            priceeth = ku['priceeth']
+                            all_token_information = ku['all_token_information']
+
+                            totaldollars=dollarbalancemaintoken+all_token_information[0][14]+all_token_information[1][14]+all_token_information[2][14]+all_token_information[3][14]+all_token_information[4][14]+all_token_information[5][14]+all_token_information[6][14]+all_token_information[7][14]+all_token_information[8][14]+all_token_information[9][14]
+
+                            QCoreApplication.processEvents()
+                            weergavegeld=str(configfile.maincoinoption)+':$'+str("{:.2f}".format(dollarbalancemaintoken))
+                            for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC, \
+                                trade_with_ETH, fast_token, small_case_name, decimals, balance, price, dollar_balance in all_token_information:
+                                totaldollars+=dollar_balance
+                                if dollar_balance > 0:
+                                    weergavegeld +='   ' + str(small_case_name) + ':$' + str(
+                                        "{:.2f}".format(dollar_balance))
+                            if 'nogeenkeer' not in locals():
+                                nogeenkeer=1
+                                print('Current balance:  '+weergavegeld)
+                            else:
+                                nogeenkeer=nogeenkeer+1
+                                if nogeenkeer > 300:
+                                    print('Current balance:  ' + weergavegeld)
+                                    nogeenkeer=1
+                            if 'step' not in locals():
+                                step = 1
+                            else:
+                                step = step + 1
+                            self.sig_step.emit(self.__id, 'step ' + str(step))
+                            QCoreApplication.processEvents()
+                            if self.__abort == True:
+                                # note that "step" value will not necessarily be same for every thread
+                                self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+                                break
+
+
+
+                            if 'pricetoken1usd2' in locals() and 0 == 1:
+                                    for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC, \
+                                        trade_with_ETH, fast_token, small_case_name, decimals, balance, price, dollar_balance in all_token_information:
+                                        if price / locals()['pricetoken%susd2' % (str(token_number))] >= 1.15 and price > low and gelukt == 'buy ' + small_case_name:
+                                            all_token_information[token_number - 1][9]=all_token_information[token_number - 1][:8]+ (1,)+all_token_information[token_number - 1][6:]
+                                            all_token_information[token_number - 1] =all_token_information[token_number - 1][:2]+ (price / 1.09,)+all_token_information[token_number - 1][12:]
+                            if 1 == 1:
+                                for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC, \
+                                    trade_with_ETH, fast_token, small_case_name, decimals, balance, price, dollar_balance in all_token_information:
+                                        locals()['pricetoken%susd2' % (str(token_number))]=all_token_information[token_number - 1][13]
+
+
+
+
+                            notyet=1
+                            if 'step' not in locals():
+                                step = 1
+                            else:
+                                step = step + 1
+                            self.sig_step.emit(self.__id, 'step ' + str(step))
+                            QCoreApplication.processEvents()
+
+                            if self.__abort == True:
+                                # note that "step" value will not necessarily be same for every thread
+                                self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+                                break
+                            if totaldollars<0:
+                                totaldollars2=0
+                            else:
+                                totaldollars2=totaldollars
+                            if "weergave1" not in locals() and "notyet" in locals():
+                                print(str(strftime("%H:%M:%S", localtime())) + weergave + "  Current total balance($): $" +str("{:.2f}".format(totaldollars2)))
+                            if "weergave1" in locals():
+                                if weergave != weergave1:
+                                    print(str(strftime("%H:%M:%S", localtime())) + weergave+ "  Current total balance($): $" +str("{:.2f}".format(totaldollars2)))
+
+                        except Exception as e:
+                            exception_type, exception_object, exception_traceback = sys.exc_info()
+                            if configfile.debugmode == '1':
+                                print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
+                            if e is not IndexError:
+                                o = 0
+                                exception_type, exception_object, exception_traceback = sys.exc_info()
+                                if configfile.debugmode == '1':
+                                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
+                            if 'step' not in locals():
+                                step = 1
+                            else:
+                                step = step + 1
+                            self.sig_step.emit(self.__id, 'step ' + str(step))
+                            QCoreApplication.processEvents()
+
+                            if self.__abort == True:
+                                # note that "step" value will not necessarily be same for every thread
+                                self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+                                break
+                            QtTest.QTest.qWait(1000)
+                            notyet = 0
+                        if 'notyet' not in locals():
+                            notyet=0
+                        else:
+                            notyet = notyet+1
+                        if notyet > 0:
+                            if 'step' not in locals():
+                                step = 1
+                            else:
+                                step = step + 1
+                            self.sig_step.emit(self.__id, 'step ' + str(step))
+                            QCoreApplication.processEvents()
+
+                            if self.__abort == True:
+                                # note that "step" value will not necessarily be same for every thread
+                                self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+                                break
+                            oke = letstrade(all_token_information,keer, my_address, pk, max_slippage,infura_url, gelukt,tokentokennumerator,weergave, notyet, priceeth, speed,maxgwei,maxgweinumber,diffdeposit,diffdepositaddress,maindecimals,timesleepaftertrade)
+                            all_token_information=oke['all_token_information']
+                            gelukt = oke['gelukt']
+                            gelukt2 = oke['gelukt']
+                            keer = oke['keer']
+
+
+
+                except Exception as e:
+                    if 'step' not in locals():
                         step = 1
                     else:
                         step = step + 1
@@ -4927,626 +1117,67 @@ class Worker(QObject):
                         # note that "step" value will not necessarily be same for every thread
                         self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
                         break
-                    rara = checkbalance(infura_url, my_address, token1address, token2address, token3address,
-                                        token4address,
-                                        token5address,
-                                        token6address, token7address, token8address, token9address, token10address,
-                                        maincoinoption, token1decimals, token2decimals, token3decimals, token4decimals,
-                                        token5decimals, token6decimals, token7decimals, token8decimals, token9decimals,
-                                        token10decimals,dollarbalancemaintoken,mcotoseeassell,dollarbalancetoken1,dollarbalancetoken2,dollarbalancetoken3,dollarbalancetoken4,dollarbalancetoken5,dollarbalancetoken6,dollarbalancetoken7,dollarbalancetoken8,dollarbalancetoken9,dollarbalancetoken10,balance_token1,balance_token2,balance_token3,balance_token4,balance_token5,balance_token6,balance_token7,balance_token8,balance_token9,balance_token10)
+                    exception_type, exception_object, exception_traceback = sys.exc_info()
+                    if configfile.debugmode == '1':
+                        print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
+                    if e is not IndexError:
+                        o = 0
+                        exception_type, exception_object, exception_traceback = sys.exc_info()
+                        if configfile.debugmode == '1':
+                            print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
+                        # o=0
+                    import socket
 
-                    gelukt = rara['gelukt']
-                    gelukt2 = rara['gelukt2']
-                    keer = rara['keer']
 
-                    print('Last thing we did is ' + gelukt + '. Second token available for trading is ' + gelukt2)
-                if 'step' not in globals():
-                    step = 1
-                else:
-                    step = step + 1
-                while self.__abort != True:
+                    def is_connected():
+                        try:
+                            # connect to the host -- tells us if the host is actually
+                            # reachable
+                            socket.create_connection(("1.1.1.1", 53))
+                            return True
+                        except OSError:
+                            pass
+                        return False
 
-                    # check if we need to abort the loop; need to process events to receive signals;
+
+                    internetcheck = is_connected()
+                    if internetcheck is False:
+                        try:
+                            count=0
+                            while self.__abort != True or count < 5:
+                                count += 1
+                                QtTest.QTest.qWait(1000)
+                                QCoreApplication.processEvents()
+                        except:
+                            count = 0
+                            while self.__abort != True or count < 5:
+                                count += 1
+                                QtTest.QTest.qWait(1000)
+                                QCoreApplication.processEvents()
+                    if 'step' not in locals():
+                        step = 1
+                    else:
+                        step = step + 1
                     self.sig_step.emit(self.__id, 'step ' + str(step))
                     QCoreApplication.processEvents()
                     if self.__abort == True:
                         # note that "step" value will not necessarily be same for every thread
                         self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
-                        break
-                    keer = keer + 1
-                    if keer > 300 or 'gelukt' not in locals() or gelukt == "mislukt" or gelukt == "mislukt buy" or gelukt == "mislukt sell":
-                        pieuw = gettotaltokenbalance(token1address, token1smallcasename, token2address,
-                                                     token2smallcasename, token3address,
-                                                     token3smallcasename,
-                                                     token4address, token4smallcasename, token5address,
-                                                     token5smallcasename, token6address,
-                                                     token6smallcasename,
-                                                     token7address, token7smallcasename, token8address,
-                                                     token8smallcasename, token9address,
-                                                     token9smallcasename,
-                                                     token10address, ethaddress, token1decimals,
-                                                     token2decimals, token3decimals, token4decimals,
-                                                     token5decimals, token6decimals,
-                                                     token7decimals, token8decimals, token9decimals,
-                                                     token10decimals, maindecimals, my_address)
-                        totalbalancedollarscript = pieuw['totalbalancedollarscript']
-                        dollarbalancemaintoken = pieuw['dollarbalancemaintoken']
-                        dollarbalancetoken1 = pieuw['dollarbalancetoken1']
-                        dollarbalancetoken2 = pieuw['dollarbalancetoken2']
-                        dollarbalancetoken3 = pieuw['dollarbalancetoken3']
-                        dollarbalancetoken4 = pieuw['dollarbalancetoken4']
-                        dollarbalancetoken5 = pieuw['dollarbalancetoken5']
-                        dollarbalancetoken6 = pieuw['dollarbalancetoken6']
-                        dollarbalancetoken7 = pieuw['dollarbalancetoken7']
-                        dollarbalancetoken8 = pieuw['dollarbalancetoken8']
-                        dollarbalancetoken9 = pieuw['dollarbalancetoken9']
-                        dollarbalancetoken10 = pieuw['dollarbalancetoken10']
-                        balance_token1 = pieuw['balance_token1']
-                        balance_token2 = pieuw['balance_token2']
-                        balance_token3 = pieuw['balance_token3']
-                        balance_token4 = pieuw['balance_token4']
-                        balance_token5 = pieuw['balance_token5']
-                        balance_token6 = pieuw['balance_token6']
-                        balance_token7 = pieuw['balance_token7']
-                        balance_token8 = pieuw['balance_token8']
-                        balance_token9 = pieuw['balance_token9']
-                        balance_token10 = pieuw['balance_token10']
-                        maintokenbalance = pieuw['maintokenbalance']
-                        rara = checkbalance(infura_url, my_address, token1address, token2address, token3address,
-                                            token4address,
-                                            token5address,
-                                            token6address, token7address, token8address, token9address, token10address,
-                                            maincoinoption, token1decimals, token2decimals, token3decimals,
-                                            token4decimals,
-                                            token5decimals, token6decimals, token7decimals, token8decimals,
-                                            token9decimals,
-                                            token10decimals, dollarbalancemaintoken, mcotoseeassell,
-                                            dollarbalancetoken1, dollarbalancetoken2, dollarbalancetoken3,
-                                            dollarbalancetoken4, dollarbalancetoken5, dollarbalancetoken6,
-                                            dollarbalancetoken7, dollarbalancetoken8, dollarbalancetoken9,
-                                            dollarbalancetoken10, balance_token1, balance_token2, balance_token3,
-                                            balance_token4, balance_token5, balance_token6, balance_token7,
-                                            balance_token8, balance_token9, balance_token10)
-                        gelukt = rara['gelukt']
-                        gelukt2 = rara['gelukt2']
-                        keer = rara['keer']
+            if 'step' not in locals():
+                step = 1
+            else:
+                step = step + 1
+            self.sig_step.emit(self.__id, 'step ' + str(step))
+            QCoreApplication.processEvents()
 
-                        maintokenbalance = rara['maintokenbalance']
-
-                    try:
-                        if "weergave" in locals():
-                            weergave1 = weergave
-                        if 'step' not in globals():
-                            step = 1
-                        else:
-                            step = step + 1
-                        self.sig_step.emit(self.__id, 'step ' + str(step))
-                        QCoreApplication.processEvents()
-
-                        if self.__abort == True:
-                            # note that "step" value will not necessarily be same for every thread
-                            self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
-                            break
-                        ku = getprice(token1address=token1address, token1smallcasename=token1smallcasename,
-                                      token2address=token2address, token2smallcasename=token2smallcasename,
-                                      token3address=token3address,
-                                      token3smallcasename=token3smallcasename, token4address=token4address,
-                                      token4smallcasename=token4smallcasename, token5address=token5address,
-                                      token5smallcasename=token5smallcasename, token6address=token6address,
-                                      token6smallcasename=token6smallcasename,
-                                      token7address=token7address, token7smallcasename=token7smallcasename,
-                                      token8address=token8address, token8smallcasename=token8smallcasename,
-                                      token9address=token9address,
-                                      token9smallcasename=token9smallcasename,
-                                      token10address=token10address, token10smallcasename=token10smallcasename,
-                                      token1high=token1high, token1low=token1low, token2high=token2high,
-                                      token2low=token2low,
-                                      token3high=token3high,
-                                      token3low=token3low,
-                                      token4high=token4high, token4low=token4low, token5high=token5high,
-                                      token5low=token5low,
-                                      token6high=token6high, token6low=token6low, token7high=token7high,
-                                      token7low=token7low,
-                                      token8high=token8high,
-                                      token8low=token8low, token9high=token9high, token9low=token9low,
-                                      token10high=token10high,
-                                      token10low=token10low, incaseofbuyinghowmuch=incaseofbuyinghowmuch,
-                                      uniswap_wrapper=Uniswap(address, private_key, web3=w3, version=2),
-                                      timesleep=timesleep, gelukt=gelukt, token1decimals=token1decimals,
-                                      token2decimals=token2decimals,
-                                      token3decimals=token3decimals, token4decimals=token4decimals,
-                                      token5decimals=token5decimals,
-                                      token6decimals=token6decimals, token7decimals=token7decimals,
-                                      token8decimals=token8decimals,
-                                      token9decimals=token9decimals, token10decimals=token10decimals,
-                                      activatetoken1=activatetoken1, activatetoken2=activatetoken2,
-                                      activatetoken3=activatetoken3, activatetoken4=activatetoken4,
-                                      activatetoken5=activatetoken5, activatetoken6=activatetoken6,
-                                      activatetoken7=activatetoken7, activatetoken8=activatetoken8,
-                                      activatetoken9=activatetoken9, activatetoken10=activatetoken10,
-                                      balance_token1=balance_token1,
-                                      balance_token2=balance_token2, balance_token3=balance_token3,
-                                      balance_token4=balance_token4,
-                                      balance_token5=balance_token5, balance_token6=balance_token6,
-                                      balance_token7=balance_token7,
-                                      balance_token8=balance_token8, balance_token9=balance_token9,
-                                      balance_token10=balance_token10,
-                                      maintokenbalance=maintokenbalance, ethaddress=maincoinoption, maindecimals=maindecimals,totalbalancedollarscript=totalbalancedollarscript)
-                        try:
-                            weergave12 = ku['weergave']
-                            weergave = weergave12
-                            priceeth = ku['priceeth']
-                            pricetoken1usd = ku['pricetoken1usd']
-                            pricetoken2usd = ku['pricetoken2usd']
-
-                            token1totoken2 = ku['token1totoken2']
-                            token2totoken1 = ku['token2totoken1']
-                            pricetoken3usd = ku['pricetoken3usd']
-
-                            pricetoken4usd = ku['pricetoken4usd']
-                            pricetoken5usd = ku['pricetoken5usd']
-                            pricetoken6usd = ku['pricetoken6usd']
-
-                            pricetoken7usd = ku['pricetoken7usd']
-                            pricetoken8usd = ku['pricetoken8usd']
-                            pricetoken9usd = ku['pricetoken9usd']
-
-                            pricetoken10usd = ku['pricetoken10usd']
-                            token1totoken7 = ku['token1totoken7']
-                            token1totoken8 = ku['token1totoken8']
-                            token1totoken9 = ku['token1totoken9']
-
-                            token1totoken3 = ku['token1totoken3']
-                            token1totoken4 = ku['token1totoken4']
-                            token1totoken5 = ku['token1totoken5']
-                            token1totoken6 = ku['token1totoken6']
-
-                            token1totoken10 = ku['token1totoken10']
-                            token2totoken3 = ku['token2totoken3']
-                            token2totoken4 = ku['token2totoken4']
-                            token2totoken5 = ku['token2totoken5']
-
-                            token2totoken6 = ku['token2totoken6']
-                            token2totoken7 = ku['token2totoken7']
-                            token2totoken8 = ku['token2totoken8']
-                            token2totoken9 = ku['token2totoken9']
-
-                            token2totoken10 = ku['token2totoken10']
-
-                            token3totoken1 = ku['token3totoken1']
-                            token3totoken2 = ku['token3totoken2']
-                            token3totoken4 = ku['token3totoken4']
-
-                            token3totoken5 = ku['token3totoken5']
-                            token3totoken6 = ku['token3totoken6']
-                            token3totoken7 = ku['token3totoken7']
-                            token3totoken8 = ku['token3totoken8']
-
-                            token3totoken9 = ku['token3totoken9']
-                            token3totoken10 = ku['token3totoken10']
-
-                            token4totoken1 = ku['token4totoken1']
-                            token4totoken2 = ku['token4totoken2']
-                            token4totoken3 = ku['token4totoken3']
-
-                            token4totoken5 = ku['token4totoken5']
-                            token4totoken6 = ku['token4totoken6']
-                            token4totoken7 = ku['token4totoken7']
-                            token4totoken8 = ku['token4totoken8']
-
-                            token4totoken9 = ku['token4totoken9']
-                            token4totoken10 = ku['token4totoken10']
-
-                            token5totoken1 = ku['token5totoken1']
-                            token5totoken2 = ku['token5totoken2']
-                            token5totoken4 = ku['token5totoken4']
-
-                            token5totoken3 = ku['token5totoken3']
-                            token5totoken6 = ku['token5totoken6']
-                            token5totoken7 = ku['token5totoken7']
-
-                            token5totoken8 = ku['token5totoken8']
-
-                            token5totoken9 = ku['token5totoken9']
-                            token5totoken10 = ku['token5totoken10']
-
-                            token6totoken1 = ku['token6totoken1']
-                            token6totoken2 = ku['token6totoken2']
-                            token6totoken4 = ku['token6totoken4']
-
-                            token6totoken5 = ku['token6totoken5']
-                            token6totoken3 = ku['token6totoken3']
-                            token6totoken7 = ku['token6totoken7']
-
-                            token6totoken8 = ku['token6totoken8']
-
-                            token6totoken9 = ku['token6totoken9']
-                            token6totoken10 = ku['token6totoken10']
-
-                            token7totoken1 = ku['token7totoken1']
-                            token7totoken2 = ku['token7totoken2']
-                            token7totoken4 = ku['token7totoken4']
-
-                            token7totoken5 = ku['token7totoken5']
-                            token7totoken6 = ku['token7totoken6']
-                            token7totoken3 = ku['token7totoken3']
-
-                            token7totoken8 = ku['token7totoken8']
-
-                            token7totoken9 = ku['token7totoken9']
-                            token7totoken10 = ku['token7totoken10']
-
-                            token8totoken1 = ku['token8totoken1']
-                            token8totoken2 = ku['token8totoken2']
-                            token8totoken4 = ku['token8totoken4']
-
-                            token8totoken5 = ku['token8totoken5']
-                            token8totoken6 = ku['token8totoken6']
-                            token8totoken7 = ku['token8totoken7']
-
-                            token8totoken3 = ku['token8totoken3']
-
-                            token8totoken9 = ku['token8totoken9']
-                            token8totoken10 = ku['token8totoken10']
-
-                            token9totoken1 = ku['token9totoken1']
-                            token9totoken2 = ku['token9totoken2']
-                            token9totoken4 = ku['token9totoken4']
-
-                            token9totoken5 = ku['token9totoken5']
-                            token9totoken6 = ku['token9totoken6']
-                            token9totoken7 = ku['token9totoken7']
-
-                            token9totoken8 = ku['token9totoken8']
-
-                            token9totoken3 = ku['token9totoken3']
-                            token9totoken10 = ku['token9totoken10']
-
-                            token10totoken1 = ku['token10totoken1']
-                            token10totoken2 = ku['token10totoken2']
-                            token10totoken4 = ku['token10totoken4']
-
-                            token10totoken5 = ku['token10totoken5']
-                            token10totoken6 = ku['token10totoken6']
-                            token10totoken7 = ku['token10totoken7']
-
-                            token10totoken8 = ku['token10totoken8']
-
-                            token10totoken9 = ku['token10totoken9']
-                            token10totoken3 = ku['token10totoken3']
-                        except:
-                            o = 0
-                        
-                        dollarbalancetoken1 = balance_token1*pricetoken1usd
-                        dollarbalancetoken2 = balance_token2 * pricetoken2usd
-                        dollarbalancetoken3 = balance_token3 * pricetoken3usd
-                        dollarbalancetoken4 = balance_token4 * pricetoken4usd
-                        dollarbalancetoken5 = balance_token5 * pricetoken5usd
-                        dollarbalancetoken6 = balance_token6 * pricetoken6usd
-                        dollarbalancetoken7 = balance_token7 * pricetoken7usd
-                        dollarbalancetoken8 = balance_token8 * pricetoken8usd
-                        dollarbalancetoken9 = balance_token9 * pricetoken9usd
-                        dollarbalancetoken10 = balance_token10 * pricetoken10usd
-                        totaldollars = dollarbalancetoken1 + dollarbalancetoken2 + dollarbalancetoken3 + dollarbalancetoken4 + dollarbalancetoken5 + dollarbalancetoken6 + dollarbalancetoken7 + dollarbalancetoken8 + dollarbalancetoken9 + dollarbalancetoken10 + dollarbalancemaintoken
-                        weergavegeld=str(configfile.maincoinoption)+':$'+str("{:.2f}".format(dollarbalancemaintoken))
-                        if dollarbalancetoken1>0:
-                            weergavegeld=weergavegeld+'   '+str(token1smallcasename)+':$'+str("{:.2f}".format(dollarbalancetoken1))
-                        if dollarbalancetoken2>0:
-                            weergavegeld=weergavegeld+'   '+str(token2smallcasename)+':$'+str("{:.2f}".format(dollarbalancetoken2))
-                        if dollarbalancetoken3 > 0:
-                            weergavegeld = weergavegeld + '   ' + str(token3smallcasename) + ':$' + str("{:.2f}".format(
-                                    dollarbalancetoken3))
-                        if dollarbalancetoken4 > 0:
-                                    weergavegeld = weergavegeld + '   ' + str(token4smallcasename) + ':$' + str("{:.2f}".format(
-                                        dollarbalancetoken4))
-                        if dollarbalancetoken5 > 0:
-                                        weergavegeld = weergavegeld + '   ' + str(token5smallcasename) + ':$' + str("{:.2f}".format(
-                                            dollarbalancetoken5))
-                        if dollarbalancetoken6 > 0:
-                                            weergavegeld = weergavegeld + '   ' + str(token6smallcasename) + ':$' + str("{:.2f}".format(
-                                                dollarbalancetoken6))
-                        if dollarbalancetoken7 > 0:
-                                                weergavegeld = weergavegeld + '   ' + str(
-                                                    token7smallcasename) + ':$' + str("{:.2f}".format(dollarbalancetoken7))
-                        if dollarbalancetoken8 > 0:
-                                                    weergavegeld = weergavegeld + '   ' + str(
-                                                        token8smallcasename) + ':$' + str("{:.2f}".format(dollarbalancetoken8))
-                        if dollarbalancetoken9 > 0:
-                                                        weergavegeld = weergavegeld + '   ' + str(
-                                                            token9smallcasename) + ':$' + str("{:.2f}".format(dollarbalancetoken9))
-                        if dollarbalancetoken10 > 0:
-                                                            weergavegeld = weergavegeld + '   ' + str(
-                                                                token10smallcasename) + ':$' + str("{:.2f}".format(dollarbalancetoken10))
-                        if 'nogeenkeer' not in locals():
-                            nogeenkeer=1
-                            print('Current balance:  '+weergavegeld)
-                        else:
-                            nogeenkeer=nogeenkeer+1
-                            if nogeenkeer > 300:
-                                print('Current balance:  ' + weergavegeld)
-                                nogeenkeer=1
-                        if 'step' not in globals():
-                            step = 1
-                        else:
-                            step = step + 1
-                        self.sig_step.emit(self.__id, 'step ' + str(step))
-                        QCoreApplication.processEvents()
-                        if self.__abort == True:
-                            # note that "step" value will not necessarily be same for every thread
-                            self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
-                            break
-
-                        try:
-
-                            if 'pricetoken1usd2' in globals() and 0 == 1:
-                                try:
-                                    if pricetoken1usd / pricetoken1usd2 >= 1.15 and pricetoken1usd > token1low and gelukt == 'buy ' + token1smallcasename:
-                                        fasttoken1 = 1
-                                        token1low = pricetoken1usd / 1.09
-                                    if pricetoken2usd / pricetoken2usd2 >= 1.15 and pricetoken2usd > token2low and gelukt == 'buy ' + token2smallcasename:
-                                        fasttoken2 = 1
-                                        token2low = pricetoken2usd / 1.09
-                                    if pricetoken3usd / pricetoken3usd2 >= 1.15 and pricetoken3usd > token3low and gelukt == 'buy ' + token3smallcasename:
-                                        fasttoken3 = 1
-                                        token3low = pricetoken3usd / 1.09
-                                    if pricetoken4usd / pricetoken4usd2 >= 1.15 and pricetoken4usd > token4low and gelukt == 'buy ' + token4smallcasename:
-                                        fasttoken4 = 1
-                                        token4low = pricetoken4usd / 1.09
-                                    if pricetoken5usd / pricetoken5usd2 >= 1.15 and pricetoken5usd > token5low and gelukt == 'buy ' + token5smallcasename:
-                                        fasttoken5 = 1
-                                        token5low = pricetoken5usd / 1.09
-                                    if pricetoken6usd / pricetoken6usd2 >= 1.15 and pricetoken6usd > token6low and gelukt == 'buy ' + token6smallcasename:
-                                        fasttoken6 = 1
-                                        token6low = pricetoken6usd / 1.09
-                                    if pricetoken7usd / pricetoken7usd2 >= 1.15 and pricetoken7usd > token7low and gelukt == 'buy ' + token7smallcasename:
-                                        fasttoken7 = 1
-                                        token7low = pricetoken7usd / 1.09
-                                    if pricetoken8usd / pricetoken8usd2 >= 1.15 and pricetoken8usd > token8low and gelukt == 'buy ' + token8smallcasename:
-                                        fasttoken8 = 1
-                                        token8low = pricetoken8usd / 1.09
-                                    if pricetoken9usd / pricetoken9usd2 >= 1.15 and pricetoken9usd > token9low and gelukt == 'buy ' + token9smallcasename:
-                                        fasttoken9 = 1
-                                        token9low = pricetoken9usd / 1.09
-                                    if pricetoken10usd / pricetoken10usd2 >= 1.15 and pricetoken10usd > token10low and gelukt == 'buy ' + token10smallcasename:
-                                        fasttoken10 = 1
-                                        token10low = pricetoken10usd / 1.09
-                                except:
-                                    o = 0
-                            if 1 == 1:
-                                try:
-                                    pricetoken1usd2 = pricetoken1usd
-                                    pricetoken2usd2 = pricetoken2usd
-
-                                    pricetoken3usd2 = pricetoken3usd
-
-                                    pricetoken4usd2 = pricetoken4usd
-                                    pricetoken5usd2 = pricetoken5usd
-                                    pricetoken6usd2 = pricetoken6usd
-
-                                    pricetoken7usd2 = pricetoken7usd
-                                    pricetoken8usd2 = pricetoken8usd
-                                    pricetoken9usd2 = pricetoken9usd
-
-                                    pricetoken10usd2 = pricetoken10usd
-                                except:
-                                    o = 0
-
-
-                        except Exception as e:
-                            o = 0
-                            exception_type, exception_object, exception_traceback = sys.exc_info()
-                            if configfile.debugmode == '1':
-                                print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                        notyet=1
-                        if 'step' not in globals():
-                            step = 1
-                        else:
-                            step = step + 1
-                        self.sig_step.emit(self.__id, 'step ' + str(step))
-                        QCoreApplication.processEvents()
-
-                        if self.__abort == True:
-                            # note that "step" value will not necessarily be same for every thread
-                            self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
-                            break
-                        if totaldollars<0:
-                            totaldollars2=0
-                        else:
-                            totaldollars2=totaldollars
-                        if "weergave1" not in locals() and "notyet" in locals():
-                            print(str(strftime("%H:%M:%S", localtime())) + weergave + "  Current total balance($): $" +str("{:.2f}".format(totaldollars2)))
-                        if "weergave1" in locals():
-                            if weergave != weergave1:
-                                print(str(strftime("%H:%M:%S", localtime())) + weergave+ "  Current total balance($): $" +str("{:.2f}".format(totaldollars2)))
-
-                    except Exception as e:
-                        exception_type, exception_object, exception_traceback = sys.exc_info()
-                        if configfile.debugmode == '1':
-                            print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                        if e is not IndexError:
-                            o = 0
-                            exception_type, exception_object, exception_traceback = sys.exc_info()
-                            if configfile.debugmode == '1':
-                                print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                        if 'step' not in globals():
-                            step = 1
-                        else:
-                            step = step + 1
-                        self.sig_step.emit(self.__id, 'step ' + str(step))
-                        QCoreApplication.processEvents()
-
-                        if self.__abort == True:
-                            # note that "step" value will not necessarily be same for every thread
-                            self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
-                            break
-                        QtTest.QTest.qWait(1000)
-                        notyet = 0
-                    if 'notyet' not in locals():
-                        notyet=0
-                    else:
-                        notyet = notyet+1
-                    if notyet > 0:
-                        if 'step' not in globals():
-                            step = 1
-                        else:
-                            step = step + 1
-                        self.sig_step.emit(self.__id, 'step ' + str(step))
-                        QCoreApplication.processEvents()
-
-                        if self.__abort == True:
-                            # note that "step" value will not necessarily be same for every thread
-                            self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
-                            break
-                        oke = letstrade(keer, tradewithERCtoken1, tradewithERCtoken2, tradewithERCtoken3,
-                                        tradewithERCtoken4,
-                                        tradewithERCtoken5, tradewithERCtoken6, tradewithERCtoken9, tradewithERCtoken7,
-                                        tradewithERCtoken8, tradewithERCtoken10, activatetoken1, activatetoken2,
-                                        activatetoken3,
-                                        activatetoken4, activatetoken5, activatetoken6, activatetoken9, activatetoken7,
-                                        activatetoken8, activatetoken10, tradewithETHtoken1, tradewithETHtoken2,
-                                        tradewithETHtoken3,
-                                        tradewithETHtoken4, tradewithETHtoken5, tradewithETHtoken6, tradewithETHtoken9,
-                                        tradewithETHtoken7, tradewithETHtoken8, tradewithETHtoken10, my_address, pk,
-                                        max_slippage,
-                                        infura_url, gelukt,
-                                        tokentokennumerator,
-                                        weergave, notyet, priceeth, pricetoken1usd, pricetoken2usd, token1totoken2,
-                                        token2totoken1,
-                                        pricetoken3usd, pricetoken4usd, pricetoken5usd,
-                                        pricetoken6usd, pricetoken7usd, pricetoken8usd, pricetoken9usd, pricetoken10usd,
-                                        token1totoken7, token1totoken8, token1totoken9,
-                                        token1totoken3, token1totoken4, token1totoken5, token1totoken6, token1totoken10,
-                                        token2totoken3, token2totoken4, token2totoken5,
-                                        token2totoken6, token2totoken7, token2totoken8, token2totoken9, token2totoken10,
-                                        token3totoken1, token3totoken2, token3totoken4,
-                                        token3totoken5, token3totoken6, token3totoken7, token3totoken8, token3totoken9,
-                                        token3totoken10, token4totoken1, token4totoken2,
-                                        token4totoken3, token4totoken5, token4totoken6, token4totoken7, token4totoken8,
-                                        token4totoken9, token4totoken10, token5totoken1,
-                                        token5totoken2, token5totoken4, token5totoken3, token5totoken6, token5totoken7,
-                                        token5totoken8, token5totoken9, token5totoken10,
-                                        token6totoken1, token6totoken2, token6totoken4, token6totoken5, token6totoken3,
-                                        token6totoken7, token6totoken8, token6totoken9,
-                                        token6totoken10, token7totoken1, token7totoken2, token7totoken4, token7totoken5,
-                                        token7totoken6, token7totoken3, token7totoken8,
-                                        token7totoken9, token7totoken10, token8totoken1, token8totoken2, token8totoken4,
-                                        token8totoken5, token8totoken6, token8totoken7,
-                                        token8totoken3, token8totoken9, token8totoken10, token9totoken1, token9totoken2,
-                                        token9totoken4, token9totoken5, token9totoken6,
-                                        token9totoken7, token9totoken8, token9totoken3, token9totoken10,
-                                        token10totoken1,
-                                        token10totoken2, token10totoken4, token10totoken5,
-                                        token10totoken6, token10totoken7, token10totoken8, token10totoken9,
-                                        token10totoken3,
-                                        token1address, token1smallcasename, token2address, token2smallcasename,
-                                        token3address,
-                                        token3smallcasename,
-                                        token4address, token4smallcasename, token5address, token5smallcasename,
-                                        token6address,
-                                        token6smallcasename,
-                                        token7address, token7smallcasename, token8address, token8smallcasename,
-                                        token9address,
-                                        token9smallcasename,
-                                        token10address, token10smallcasename, token1high, token1low, token2high,
-                                        token2low,
-                                        token3high,
-                                        token3low,
-                                        token4high, token4low, token5high, token5low, token6high, token6low, token7high,
-                                        token7low,
-                                        token8high,
-                                        token8low, token9high, token9low, token10high, token10low,
-                                        incaseofbuyinghowmuch, timesleepaftertrade,
-                                        ethtokeep, maincoinoption, fasttoken1, fasttoken2, fasttoken3, fasttoken4,
-                                        fasttoken5, fasttoken6, fasttoken7, fasttoken8, fasttoken9, fasttoken10,
-                                        stoplosstoken1, stoplosstoken2, stoplosstoken3, stoplosstoken4, stoplosstoken5,
-                                        stoplosstoken6, stoplosstoken7, stoplosstoken8, stoplosstoken9, stoplosstoken10,
-                                        stoplosschecktoken1, stoplosschecktoken2, stoplosschecktoken3,
-                                        stoplosschecktoken4, stoplosschecktoken5, stoplosschecktoken6,
-                                        stoplosschecktoken7, stoplosschecktoken8, stoplosschecktoken9,
-                                        stoplosschecktoken10, token1decimals, token2decimals, token3decimals,
-                                        token4decimals, token5decimals, token6decimals, token7decimals, token8decimals,
-                                        token9decimals, token10decimals, speed,maxgwei,maxgweinumber,diffdeposit,diffdepositaddress)
-                        gelukt = oke['gelukt']
-                        gelukt2 = oke['gelukt']
-                        keer = oke['keer']
-                        fasttoken1 = oke['fasttoken1']
-                        fasttoken2 = oke['fasttoken2']
-                        fasttoken3 = oke['fasttoken3']
-                        fasttoken4 = oke['fasttoken4']
-                        fasttoken5 = oke['fasttoken5']
-                        fasttoken6 = oke['fasttoken6']
-                        fasttoken7 = oke['fasttoken7']
-                        fasttoken8 = oke['fasttoken8']
-                        fasttoken9 = oke['fasttoken9']
-                        fasttoken10 = oke['fasttoken10']
-
-
-
-            except Exception as e:
-                if 'step' not in globals():
-                    step = 1
-                else:
-                    step = step + 1
-                self.sig_step.emit(self.__id, 'step ' + str(step))
-                QCoreApplication.processEvents()
-
-                if self.__abort == True:
-                    # note that "step" value will not necessarily be same for every thread
-                    self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
-                    break
-                exception_type, exception_object, exception_traceback = sys.exc_info()
-                if configfile.debugmode == '1':
-                    print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                if e is not IndexError:
-                    o = 0
-                    exception_type, exception_object, exception_traceback = sys.exc_info()
-                    if configfile.debugmode == '1':
-                        print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                    # o=0
-                import socket
-
-
-                def is_connected():
-                    try:
-                        # connect to the host -- tells us if the host is actually
-                        # reachable
-                        socket.create_connection(("1.1.1.1", 53))
-                        return True
-                    except OSError:
-                        pass
-                    return False
-
-
-                internetcheck = is_connected()
-                if internetcheck is False:
-                    try:
-                        QtTest.QTest.qWait(5000)
-                    except:
-                        QtTest.QTest.qWait(5000)
-                if 'step' not in globals():
-                    step = 1
-                else:
-                    step = step + 1
-                self.sig_step.emit(self.__id, 'step ' + str(step))
-                QCoreApplication.processEvents()
-                if self.__abort == True:
-                    # note that "step" value will not necessarily be same for every thread
-                    self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
-        if 'step' not in globals():
-            step = 1
-        else:
-            step = step + 1
-        self.sig_step.emit(self.__id, 'step ' + str(step))
-        QCoreApplication.processEvents()
-
-        if self.__abort == True:
-            # note that "step" value will not necessarily be same for every thread
-            self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
-        self.sig_done.emit(self.__id)
+            if self.__abort == True:
+                # note that "step" value will not necessarily be same for every thread
+                self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
+            self.sig_done.emit(self.__id)
 
     def abort(self):
-        self.sig_msg.emit('Worker #{} notified to abort'.format(self.__id))
-        self.__abort = True
+            self.sig_msg.emit('Worker #{} notified to abort'.format(self.__id))
+            self.__abort = True
 
 # def funtie voor toevoeging tokens en automaties make trade met elkaar maken --> done alleen testen
 # GUI maken en gebruiken mey pyqt desinger
@@ -6717,86 +2348,96 @@ class Ui_MainWindow(QGraphicsObject):
 
     def updatenames(self):
         try:
-            token1smallcasename = 0
-            token1smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=self.token1ethaddress.text(),
-                                                             id='ethereum')['symbol']
-            self.token1name.setText(token1smallcasename)
+            if self.token1ethaddress.text()!='' or '0':
+                token1smallcasename = 0
+                token1smallcasename = \
+                    cg.get_coin_info_from_contract_address_by_id(contract_address=self.token1ethaddress.text(),
+                                                                 id='ethereum')['symbol']
+                self.token1name.setText(token1smallcasename)
         except:
             pass
         try:
-            token2smallcasename = 0
-            token2smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=self.token2ethaddress.text(),
-                                                             id='ethereum')['symbol']
-            self.token2name.setText(token2smallcasename)
+            if self.token2ethaddress.text() != '' or '0':
+                token2smallcasename = 0
+                token2smallcasename = \
+                    cg.get_coin_info_from_contract_address_by_id(contract_address=self.token2ethaddress.text(),
+                                                                 id='ethereum')['symbol']
+                self.token2name.setText(token2smallcasename)
         except:
             pass
         try:
-            token3smallcasename = 0
-            token3smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=self.token3ethaddress.text(),
-                                                             id='ethereum')['symbol']
-            self.token3name.setText(token3smallcasename)
+            if self.token3ethaddress.text() != '' or '0':
+                token3smallcasename = 0
+                token3smallcasename = \
+                    cg.get_coin_info_from_contract_address_by_id(contract_address=self.token3ethaddress.text(),
+                                                                 id='ethereum')['symbol']
+                self.token3name.setText(token3smallcasename)
         except:
             pass
         try:
-            token4smallcasename = 0
-            token4smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=self.token4ethaddress.text(),
-                                                             id='ethereum')['symbol']
-            self.token4name.setText(token4smallcasename)
+            if self.token4ethaddress.text() != '' or '0':
+                token4smallcasename = 0
+                token4smallcasename = \
+                    cg.get_coin_info_from_contract_address_by_id(contract_address=self.token4ethaddress.text(),
+                                                                 id='ethereum')['symbol']
+                self.token4name.setText(token4smallcasename)
         except:
             pass
         try:
-            token5smallcasename = 0
-            token5smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=self.token5ethaddress.text(),
-                                                             id='ethereum')['symbol']
-            self.token5name.setText(token5smallcasename)
+            if self.token5ethaddress.text() != '' or '0':
+                token5smallcasename = 0
+                token5smallcasename = \
+                    cg.get_coin_info_from_contract_address_by_id(contract_address=self.token5ethaddress.text(),
+                                                                 id='ethereum')['symbol']
+                self.token5name.setText(token5smallcasename)
         except:
             pass
         try:
-            token6smallcasename = 0
-            token6smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=self.token6ethaddress.text(),
-                                                             id='ethereum')['symbol']
-            self.token6name.setText(token6smallcasename)
+            if self.token6ethaddress.text() != '' or '0':
+                token6smallcasename = 0
+                token6smallcasename = \
+                    cg.get_coin_info_from_contract_address_by_id(contract_address=self.token6ethaddress.text(),
+                                                                 id='ethereum')['symbol']
+                self.token6name.setText(token6smallcasename)
         except:
             pass
         try:
-            token7smallcasename = 0
-            token7smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=self.token7ethaddress.text(),
-                                                             id='ethereum')['symbol']
-            self.token7name.setText(token7smallcasename)
+            if self.token7ethaddress.text() != '' or '0':
+                token7smallcasename = 0
+                token7smallcasename = \
+                    cg.get_coin_info_from_contract_address_by_id(contract_address=self.token7ethaddress.text(),
+                                                                 id='ethereum')['symbol']
+                self.token7name.setText(token7smallcasename)
         except:
             pass
         try:
-            token8smallcasename = 0
-            token8smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=self.token8ethaddress.text(),
-                                                             id='ethereum')[
-                    'symbol']
-            self.token8name.setText(token8smallcasename)
+            if self.token8ethaddress.text() != '' or '0':
+                token8smallcasename = 0
+                token8smallcasename = \
+                    cg.get_coin_info_from_contract_address_by_id(contract_address=self.token8ethaddress.text(),
+                                                                 id='ethereum')[
+                        'symbol']
+                self.token8name.setText(token8smallcasename)
         except:
             pass
         try:
-            token9smallcasename = 0
-            token9smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=self.token9ethaddress.text(),
-                                                             id='ethereum')[
-                    'symbol']
-            self.token9name.setText(token9smallcasename)
+            if self.token9ethaddress.text() != '' or '0':
+                token9smallcasename = 0
+                token9smallcasename = \
+                    cg.get_coin_info_from_contract_address_by_id(contract_address=self.token9ethaddress.text(),
+                                                                 id='ethereum')[
+                        'symbol']
+                self.token9name.setText(token9smallcasename)
         except:
             pass
         try:
-            token10smallcasename = 0
-            token10smallcasename = \
-                cg.get_coin_info_from_contract_address_by_id(contract_address=self.token10ethaddress.text(),
-                                                             id='ethereum')[
-                    'symbol']
-            self.token10name.setText(token10smallcasename)
+            if self.token10ethaddress.text() != '' or '0':
+                token10smallcasename = 0
+                token10smallcasename = \
+                    cg.get_coin_info_from_contract_address_by_id(contract_address=self.token10ethaddress.text(),
+                                                                 id='ethereum')[
+                        'symbol']
+                self.token10name.setText(token10smallcasename)
         except:
             pass
         if token1smallcasename == 0:
