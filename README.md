@@ -79,10 +79,10 @@ my_pk = ''</pre>
 <br> </br>
 <H2>Changelog v1</h2>
 
--Several bug fixes that were found after testing all feature
--Added current balances in $. The bot now tells you how much balance your account has.
--Added buy-sell boundary. This value tells the bot how much ETH (or token such as USDT) is needed to be on the address to see the last action as a sell.
-...
+- Several bug fixes that were found after testing all feature
+- Added current balances in $. The bot now tells you how much balance your account has.
+- Added buy-sell boundary. This value tells the bot how much ETH (or token such as USDT) is needed to be on the address to see the last action as a sell.
+- ...
 - Repacked into an executable due to edited modules and questions about python usage
 - Fixed problems regarding threading, the trader works much faster now
 - Further updates in custom gas strategies
