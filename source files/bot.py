@@ -251,16 +251,28 @@ class Worker(QObject):
                         else:
                             mainusd = (priceeth / (maintokeneth))
                         dollarbalancemaintoken=mainusd*balance_eth
+
+                    if len(all_token_information[0]) > 15:
+                        all_token_information[0] =all_token_information[0][:15]
+                        all_token_information[1] =all_token_information[1][:15]
+                        all_token_information[2] =all_token_information[2][:15]
+                        all_token_information[3] =all_token_information[3][:15]
+                        all_token_information[4] =all_token_information[4][:15]
+                        all_token_information[5] =all_token_information[5][:15]
+                        all_token_information[6] =all_token_information[6][:15]
+                        all_token_information[7] =all_token_information[7][:15]
+                        all_token_information[8] =all_token_information[8][:15]
+                        all_token_information[9] =all_token_information[9][:15]
                     if len(all_token_information[0]) > 14:
                         for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC, trade_with_ETH, fast_token, small_case_name, decimals, balance, price, dollar_balance in all_token_information:
                             if eth_address != '0' or '':
                                 erc20tokens = ethbalance.add_token(small_case_name, {'symbol': small_case_name, 'address': eth_address, 'decimals': decimals,
                                            'name': small_case_name})
                                 a = ethbalance.get_token_balance(small_case_name, ethereum_address)['balance']
-                                all_token_information[token_number - 1]= all_token_information[token_number - 1][:12]+(a,)+all_token_information[token_number - 1][2:]
+                                all_token_information[token_number - 1]= all_token_information[token_number - 1][:12]+(a,all_token_information[token_number - 1][13],all_token_information[token_number - 1][14])
                             else:
                                 a=0
-                                all_token_information[token_number - 1] = all_token_information[token_number - 1][:12]+(a,)+all_token_information[token_number - 1][2:]
+                                all_token_information[token_number - 1] = all_token_information[token_number - 1][:12]+(a,all_token_information[token_number - 1][13],all_token_information[token_number - 1][14])
                     else:
                         for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC, trade_with_ETH, fast_token, small_case_name, decimals in all_token_information:
                             if eth_address != '0' or '':
@@ -271,7 +283,6 @@ class Worker(QObject):
                             else:
                                 a=0
                                 all_token_information[token_number - 1] = all_token_information[token_number - 1] + (a,)
-
                     # its now: for token_number,eth_address,high,low,activate,stoploss_value,stoploss_activate,trade_with_ERC,trade_with_ETH,fast_token,small_case_name,decimals,balance in all_token_information:
 
                 except Exception as e:
@@ -289,6 +300,17 @@ class Worker(QObject):
                     # note that "step" value will not necessarily be same for every thread
                     self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
                 try: #prices
+                    if len(all_token_information[0]) > 15:
+                        all_token_information[0] =all_token_information[0][:15]
+                        all_token_information[1] =all_token_information[1][:15]
+                        all_token_information[2] =all_token_information[2][:15]
+                        all_token_information[3] =all_token_information[3][:15]
+                        all_token_information[4] =all_token_information[4][:15]
+                        all_token_information[5] =all_token_information[5][:15]
+                        all_token_information[6] =all_token_information[6][:15]
+                        all_token_information[7] =all_token_information[7][:15]
+                        all_token_information[8] =all_token_information[8][:15]
+                        all_token_information[9] =all_token_information[9][:15]
                     if len(all_token_information[0]) > 14:
                         for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC, trade_with_ETH, fast_token, small_case_name, decimals, balance, price, dollar_balance in all_token_information:
                             if str(eth_address) != '0' or '':
@@ -300,10 +322,10 @@ class Worker(QObject):
                                 else:
                                     pricetoken1usd = (priceeth / (token1eth))
                                 a = pricetoken1usd
-                                all_token_information[token_number - 1] = all_token_information[token_number - 1][:13]+(a,)+all_token_information[1:]
+                                all_token_information[token_number - 1] = all_token_information[token_number - 1][:13]+(a,all_token_information[token_number - 1][14])
                             else:
                                 a = 0
-                                all_token_information[token_number - 1]= all_token_information[token_number - 1][:13]+(a,)+all_token_information[1:]
+                                all_token_information[token_number - 1] = all_token_information[token_number - 1][:13]+(a,all_token_information[token_number - 1][14])
                     else:
                         for token_number, eth_address, high, low, activate, stoploss_value, stoploss_activate, trade_with_ERC, trade_with_ETH, fast_token, small_case_name, decimals, balance in all_token_information:
                             if str(eth_address) != '0' or '':
@@ -325,6 +347,17 @@ class Worker(QObject):
                     if configfile.debugmode == '1':
                         print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
                 totalbalancedollarscript=0
+                if len(all_token_information[0]) > 15:
+                    all_token_information[0] = all_token_information[0][:15]
+                    all_token_information[1] = all_token_information[1][:15]
+                    all_token_information[2] = all_token_information[2][:15]
+                    all_token_information[3] = all_token_information[3][:15]
+                    all_token_information[4] = all_token_information[4][:15]
+                    all_token_information[5] = all_token_information[5][:15]
+                    all_token_information[6] = all_token_information[6][:15]
+                    all_token_information[7] = all_token_information[7][:15]
+                    all_token_information[8] = all_token_information[8][:15]
+                    all_token_information[9] = all_token_information[9][:15]
                 if len(all_token_information[0]) >14:
                     for token_number,eth_address,high,low,activate,stoploss_value,stoploss_activate,trade_with_ERC,trade_with_ETH,fast_token,small_case_name,decimals,balance,price,dollar_balance in all_token_information:
                         if balance != 0:
@@ -368,6 +401,7 @@ class Worker(QObject):
                 # note that "step" value will not necessarily be same for every thread
                 self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
             def checkbalance(all_token_information,infura_url, my_address, maincoinoption,dollarbalancemaintoken, mcotoseeassell):
+
                 ethereum_address = my_address
                 cg = CoinGeckoAPI()
 
@@ -408,22 +442,14 @@ class Worker(QObject):
                 return {'keer': keer, 'gelukt': gelukt, 'gelukt2': gelukt2,'all_token_information': all_token_information}
 
             def getprice(all_token_information,incaseofbuyinghowmuch,uniswap_wrapper, timesleep, gelukt, maintokenbalance, ethaddress, maindecimals,totalbalancedollarscript):
+                count = 0
                 try:
                     QCoreApplication.processEvents()
-                    count = 0
-                    while self.__abort != True or count < timesleep:
-                        count += 1
+
+                    while count < timesleep:
+                        count =count+ 1
                         QtTest.QTest.qWait(1000)
                         QCoreApplication.processEvents()
-                        if 'step' not in locals():
-                            step = 1
-                        else:
-                            step = 1
-                        self.sig_step.emit(self.__id, 'step ' + str(step))
-                        QCoreApplication.processEvents()
-                        if self.__abort == True:
-                            # note that "step" value will not necessarily be same for every thread
-                            self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
                     QtTest.QTest.qWait(166)
                     if ethaddress == "0x0000000000000000000000000000000000000000" and maintokenbalance > 0.001:
                         priceeth = int(cg.get_price(ids='ethereum', vs_currencies='usd')['ethereum']['usd'])
@@ -652,13 +678,16 @@ class Worker(QObject):
                             exception_type, exception_object, exception_traceback = sys.exc_info()
                             if configfile.debugmode == '1':
                                 print(str(e) + ' on line: ' + str(exception_traceback.tb_lineno))
-                        tradeamount = (ethamount2 * 10 ** selldecimals)
+                        tradeamount = int(ethamount2 * 10 ** selldecimals)
+                        if tradeamount <0:
+                            tradeamount=int(1)
+
                         ethamount = ethamount2
                         contractaddress = token
                         if int(diffdeposit) == 0:
-                            uniconnect.make_trade(eth, token, int(tradeamount),gwei,my_address,pk,my_address)
+                            uniconnect.make_trade(eth, token, tradeamount,gwei,my_address,pk,my_address)
                         if int(diffdeposit) == 1:
-                            uniconnect.make_trade(eth, token, int(tradeamount), gwei, my_address, pk,diffdepositaddress)
+                            uniconnect.make_trade(eth, token, tradeamount, gwei, my_address, pk,diffdepositaddress)
 
                         if buytokenaddress == ethaddress:
                             gelukt = 'sell'
@@ -696,10 +725,12 @@ class Worker(QObject):
                             gelukt = kaka['gelukt']
                             if gelukt != 'mislukt':
                                 count = 0
-                                while self.__abort != True or count < timesleepaftertrade:
+                                while count < timesleepaftertrade:
                                     count += 1
                                     QtTest.QTest.qWait(1000)
                                     QCoreApplication.processEvents()
+                                    if self.__abort != True:
+                                        count += 100
                             keer = 9999
                             all_token_information[token_number - 1] = all_token_information[token_number - 1][:9]+fasttoken1+all_token_information[token_number - 1][5:]
                         if (
@@ -721,10 +752,12 @@ class Worker(QObject):
                                 gelukt = kaka['gelukt']
                                 if gelukt != 'mislukt':
                                     count = 0
-                                    while self.__abort != True or count < timesleepaftertrade:
+                                    while count < timesleepaftertrade:
                                         count += 1
                                         QtTest.QTest.qWait(1000)
                                         QCoreApplication.processEvents()
+                                        if self.__abort != True:
+                                            count += 100
                                         if 'step' not in locals():
                                             step = 1
                                         else:
@@ -755,10 +788,12 @@ class Worker(QObject):
                                 gelukt = kaka['gelukt']
                                 if gelukt != 'mislukt':
                                     count = 0
-                                    while self.__abort != True or count < timesleepaftertrade:
+                                    while count < timesleepaftertrade:
                                         count += 1
                                         QtTest.QTest.qWait(1000)
                                         QCoreApplication.processEvents()
+                                        if self.__abort != True:
+                                            count += 100
                                         if 'step' not in locals():
                                             step = 1
                                         else:
@@ -797,8 +832,10 @@ class Worker(QObject):
                                                 gelukt = kaka['gelukt']
                                                 if gelukt != 'mislukt':
                                                     count=1
-                                                    while self.__abort != True or count <timesleepaftertrade:
+                                                    while count < timesleepaftertrade:
                                                         count+=1
+                                                        if self.__abort != True:
+                                                            count += 100
                                                         QtTest.QTest.qWait(1000)
                                                         QCoreApplication.processEvents()
                                                         if 'step' not in locals():
@@ -929,7 +966,6 @@ class Worker(QObject):
                         if self.__abort == True:
                             # note that "step" value will not necessarily be same for every thread
                             self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
-                            break
                         rara = checkbalance(all_token_information,infura_url, my_address, maincoinoption,dollarbalancemaintoken, mcotoseeassell)
                         all_token_information=rara['all_token_information']
                         gelukt = rara['gelukt']
@@ -943,14 +979,12 @@ class Worker(QObject):
                         step = step + 1
                     QCoreApplication.processEvents()
                     while self.__abort != True:
-
                         # check if we need to abort the loop; need to process events to receive signals;
                         self.sig_step.emit(self.__id, 'step ' + str(step))
                         QCoreApplication.processEvents()
                         if self.__abort == True:
                             # note that "step" value will not necessarily be same for every thread
                             self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
-                            break
                         keer = keer + 1
                         QCoreApplication.processEvents()
                         if keer > 300 or 'gelukt' not in locals() or gelukt == "mislukt" or gelukt == "mislukt buy" or gelukt == "mislukt sell":
@@ -967,8 +1001,6 @@ class Worker(QObject):
                             gelukt2 = rara['gelukt2']
                             keer = rara['keer']
                             QCoreApplication.processEvents()
-
-                            maintokenbalance = rara['maintokenbalance']
                         QCoreApplication.processEvents()
                         try:
                             if "weergave" in locals():
@@ -983,7 +1015,6 @@ class Worker(QObject):
                             if self.__abort == True:
                                 # note that "step" value will not necessarily be same for every thread
                                 self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__id, step))
-                                break
                             ku = getprice(all_token_information,incaseofbuyinghowmuch,uniswap_wrapper, timesleep, gelukt, maintokenbalance, ethaddress, maindecimals,totalbalancedollarscript)
 
                             QCoreApplication.processEvents()
