@@ -93,6 +93,7 @@ my_pk = ''</pre>
 <H2>Current bugs</h2>
 
 
+- Using wBTC or eth as token is not possible, but it is possible to use them as main-coin/token
 - Sloppy dinamic design of GUI
 - Sometimes lag when updating names or when starting the bot (0-10 seconds)
 - More: Let me know!
