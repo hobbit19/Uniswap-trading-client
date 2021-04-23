@@ -22,7 +22,7 @@
 
 0. Read prerequisites
 
-1. Download the latest release or download "configfile.py" and "bot.exe" from the repository.
+1. Download the latest release or download "configfile.py" and "UNISWAP_bot.exe" from the repository.
 
 
 2. Open "configfile.py" (with notepad for instance) and add your ethereum address and personal key at the bottom of the file between the quotation marks('').
@@ -47,15 +47,15 @@ my_pk = ''</pre>
 
 <b>Main coin/token</b>: The token or coin you want to trade tokens for and with
 
-<b>Buy/Sell boundary</b>: The amount of balance (calculated in $) that a token or your main coin/token has to be present to deduct whether the latest action was a buy or a sell. For instance: in the value is 100 ,your maincoin option ethereum and have 120$ worth of ethereum on your address, the bot will see the latest action as "sell".
+<b>Buy/Sell boundary</b>: The amount of balance (calculated in $) that has to be present in (main-)tokens or coins has to be present in the wallet, to deduct whether the latest action was a buy or a sell. For instance: iF the value is 100, your maincoin option ethereum and have 120$ worth of ethereum In your address, the bot will see the latest action as "sell".
 
-<b>Token ETH address</b>: Fill the token eth address you want to trade (such as 0x00000000000000000)
+<b>Token ETH address</b>: Fill the token eth address you want to trade (such as 0x0000000000000000000000000000000000000000)
 
-<b>Low($)</b>: The price you want the trader to sell the token for (0.01 = 1 dollar cent)
+<b>Sell($)</b>: The price you want the trader to sell the token for (0.01 = 1 dollar cent)
 
-<b>High($)</b>: The price you want the trader to buy the token for (0.01 = 1 dollar cent)
+<b>Buy($)</b>: The price you want the trader to buy the token for (0.01 = 1 dollar cent)
 
-<b>Activate and Trade with ETH</b>: Toggle if you want to activate trading with your main coin/token
+<b>Activate and Trade with ETH</b>: Toggle if you want to activate trading with your main-coin/token
 
 <b>Trade with ERC (Experimental!)</b>: Toggle if you want to trade the token with other ERC tokens of which this option is activated (see tokentokennumerator)
 
@@ -67,7 +67,7 @@ my_pk = ''</pre>
 
 <b>Seconds waiting between trades</b>: depends on how fast transactions finalize
 <b>Max slippage</b>: The maximum slippage you want to allow while trading (0.03 = 3%)
-<b>$ to keep in ETH after trade</b>: The amount of ETH/main token you want to keep after each trade (excluding transaction fee's) in terms of $.
+<b>$ to keep in ETH after trade</b>: The amount of ETH/main token you want to keep after each trade (excluding transaction fees) in terms of $.
 <b>GWEI option</b>: The amount of gas you want to use for each trade (see ethgasstation.info) <b>Under construction: use fast</b>
 <b>Update names</b>: Press to update tokens names according to the Token address
 
@@ -87,6 +87,7 @@ my_pk = ''</pre>
 <br> </br>
 <H2>Changelog v1</h2>
 
+- Bot actually works now <b>Since version 1.1 </b>
 - Several bug fixes that were found after testing all feature
 - Added current balances in $. The bot now tells you how much balance your account has.
 - Added buy-sell boundary. This value tells the bot how much ETH (or token such as USDT) is needed to be on the address to see the last action as a sell.
@@ -118,6 +119,8 @@ my_pk = ''</pre>
 During the latest pandemic I realised that I had time to learn how to code, I decided to do this by making trader-bots in python. Other than it being a good exercise, it was/is also very fun and lucrative! This is one of my first applications I made, so the documentation is still quite poor with spaghetti-code here and there, but it does what it should do! 
 <br> </br>
 If you have any questions you can contact me via telegram: aviddot
+<br> </br>
+Donations: 0x6B1CeA1c27Bbb1428978dC3C0423642fDa404367
 
 
 
