@@ -2,6 +2,14 @@
 
 ![alt text](https://github.com/aviddot/Uniswap-trading-client/raw/main/testv03.gif "GIF application")
 
+<br> </br>
+<br> </br>
+<br> </br>
+<H2><b><p style="font-size:20px;color:red;">Since the transaction fee's are huge on ethereum at the moment, check out my pancakeswap trading client</p></b></H2>
+<br> </br>
+<br> </br>
+<br> </br>
+
 <H2>Prerequisites</H2>
 
 - An ethereum address
