@@ -5,7 +5,7 @@
 <br> </br>
 <br> </br>
 <br> </br>
-<H2><b><p style="font-size:20px;color:red;">Since the transaction fee's are huge on ethereum at the moment, check out my pancakeswap trading clientL https://github.com/aviddot/Pancakeswap-trading-bot</p></b></H2>
+<H2><b><p style="font-size:20px;color:red;">Since the transaction fee's are huge on ethereum at the moment, check out my pancakeswap trading client: https://github.com/aviddot/Pancakeswap-trading-bot</p></b></H2>
 <br> </br>
 <br> </br>
 <br> </br>
